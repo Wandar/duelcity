@@ -1,0 +1,8 @@
+{
+    "python.analysis.extraPaths": [
+        "./scripts/common",
+        "./scripts/data",
+        "./game_logic",
+        "./lib"
+    ]
+}

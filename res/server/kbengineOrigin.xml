@@ -1,0 +1,458 @@
+<root>
+    <publish>
+        <state>0</state>
+        <script_version>0.0.1</script_version>
+    </publish>
+
+
+    <debugEntity>0</debugEntity>
+    <gameUpdateHertz>15</gameUpdateHertz>
+    <bitsPerSecondToClient>1600000</bitsPerSecondToClient>
+    <packetAlwaysContainLength>0</packetAlwaysContainLength>
+    <trace_packet>
+        <debug_type>0</debug_type>
+        <use_logfile>false</use_logfile>
+        <disables>
+            <item>Encrypted::packets</item>
+            <item>Baseappmgr::updateBaseapp</item>
+            <item>Baseappmgr::onBaseappInitProgress</item>
+            <item>Cellappmgr::updateCellapp</item>
+            <item>Cellappmgr::onCellappInitProgress</item>
+            <item>Loginapp::onBaseappInitProgress</item>
+            <item>Cellapp::onUpdateDataFromClient</item>
+            <item>Baseapp::onUpdateDataFromClient</item>
+            <item>Baseapp::forwardMessageToClientFromCellapp</item>
+            <item>Client::onUpdateVolatileData</item>
+            <item>Client::onUpdateData</item>
+            <item>Client::onUpdateBasePos</item>
+            <item>Client::onUpdateData_xz</item>
+            <item>Client::onUpdateData_xyz</item>
+            <item>Client::onUpdateData_y</item>
+            <item>Client::onUpdateData_r</item>
+            <item>Client::onUpdateData_p</item>
+            <item>Client::onUpdateData_ypr</item>
+            <item>Client::onUpdateData_yp</item>
+            <item>Client::onUpdateData_yr</item>
+            <item>Client::onUpdateData_pr</item>
+            <item>Client::onUpdateData_xz_y</item>
+            <item>Client::onUpdateData_xz_p</item>
+            <item>Client::onUpdateData_xz_r</item>
+            <item>Client::onUpdateData_xz_yr</item>
+            <item>Client::onUpdateData_xz_yp</item>
+            <item>Client::onUpdateData_xz_pr</item>
+            <item>Client::onUpdateData_xz_ypr</item>
+            <item>Client::onUpdateData_xyz_y</item>
+            <item>Client::onUpdateData_xyz_p</item>
+            <item>Client::onUpdateData_xyz_r</item>
+            <item>Client::onUpdateData_xyz_yr</item>
+            <item>Client::onUpdateData_xyz_yp</item>
+            <item>Client::onUpdateData_xyz_pr</item>
+            <item>Client::onUpdateData_xyz_ypr</item>
+        </disables>
+    </trace_packet>
+
+    <channelCommon>
+        <timeout>
+            <internal>120.0</internal>
+            <external>31.0</external>
+        </timeout>
+        <readBufferSize>
+            <internal>16777216</internal>
+            <external>0</external>
+        </readBufferSize>
+        <writeBufferSize>
+            <internal>16777216</internal>
+            <external>0</external>
+        </writeBufferSize>
+        <windowOverflow>
+            <send>
+                <tickSentBytes>
+                    <internal>0</internal>
+                    <external>0</external>
+                </tickSentBytes>
+                <messages>
+                    <critical>0</critical>
+                    <internal>0</internal>
+                    <external>0</external>
+                </messages>
+                <bytes>
+                    <internal>0</internal>
+                    <external>0</external>
+                </bytes>
+            </send>
+
+            <receive>
+                <messages>
+                    <critical>1324</critical>
+                    <internal>0</internal>
+                    <external>1524</external>
+                </messages>
+                <bytes>
+                    <internal>0</internal>
+                    <external>1019200</external>
+                </bytes>
+            </receive>
+<!--            <receive>-->
+<!--                <messages>-->
+<!--                    <critical>1024</critical>-->
+<!--                    <internal>0</internal>-->
+<!--                    <external>1224</external>-->
+<!--                </messages>-->
+<!--                <bytes>-->
+<!--                    <internal>0</internal>-->
+<!--                    <external>819200</external>-->
+<!--                </bytes>-->
+<!--            </receive>-->
+        </windowOverflow>
+
+        <encrypt_type>1</encrypt_type>
+        <reliableUDP>
+            <readPacketsQueueSize>
+                <internal>1024</internal>
+                <external>1024</external>
+            </readPacketsQueueSize>
+
+            <writePacketsQueueSize>
+                <internal>1024</internal>
+                <external>1024</external>
+            </writePacketsQueueSize>
+
+            <tickInterval>10</tickInterval>
+            <minRTO>10</minRTO>
+            <missAcksResend>2</missAcksResend>
+            <mtu>0</mtu>
+            <congestionControl>false</congestionControl>
+            <nodelay>true</nodelay>
+        </reliableUDP>
+
+        <sslCertificate></sslCertificate>
+        <sslPrivateKey></sslPrivateKey>
+    </channelCommon>
+
+    <shutdown_time>10.0</shutdown_time>
+
+    <shutdown_waittick>0.2</shutdown_waittick>
+
+    <callback_timeout>300.0</callback_timeout>
+
+    <thread_pool>
+        <timeout>300.0</timeout>
+
+        <init_create>1</init_create>
+        <pre_create>2</pre_create>
+        <max_create>8</max_create>
+    </thread_pool>
+
+    <email_service_config>server/email_service.xml</email_service_config>
+
+    <interfaces>
+        <entryScriptFile>kbemain</entryScriptFile>
+
+        <host>localhost</host>
+        <port_min>30100</port_min>
+        <port_max>30110</port_max>
+
+        <orders_timeout>3600</orders_timeout>
+
+        <SOMAXCONN>128</SOMAXCONN>
+
+        <telnet_service>
+            <port>33000</port>
+            <password>Qq:123456</password>
+            <default_layer>python</default_layer>
+        </telnet_service>
+    </interfaces>
+
+    <dbmgr>
+        <entryScriptFile>kbemain</entryScriptFile>
+
+        <debug>false</debug>
+
+        <allowEmptyDigest>false</allowEmptyDigest>
+        <internalInterface></internalInterface>
+
+        <InterfacesServiceAddr>
+            <enable>true</enable>
+            <addDefaultAddress> true </addDefaultAddress>
+            <item>
+                <host>localhost</host>
+                <port>30100</port>
+            </item>
+        </InterfacesServiceAddr>
+
+        <databaseInterfaces>
+            <default>
+                <pure>false</pure>
+
+                <type>mysql</type>                                            <!-- Type: String -->
+
+                <host>localhost</host>                                        <!-- Type: String -->
+                <port>0</port>                                                <!-- Type: Integer -->
+                <autoIncrementInit>0</autoIncrementInit>
+                <auth>
+                    <username>kbe</username>                                    <!-- Type: String -->
+                    <password>Qq:123456</password>                                    <!-- Type: String -->
+
+                    <encrypt>false</encrypt>
+                </auth>
+
+                <databaseName>card</databaseName>                                <!-- Type: String -->
+
+                <numConnections>5</numConnections>                            <!-- Type: Integer -->
+
+                <unicodeString>
+                    <characterSet>utf8</characterSet>                        <!-- Type: String -->
+                    <collation>utf8_bin</collation>                            <!-- Type: String -->
+                </unicodeString>
+            </default>
+        </databaseInterfaces>
+
+        <account_system>
+            <accountEntityScriptType>Account</accountEntityScriptType>
+
+            <accountDefaultFlags>0</accountDefaultFlags>                            <!-- Type: Integer -->
+
+            <accountDefaultDeadline>0</accountDefaultDeadline>                        <!-- Type: Integer -->
+
+            <account_resetPassword>
+                <enable>true</enable>
+            </account_resetPassword>
+
+            <account_registration>
+                <enable>true</enable>
+
+                <loginAutoCreate>false</loginAutoCreate>
+            </account_registration>
+        </account_system>
+
+        <telnet_service>
+            <port>32000</port>
+            <password>Qq:123456</password>
+            <default_layer>python</default_layer>
+        </telnet_service>
+
+        <ids>
+            <increasing_range>200000</increasing_range>                <!-- Type: Integer -->
+        </ids>
+    </dbmgr>
+
+    <cellapp>
+        <entryScriptFile>kbemain</entryScriptFile>
+
+        <defaultViewRadius>
+            <!--1000pixel-->
+            <radius>100.0</radius>
+            <hysteresisArea>5.0</hysteresisArea>
+        </defaultViewRadius>
+
+        <aliasEntityID>true</aliasEntityID>
+
+        <entitydefAliasID>true</entitydefAliasID>
+
+        <internalInterface></internalInterface>
+
+        <ids>
+            <criticallyLowSize>100000</criticallyLowSize>                <!-- Type: Integer -->
+        </ids>
+
+        <profiles>
+            <cprofile>false</cprofile>
+            <pyprofile>false</pyprofile>
+            <eventprofile>false</eventprofile>
+            <networkprofile>false</networkprofile>
+        </profiles>
+
+        <loadSmoothingBias>0.01</loadSmoothingBias>
+
+        <ghostDistance>500.0</ghostDistance>
+        <ghostingMaxPerCheck>64</ghostingMaxPerCheck> <!-- Type: Integer -->
+
+        <ghostUpdateHertz>5</ghostUpdateHertz>        <!-- Type: Integer -->
+
+        <coordinate_system>
+            <enable>true</enable>
+
+            <rangemgr_y>false</rangemgr_y>
+
+            <entity_posdir_additional_updates>2</entity_posdir_additional_updates>
+            <entity_posdir_updates>
+                <type> 1 </type>
+                <smartThreshold> 10 </smartThreshold>
+            </entity_posdir_updates>
+        </coordinate_system>
+
+        <telnet_service>
+            <port>50000</port>
+            <password>Qq:123456</password>
+            <default_layer>python</default_layer>
+        </telnet_service>
+
+        <shutdown>
+            <perSecsDestroyEntitySize>2000</perSecsDestroyEntitySize>
+        </shutdown>
+
+        <witness>
+            <timeout>5</timeout>                                        <!-- Type: Integer -->
+        </witness>
+    </cellapp>
+
+    <baseapp>
+        <entryScriptFile>kbemain</entryScriptFile>
+
+        <internalInterface></internalInterface>
+        <externalInterface></externalInterface>                        <!-- Type: String -->
+
+        <externalAddress></externalAddress>                            <!-- Type: String -->
+        <domain></domain>                            <!-- Type: String -->
+
+        <externalTcpPorts_min> 20015 </externalTcpPorts_min>			<!-- Type: Integer -->
+        <externalTcpPorts_max> 20055 </externalTcpPorts_max>			<!-- Type: Integer -->
+        <externalUdpPorts_min> 20005 </externalUdpPorts_min>			<!-- Type: Integer -->
+        <externalUdpPorts_max> 20045 </externalUdpPorts_max>			<!-- Type: Integer -->
+
+        <archivePeriod>0</archivePeriod>                            <!-- Type: Float -->
+
+        <backupPeriod>0</backupPeriod>                                <!-- Type: Float -->
+
+        <backUpUndefinedProperties>0</backUpUndefinedProperties>        <!-- Type: Boolean -->
+
+        <loadSmoothingBias>0.01</loadSmoothingBias>
+
+        <downloadStreaming>
+            <bitsPerSecondTotal>1000000</bitsPerSecondTotal>            <!-- Type: Int -->
+            <bitsPerSecondPerClient>100000</bitsPerSecondPerClient>    <!-- Type: Int -->
+        </downloadStreaming>
+
+        <ids>
+            <criticallyLowSize>10000</criticallyLowSize>                <!-- Type: Integer -->
+        </ids>
+
+        <entityRestoreSize>32</entityRestoreSize>
+
+        <profiles>
+            <cprofile>false</cprofile>
+            <pyprofile>false</pyprofile>
+            <eventprofile>false</eventprofile>
+            <networkprofile>false</networkprofile>
+        </profiles>
+
+        <SOMAXCONN>128</SOMAXCONN>
+
+        <telnet_service>
+            <port>40000</port>
+            <password>Qq:123456</password>
+            <default_layer>python</default_layer>
+        </telnet_service>
+
+        <shutdown>
+            <perSecsDestroyEntitySize>200</perSecsDestroyEntitySize>
+        </shutdown>
+
+        <respool>
+            <buffer_size>1024</buffer_size>
+
+            <timeout>600</timeout>
+
+            <checktick>60</checktick>
+        </respool>
+    </baseapp>
+
+    <cellappmgr>
+        <internalInterface></internalInterface>
+    </cellappmgr>
+
+    <baseappmgr>
+        <internalInterface></internalInterface>
+    </baseappmgr>
+
+    <loginapp>
+        <entryScriptFile>kbemain</entryScriptFile>
+
+        <internalInterface></internalInterface>
+        <externalInterface></externalInterface>                        <!-- Type: String -->
+
+        <externalAddress></externalAddress>                            <!-- Type: String -->
+        <domain></domain>                            <!-- Type: String -->
+
+        <externalTcpPorts_min> 20013 </externalTcpPorts_min>			<!-- Type: Integer -->
+        <externalTcpPorts_max> 0 </externalTcpPorts_max>				<!-- Type: Integer -->
+        <externalUdpPorts_min> -1 </externalUdpPorts_min>				<!-- Type: Integer -->
+        <externalUdpPorts_max> -1 </externalUdpPorts_max>				<!-- Type: Integer -->
+
+
+        <encrypt_login>0</encrypt_login>
+
+        <SOMAXCONN>128</SOMAXCONN>
+
+        <account_type>2</account_type>
+
+        <http_cbhost>localhost</http_cbhost>
+        <http_cbport>21103</http_cbport>
+
+        <telnet_service>
+            <port>31000</port>
+            <password>Qq:123456</password>
+            <default_layer>python</default_layer>
+        </telnet_service>
+    </loginapp>
+
+    <machine>
+        <externalTcpPorts_min> 20099 </externalTcpPorts_min>			<!-- Type: Integer -->
+        <externalTcpPorts_max> 0 </externalTcpPorts_max>				<!-- Type: Integer -->
+        <externalUdpPorts_min> 0 </externalUdpPorts_min>				<!-- Type: Integer -->
+        <externalUdpPorts_max> 0 </externalUdpPorts_max>				<!-- Type: Integer -->
+
+        <internalInterface></internalInterface>
+        <addresses>
+        </addresses>
+    </machine>
+
+    <bots>
+        <entryScriptFile>kbemain</entryScriptFile>
+
+        <internalInterface></internalInterface>
+
+        <forceInternalLogin>true</forceInternalLogin>
+
+        <host>localhost</host>                                        <!-- Type: String -->
+        <port_min> 20013 </port_min>									<!-- Type: Integer -->
+        <port_max> 0 </port_max>
+
+        <isOnInitCallPropertysSetMethods>true</isOnInitCallPropertysSetMethods>
+
+        <defaultAddBots>
+            <totalCount>300</totalCount>                                <!-- Type: Integer -->
+            <tickTime>0.1</tickTime>                                    <!-- Type: Float -->
+            <tickCount>5</tickCount>                                    <!-- Type: Integer -->
+        </defaultAddBots>
+
+        <account_infos>
+            <account_name_prefix>bot_</account_name_prefix>
+
+            <account_name_suffix_inc>1</account_name_suffix_inc><!-- Type: Integer -->
+            <account_password> botUBa77dbJAVod(DY1 </account_password>
+        </account_infos>
+
+        <telnet_service>
+            <port>51000</port>
+            <password>Qq:123456</password>
+            <default_layer>python</default_layer>
+        </telnet_service>
+    </bots>
+
+    <logger>
+        <entryScriptFile>kbemain</entryScriptFile>
+
+        <internalInterface></internalInterface>
+
+        <tick_max_buffered_logs>131070</tick_max_buffered_logs>
+
+        <tick_sync_logs>0</tick_sync_logs>
+
+        <telnet_service>
+            <port>34000</port>
+            <password>Qq:123456</password>
+            <default_layer>python</default_layer>
+        </telnet_service>
+    </logger>
+</root>
