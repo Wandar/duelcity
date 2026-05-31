@@ -292,7 +292,6 @@ class Game(Reload, GameFunc):
 
         self.duel.recalculateAllCardsOperation()
 
-
     def y_startTutorialScene(self):
         ME_START_HAND = ["StoneBeast"]
         ME_START_FIELD = []
