@@ -58,15 +58,15 @@ echo xml set IP:%INTERNAL_IP%
 
 
 
-start /MIN "logger" %KBE_BIN_PATH%/logger.exe --cid=1000 --gus=100 --hide=0
-start /MIN "machine" %KBE_BIN_PATH%/machine.exe --cid=2000 --gus=200 --hide=%HIDE%
-start /MIN "dbmgr" %KBE_BIN_PATH%/dbmgr.exe --cid=4000 --gus=400 --hide=0
-start /MIN "baseappmgr" %KBE_BIN_PATH%/baseappmgr.exe --cid=5000 --gus=500 --hide=%HIDE%
-start /MIN "cellappmgr" %KBE_BIN_PATH%/cellappmgr.exe --cid=6000 --gus=600 --hide=%HIDE%
-start /MIN "interfaces" %KBE_BIN_PATH%/interfaces.exe --cid=3000 --gus=300 --hide=%HIDE%
-start /MIN "loginapp" %KBE_BIN_PATH%/loginapp.exe --cid=9000 --gus=900 --hide=%HIDE%
-start /MIN "baseapp" %KBE_BIN_PATH%/baseapp.exe --cid=1 --gus=1 --hide=0
-start /MIN "cellapp" %KBE_BIN_PATH%/cellapp.exe --cid=8000 --gus=800 --hide=0
+start /MIN /HIGH "logger" %KBE_BIN_PATH%/logger.exe --cid=1000 --gus=100 --hide=0
+start /MIN /HIGH "machine" %KBE_BIN_PATH%/machine.exe --cid=2000 --gus=200 --hide=%HIDE%
+start /MIN /HIGH "dbmgr" %KBE_BIN_PATH%/dbmgr.exe --cid=4000 --gus=400 --hide=0
+start /MIN /HIGH "baseappmgr" %KBE_BIN_PATH%/baseappmgr.exe --cid=5000 --gus=500 --hide=%HIDE%
+start /MIN /HIGH "cellappmgr" %KBE_BIN_PATH%/cellappmgr.exe --cid=6000 --gus=600 --hide=%HIDE%
+start /MIN /HIGH "interfaces" %KBE_BIN_PATH%/interfaces.exe --cid=3000 --gus=300 --hide=%HIDE%
+start /MIN /HIGH "loginapp" %KBE_BIN_PATH%/loginapp.exe --cid=9000 --gus=900 --hide=%HIDE%
+start /MIN /HIGH "baseapp" %KBE_BIN_PATH%/baseapp.exe --cid=1 --gus=1 --hide=0
+start /MIN /HIGH "cellapp" %KBE_BIN_PATH%/cellapp.exe --cid=8000 --gus=800 --hide=0
 
 
 
