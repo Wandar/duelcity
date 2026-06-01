@@ -7,6 +7,8 @@ from a.Effect import *
 from a.DuelConstants import *
 from Constants import *
 
+ENGINE_VERSION=1
+D_SCRIPT_VERSION=1
 
 
 def getMonsterOnFieldWithHighestAtk(game:Game):

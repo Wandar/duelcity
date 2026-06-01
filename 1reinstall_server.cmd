@@ -16,9 +16,10 @@ IF %ERRORLEVEL% NEQ 0 (
     pause
     exit
 )
-echo The download is complete, please wait for unzipping...
 
+echo Download completed. Please wait while extracting files......
 unzip.exe -o -q server.zip
+
 echo Successfully downloading and unzipping server,press any key to exit
 
 pause
