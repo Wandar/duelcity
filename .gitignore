@@ -20,8 +20,6 @@ cards_test/
 !/res
 !/game_logic
 !/1reinstall_server.cmd
-!/clear_logs.cmd
-!/guiconsole.cmd
 !/kill_server.cmd
 !/README.md
 !/start_server.cmd

@@ -54,8 +54,7 @@ if exist "%KBE_SCRIPT%\localip.txt" (
 :: copy and replace IP
 powershell -Command "(Get-Content '.\res\server\kbengineOrigin.xml') -replace '(<internalInterface>).*?(</internalInterface>)', '${1}%INTERNAL_IP%${2}' -replace '(<externalInterface>).*?(</externalInterface>)', '${1}%INTERNAL_IP%${2}' | Set-Content '.\res\server\kbengine.xml' -Encoding UTF8"
 
-echo xml set IP:%INTERNAL_IP%
-
+if defined INTERNAL_IP echo xml set IP:%INTERNAL_IP%
 
 
 start /MIN /HIGH "logger" %KBE_BIN_PATH%/logger.exe --cid=1000 --gus=100 --hide=0
