@@ -115,7 +115,7 @@ class Duel(Reload):
         elif self._botName=="tutorialBot":
             self.IS_TUTORIAL=True
             self.startDuel()
-            avatar.c_startTutorial()
+            avatar.c_startGuideUI()
 
 
 
