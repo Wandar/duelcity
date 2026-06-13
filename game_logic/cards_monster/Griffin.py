@@ -16,7 +16,7 @@ class Griffin(Card):
 
 
 """
-1P:<场上效果>:我方场上所有风属性怪兽（包含此卡）攻击力+300
+1P:我方场上所有风属性怪兽（包含此卡）攻击力+300
 1P:<While this card is in the Monster Zone>:All WIND monsters on your field (including this card) gain +300 ATK. Remove this effect when this card leaves the field.
 """
 class Griffin_GuardianFeathers(Effect):

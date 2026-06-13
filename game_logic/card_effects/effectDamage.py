@@ -24,7 +24,7 @@ from Constants import *
 
 
 """
-1A:<场上效果>[献祭此卡]:对对方场上所有怪兽造成200点伤害
+1A:[献祭此卡]:对对方场上所有怪兽造成200点伤害
 """
 class TributeDamage(Effect):
     effType = EFF_TYPE.active
@@ -111,7 +111,7 @@ class SummonBeDamaged(Effect):
 
 
 
-#1A:<场上效果>[献祭此卡]:获得对方场上所有LV3以下怪兽的控制权
+#1A:[献祭此卡]:获得对方场上所有LV3以下怪兽的控制权
 class allDamageSpell(Effect):
     effType = EFF_TYPE.active
 
@@ -207,7 +207,7 @@ class DestroyedByBattleDestroyMagic(Effect):
 # ============================================================
 
 """
-1OT:<场上效果>:此卡战斗破坏对方怪兽时,对对方造成被破坏怪兽{ATK}一半的伤害
+1OT:此卡战斗破坏对方怪兽时,对对方造成被破坏怪兽{ATK}一半的伤害
 """
 class BattleDestroyDamageHalfAtk(Effect):
     effType = EFF_TYPE.optionalTrigger
@@ -238,7 +238,7 @@ class BattleDestroyDamageHalfAtk(Effect):
 
 
 """
-1A:<场上效果>[解放此卡]:对对方场上所有怪兽的控制者各造成500伤害
+1A:[解放此卡]:对对方场上所有怪兽的控制者各造成500伤害
 """
 class TributeDamageEachEnemyMonster(Effect):
     effType = EFF_TYPE.active
@@ -293,7 +293,7 @@ class DestroyedDamage1000(Effect):
 
 
 """
-1T:<场上效果>[不限次数]:对方每次发动魔法卡时,对对方造成300伤害
+1T:[不限次数]:对方每次发动魔法卡时,对对方造成300伤害
 """
 class OppActivateSpellDamage300(Effect):
     effType = EFF_TYPE.trigger
@@ -323,7 +323,7 @@ class OppActivateSpellDamage300(Effect):
 
 
 """
-1OT:<场上效果>[不限次数]:我方抽卡时,对对方造成200伤害
+1OT:[不限次数]:我方抽卡时,对对方造成200伤害
 """
 class MyDrawDamage200(Effect):
     effType = EFF_TYPE.optionalTrigger
@@ -351,7 +351,7 @@ class MyDrawDamage200(Effect):
 
 
 """
-1A:<场上效果>[从手牌丢弃2张卡]:对对方造成2000伤害
+1A:[从手牌丢弃2张卡]:对对方造成2000伤害
 """
 class Discard2Damage2000(Effect):
     effType = EFF_TYPE.active
@@ -386,7 +386,7 @@ class Discard2Damage2000(Effect):
 
 
 """
-1T:<场上效果>:对方回合结束时,若此卡本回合未宣言攻击,对对方造成500伤害
+1T:对方回合结束时,若此卡本回合未宣言攻击,对对方造成500伤害
 """
 class OppTurnEndNoAttackDamage500(Effect):
     effType = EFF_TYPE.trigger
@@ -470,7 +470,7 @@ class BattleDestroyedSelfDamageEqualAtk(Effect):
 
 
 """
-1A:<场上效果>[支付LP 500]:对我方或对方1只怪兽造成800伤害
+1A:[支付LP 500]:对我方或对方1只怪兽造成800伤害
 """
 class PayLP500DamageMonster800(Effect):
     effType = EFF_TYPE.active

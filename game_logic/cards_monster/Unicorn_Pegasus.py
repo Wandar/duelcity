@@ -16,7 +16,7 @@ class Unicorn_Pegasus(Card):
 
 
 """
-1A:<场上效果>:选择对手场上1只怪兽，使其攻击力变为0直到回合结束。
+1A:选择对手场上1只怪兽，使其攻击力变为0直到回合结束。
 1A:<Field effect>:Target 1 monster your opponent controls; its ATK becomes 0 until the end of this turn.
 """
 class Unicorn_Pegasus_LunarBind(Effect):

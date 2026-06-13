@@ -17,7 +17,7 @@ class weresnake(Card):
 
 
 """
-1I:<场上效果>:<送入墓地时>[丢弃一张手牌]:从卡组特殊召唤一只LV4以下的爬虫类怪兽
+1I:<送入墓地时>[丢弃一张手牌]:从卡组特殊召唤一只LV4以下的爬虫类怪兽
 1I:<When sent to the Graveyard>[Discard 1 card]: Special Summon 1 Level 4 or lower REPTILE monster from your Deck.
 """
 class weresnake_SheddingRebirth(Effect):

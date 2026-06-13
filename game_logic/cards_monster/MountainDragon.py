@@ -16,7 +16,7 @@ class MountainDragon(Card):
 
 
 """
-1T:<场上效果>:此卡被召唤成功时,对对手场上所有怪兽各造成500点伤害。
+1T:此卡被召唤成功时,对对手场上所有怪兽各造成500点伤害。
 1T:<When this card is Summoned>:Deal 500 damage to all monsters on your opponent's field.
 """
 class MountainDragon_AvalancheBreath(Effect):

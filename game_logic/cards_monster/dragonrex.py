@@ -17,7 +17,7 @@ class dragonrex(Card):
 
 
 """
-1A:<场上效果>[丢弃一张魔法·陷阱卡]:破坏对方场上的1张魔法·陷阱卡。
+1A:[丢弃一张魔法·陷阱卡]:破坏对方场上的1张魔法·陷阱卡。
 1A:<Field effect>[Discard 1 Spell/Trap]: Destroy 1 Spell/Trap on your opponent's field.
 """
 class dragonrex_RexCataclysm(Effect):

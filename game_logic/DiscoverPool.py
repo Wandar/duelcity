@@ -1,36 +1,47 @@
 # -*- coding: utf-8 -*-
 """
-DiscoverPool — 全服全局发现卡池管理器（单例）
+DiscoverPool — Global singleton for Hearthstone-style Discover card pool management.
 
-职责：
-  - 按过滤条件（种族/属性/类型/等级范围）懒初始化卡池
-  - 用洗牌队列保证同批次内不重复
-  - 返回 cardKey 字符串列表，由调用方 createCard
+Responsibilities:
+  - Lazy-initialize pools by filter conditions (race / attr / type / level range)
+  - Support manually registered named pools (explicit card key lists)
+  - Shuffle-bag to avoid repetition within the same batch
+  - Return cardKey string lists; callers are responsible for createCard
 
-用法（在 Effect 子类里）：
+── Auto filter pool (built from ALL_DATA) ──────────────────────
     keys = DiscoverPool.instance().get(race=RACE.DINOSAUR, count=3)
-    tempCards = [self.game.createCard(k, self.getSide()) for k in keys]
-    # 玩家选牌后加手牌，未选的 destroyTempCard
 
-过滤参数均可省略（省略 = 不过滤该维度）：
-    get(race=RACE.DINOSAUR)               # 所有恐龙族
-    get(attr=ATTR.DARK, maxLevel=4)       # LV4以下暗属性
-    get(cardType='SPELL')                 # 所有魔法卡
-    get(minLevel=5)                       # LV5以上怪兽（默认只取怪兽）
-    get(includeAllTypes=True, race=None)  # 怪兽+魔法+陷阱全部
+All filter params are optional (omit = no filter on that dimension):
+    get(race=RACE.DINOSAUR)               # all dinosaur-race cards
+    get(attr=ATTR.DARK, maxLevel=4)       # dark-attr cards LV4 or below
+    get(cardType='SPELL')                 # all spell cards
+    get(minLevel=5)                       # monsters LV5 or above (default: monsters only)
+
+── Manual named pool (explicit card key list) ────────────────────────
+Register (typically at game init or stage config):
+    DiscoverPool.instance().registerPool('boss_drops', [
+        'FireDragonRed', 'Dragonknight', 'ElderDragon_Rd',
+    ])
+
+Discover:
+    keys = DiscoverPool.instance().getFromPool('boss_drops', count=3)
+    tempCards = [self.game.createCard(k, self.getSide()) for k in keys]
+    # add picked card to hand; destroy the rest (temp cards)
+
+Remove:
+    DiscoverPool.instance().unregisterPool('boss_drops')
 """
 from __future__ import annotations
 
-import random
-from typing import Dict, List, Optional, Tuple
+from util import *
 
 from KBEDebug import *
 from globalvars import D_CARD
 from Constants import RACE, ATTR
 
 # ─────────────────────────────────────────────
-# 枚举值 → D_CARD 字符串名称 的反查表
-# D_CARD 里 race/attr 均以大写字符串存储，如 "DINOSAUR"、"DARK"
+# Enum int → D_CARD string lookup tables
+# race/attr are stored as uppercase strings in D_CARD, e.g. "DINOSAUR", "DARK"
 # ─────────────────────────────────────────────
 _RACE_INT_TO_STR: Dict[int, str] = {
     1:  'WARRIOR',    2:  'SPELLCASTER', 4:  'FIEND',
@@ -46,14 +57,14 @@ _ATTR_INT_TO_STR: Dict[int, str] = {
     0x08: 'WATER',  0x10: 'FIRE',   0x20: 'WIND',   0x40: 'GRASS',
 }
 
-# D_CARD type 字段包含的关键词 → 归属
-_MONSTER_TYPE_KEYWORDS = ('MONSTER',)   # 'MONSTER'/'ORANGE_MONSTER'/'WHITE_MONSTER' 均含 'MONSTER'
+# D_CARD type field keywords
+_MONSTER_TYPE_KEYWORDS = ('MONSTER',)   # covers 'MONSTER' / 'ORANGE_MONSTER' / 'WHITE_MONSTER'
 _SPELL_TYPE_KEYWORDS   = ('SPELL',)
 _TRAP_TYPE_KEYWORDS    = ('TRAP',)
 
 
 def _toStr(val, table: Dict[int, str]) -> Optional[str]:
-    """将枚举整数或字符串统一成 D_CARD 里的大写字符串；None 原样返回。"""
+    """Normalize an enum int or string to the uppercase D_CARD string; pass None through."""
     if val is None:
         return None
     if isinstance(val, str):
@@ -65,13 +76,13 @@ def _toStr(val, table: Dict[int, str]) -> Optional[str]:
 
 def _typeMatches(dtype: str, cardType) -> bool:
     """
-    检查 D_CARD['type'] 字符串是否符合 cardType 过滤。
-    cardType 可以是：
-      None          → 只取怪兽（默认行为，此函数不会被调用，外层处理）
-      'MONSTER'     → 含 'MONSTER' 的类型
-      'SPELL'       → 含 'SPELL' 的类型
-      'TRAP'        → 含 'TRAP' 的类型
-      'ALL'/'all'   → 任意类型
+    Check whether a D_CARD['type'] string matches the cardType filter.
+    cardType values:
+      None          -> monsters only (default; this function is not called in that path)
+      'MONSTER'     -> types containing 'MONSTER'
+      'SPELL'       -> types containing 'SPELL'
+      'TRAP'        -> types containing 'TRAP'
+      'ALL'/'ANY'   -> any type
     """
     if cardType is None:
         return 'MONSTER' in dtype
@@ -82,7 +93,7 @@ def _typeMatches(dtype: str, cardType) -> bool:
 
 
 # ─────────────────────────────────────────────
-# 内部池子：洗牌队列
+# Internal pool: shuffle-bag queue
 # ─────────────────────────────────────────────
 class _Pool:
     __slots__ = ('_all', '_queue')
@@ -100,8 +111,8 @@ class _Pool:
 
     def pick(self, count: int) -> List[str]:
         """
-        从洗牌队列里取 count 张不重复的 key。
-        池子大小不足 count 时取全部。
+        Draw count unique keys from the shuffle-bag.
+        If the pool has fewer than count cards, return all of them.
         """
         if not self._all:
             return []
@@ -110,7 +121,7 @@ class _Pool:
         while len(result) < count:
             if not self._queue:
                 self._refill()
-            # 避免同次 pick 内重复（队列末尾可能恰好和已取的重叠）
+            # Guard against duplicates when the tail of one cycle overlaps the next
             key = self._queue.pop()
             if key not in result:
                 result.append(key)
@@ -118,16 +129,27 @@ class _Pool:
 
 
 # ─────────────────────────────────────────────
-# 单例主体
+# Singleton
 # ─────────────────────────────────────────────
-class DiscoverPool:
+class DiscoverPool(Reload):
     _inst: Optional[DiscoverPool] = None
 
     def __init__(self):
-        # key → _Pool
+        Reload.__init__(self, True, True)
+        # filter-key tuple → _Pool  (auto-built pools)
         self._pools: Dict[Tuple, _Pool] = {}
+        # name → _Pool  (manually registered pools)
+        self._named_pools: Dict[str, _Pool] = {}
+        self._reset()
 
-    # ── 单例 ──────────────────────────────────
+    # ── Singleton ─────────────────────────────
+
+    def _reset(self):
+        """Clear auto-built pools (called after ALL_DATA reload).
+        Named pools are intentionally preserved — their keys come from external config."""
+        if self._inst is not None:
+            self._inst._pools.clear()
+        self._inst = None
 
     @classmethod
     def instance(cls) -> DiscoverPool:
@@ -135,15 +157,59 @@ class DiscoverPool:
             cls._inst = DiscoverPool()
         return cls._inst
 
-    @classmethod
-    def reset(cls):
-        """重载 ALL_DATA 后调用，清空所有缓存池（下次 get 时重新构建）。"""
-        if cls._inst is not None:
-            cls._inst._pools.clear()
-        cls._inst = None
-        INFO_MSG("[DiscoverPool] 已重置")
+    def onReloadData(self):
+        self._reset()
 
-    # ── 主接口 ────────────────────────────────
+    # ── Manual named pools ────────────────────
+
+    def registerPool(self, name: str, keys: List[str]):
+        """
+        Register a named pool with an explicit card key list.
+
+        Parameters
+        ----------
+        name : pool identifier used when calling getFromPool
+        keys : list of cardKey strings; duplicates are allowed (acts as weight)
+
+        Example
+        -------
+        DiscoverPool.instance().registerPool('boss_drops', [
+            'FireDragonRed', 'Dragonknight', 'ElderDragon_Rd',
+        ])
+        """
+        self._named_pools[name] = _Pool(list(keys))
+        INFO_MSG(f"[DiscoverPool] registered named pool '{name}' with {len(keys)} cards")
+
+    def unregisterPool(self, name: str):
+        """Remove a named pool by name."""
+        if name in self._named_pools:
+            del self._named_pools[name]
+            INFO_MSG(f"[DiscoverPool] removed named pool '{name}'")
+
+    def getFromPool(self, name: str, count: int = 3) -> List[str]:
+        """
+        Draw count cards from a named pool; returns a list of cardKey strings.
+        Returns an empty list (with a WARNING) if the pool does not exist.
+
+        Example
+        -------
+        keys = DiscoverPool.instance().getFromPool('boss_drops', count=3)
+        tempCards = [self.game.createCard(k, self.getSide()) for k in keys]
+        """
+        pool = self._named_pools.get(name)
+        if pool is None:
+            WARNING_MSG(f"[DiscoverPool] named pool '{name}' not found — call registerPool first")
+            return []
+        keys = pool.pick(count)
+        if not keys:
+            WARNING_MSG(f"[DiscoverPool] named pool '{name}' is empty")
+        return keys
+
+    def hasPool(self, name: str) -> bool:
+        """Return True if a named pool with the given name exists."""
+        return name in self._named_pools
+
+    # ── Auto filter pool ──────────────────────
 
     def get(self,
             race=None,
@@ -154,17 +220,17 @@ class DiscoverPool:
             onlyEnabled: bool = True,
             count: int = 3) -> List[str]:
         """
-        返回 count 个满足条件的 cardKey 字符串。
+        Return count cardKey strings that match the given filters.
 
-        参数
-        ----
-        race        : RACE.DINOSAUR 或 'DINOSAUR'，None = 不过滤
-        attr        : ATTR.DARK 或 'DARK'，None = 不过滤
-        cardType    : 'MONSTER'/'SPELL'/'TRAP'/'ALL'，None = 只取怪兽
-        minLevel    : 最小等级（含），None = 不限
-        maxLevel    : 最大等级（含），None = 不限
-        onlyEnabled : True = 只取 disable==9 的卡（已启用），False = 取所有
-        count       : 返回张数，默认 3
+        Parameters
+        ----------
+        race        : RACE.DINOSAUR or 'DINOSAUR'; None = no filter
+        attr        : ATTR.DARK or 'DARK'; None = no filter
+        cardType    : 'MONSTER'/'SPELL'/'TRAP'/'ALL'; None = monsters only
+        minLevel    : minimum level (inclusive); None = no limit
+        maxLevel    : maximum level (inclusive); None = no limit
+        onlyEnabled : True = only cards with disable==9; False = all cards
+        count       : number of cards to return (default 3)
         """
         raceStr = _toStr(race, _RACE_INT_TO_STR)
         attrStr = _toStr(attr, _ATTR_INT_TO_STR)
@@ -174,43 +240,43 @@ class DiscoverPool:
         if fkey not in self._pools:
             pool = self._buildPool(raceStr, attrStr, cardType, minLevel, maxLevel, onlyEnabled)
             self._pools[fkey] = pool
-            INFO_MSG(f"[DiscoverPool] 新池子 race={raceStr} attr={attrStr} "
+            INFO_MSG(f"[DiscoverPool] new auto pool race={raceStr} attr={attrStr} "
                      f"type={cardType} lv={minLevel}~{maxLevel} "
-                     f"共 {len(pool)} 张")
+                     f"size={len(pool)}")
 
         keys = self._pools[fkey].pick(count)
 
         if not keys:
-            WARNING_MSG(f"[DiscoverPool] 池子为空 fkey={fkey}")
+            WARNING_MSG(f"[DiscoverPool] auto pool is empty fkey={fkey}")
         return keys
 
-    # ── 构建池子 ──────────────────────────────
+    # ── Build auto pool ───────────────────────
 
     def _buildPool(self, raceStr, attrStr, cardType, minLevel, maxLevel, onlyEnabled) -> _Pool:
         keys = []
         for key, d in D_CARD.items():
-            # 跳过版本号等非卡条目
+            # skip meta entries like 'version'
             if not key or key == 'version':
                 continue
 
-            # 启用状态过滤
+            # enabled filter
             if onlyEnabled and d.get('disable', 0) != 9:
                 continue
 
-            # 类型过滤
+            # type filter
             dtype = d.get('type', '')
             if not _typeMatches(dtype, cardType):
                 continue
 
-            # 种族过滤
+            # race filter
             if raceStr is not None and d.get('race', '') != raceStr:
                 continue
 
-            # 属性过滤
+            # attr filter
             if attrStr is not None and d.get('attr', '') != attrStr:
                 continue
 
-            # 等级过滤
+            # level filter
             if minLevel is not None or maxLevel is not None:
                 try:
                     lv = int(d.get('level', 0) or 0)

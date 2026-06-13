@@ -16,7 +16,7 @@ class Wyvern(Card):
 
 
 """
-1I:<场上效果>:对手特殊召唤怪兽时,若该怪兽的攻击力低于此卡，直接将其破坏；否则该怪兽{ATK}-1000{UTIL}。
+1I:对手特殊召唤怪兽时,若该怪兽的攻击力低于此卡，直接将其破坏；否则该怪兽{ATK}-1000{UTIL}。
 1I: <When your opponent Special Summons a monster>: If that monster's ATK is lower than this card's ATK, destroy it immediately; otherwise, that monster loses 1000 ATK until the end of this turn.
 """
 class Wyvern_TyrantMenace(Effect):

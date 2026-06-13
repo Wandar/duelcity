@@ -16,7 +16,7 @@ class ToonDragon_Lowpoly(Card):
 
 
 """
-1P:<场上效果>:场上的炎属性怪兽的攻击力上升500，水属性怪兽的攻击力下降400。
+1P:场上的炎属性怪兽的攻击力上升500，水属性怪兽的攻击力下降400。
 1P: <While on the field>: All FIRE monsters on the field gain 500 ATK; all WATER monsters on the field lose 400 ATK.
 """
 class ToonDragon_Lowpoly_ElementalChorus(Effect):

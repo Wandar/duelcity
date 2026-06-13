@@ -16,7 +16,7 @@ class desertdragon(Card):
 
 
 """
-1T:<场上效果>:这张卡战斗破坏对方怪兽送去墓地的场合发动。{ATK}+700。
+1T:这张卡战斗破坏对方怪兽送去墓地的场合发动。{ATK}+700。
 1T:<Battle effect>:After this card destroys a monster by battle, this card gains 700 ATK (permanent).
 """
 class desertdragon_SandstormFury(Effect):

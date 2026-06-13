@@ -16,7 +16,7 @@ class FireDragonRed(Card):
 
 
 """
-1I:<场上效果>:我方怪兽被战斗破坏时,对对手造成300点LP伤害。
+1I:我方怪兽被战斗破坏时,对对手造成300点LP伤害。
 1I:<When a monster on your field is destroyed by battle>:Inflict 300 LP damage to your opponent.
 """
 class FireDragonRed_EmberRetaliation(Effect):

@@ -90,7 +90,7 @@ class TributeAndControl(Effect):
         return True
 
 
-#1A:<场上效果>[献祭此卡]:破坏场上一只怪兽
+#1A:[献祭此卡]:破坏场上一只怪兽
 class TributeSelfDestroy(Effect):
     effType = EFF_TYPE.active
     activateLocation = LOCATION.monsterZone
@@ -119,7 +119,7 @@ class TributeSelfDestroy(Effect):
 
 
 
-#1A:<场上效果>[献祭我方场上一只怪兽]:破坏对方场上一只HP不大于祭品HP的怪兽
+#1A:[献祭我方场上一只怪兽]:破坏对方场上一只HP不大于祭品HP的怪兽
 class TributeDestroy(Effect):
     effType = EFF_TYPE.active
 
@@ -240,7 +240,7 @@ class normalSummonWind(Effect):
 
 
 """
-1A:<场上效果>[丢弃一张手牌]:破坏对方场上所有与丢弃的牌相同卡种的卡
+1A:[丢弃一张手牌]:破坏对方场上所有与丢弃的牌相同卡种的卡
 """
 class dropHandCardDestroy(Effect):
     effType = EFF_TYPE.active
@@ -525,7 +525,7 @@ class NormalSummonDestroyMagic(Effect):
         return True
 
 """
-1A:<场上效果>:将对方一只怪兽变为守备表示
+1A:将对方一只怪兽变为守备表示
 """
 class MakeMonsterDefend(Effect):
     effType = EFF_TYPE.active
@@ -561,7 +561,7 @@ class MakeMonsterDefend(Effect):
 
 
 """
-1A:<场上效果>:破坏对方场上一只{ATK}低于此卡的怪兽
+1A:破坏对方场上一只{ATK}低于此卡的怪兽
 """
 class DestroyAtkLowMonster(Effect):
     effType = EFF_TYPE.active
@@ -605,7 +605,7 @@ class DestroyAtkLowMonster(Effect):
 
 
 """
-1A:<场上效果>:我方墓地有5只以上怪兽时,破坏对方场上{DEF}最低的一只怪兽
+1A:我方墓地有5只以上怪兽时,破坏对方场上{DEF}最低的一只怪兽
 """
 class DestroyGraveOver5(Effect):
     effType = EFF_TYPE.active
@@ -646,7 +646,7 @@ class DestroyGraveOver5(Effect):
 
 
 """
-1A:<场上效果>[将手牌中1只怪兽送去墓地]:除外对方场上一只与被送去墓地的怪兽相同属性的怪兽
+1A:[将手牌中1只怪兽送去墓地]:除外对方场上一只与被送去墓地的怪兽相同属性的怪兽
 """
 class SameAttrBanish(Effect):
     effType = EFF_TYPE.active
@@ -703,7 +703,7 @@ class SameAttrBanish(Effect):
 # ============================================================
 
 """
-1A:<场上效果>[解放此卡]:将对方场上所有LV4以下怪兽返回手牌
+1A:[解放此卡]:将对方场上所有LV4以下怪兽返回手牌
 """
 class TributeReturnAllEnemyLv4(Effect):
     effType = EFF_TYPE.active
@@ -764,7 +764,7 @@ class SpecialSummonedDestroyEnemySpell(Effect):
 
 
 """
-1A:<场上效果>[从手牌丢弃1张卡]:除外对方墓地1只怪兽
+1A:[从手牌丢弃1张卡]:除外对方墓地1只怪兽
 """
 class DiscardBanishEnemyGrave(Effect):
     effType = EFF_TYPE.active
@@ -829,7 +829,7 @@ class BattleDestroyedDestroyEnemy(Effect):
 
 
 """
-1A:<场上效果>:将我方场上1只LV4以下怪兽返回手牌,破坏对方场上1只{ATK}最高的怪兽
+1A:将我方场上1只LV4以下怪兽返回手牌,破坏对方场上1只{ATK}最高的怪兽
 """
 class ReturnLv4DestroyHighestAtk(Effect):
     effType = EFF_TYPE.active
@@ -870,7 +870,7 @@ class ReturnLv4DestroyHighestAtk(Effect):
 
 
 """
-1OI:<场上效果>[解放此卡]:对方发动魔法卡时,无效该魔法卡发动并破坏
+1OI:[解放此卡]:对方发动魔法卡时,无效该魔法卡发动并破坏
 """
 class TributeCounterSpell(Effect):
     effType = EFF_TYPE.optionalInstant
@@ -905,7 +905,7 @@ class TributeCounterSpell(Effect):
 
 
 """
-1A:<场上效果>[解放此卡]:让对方随机除外手牌1张
+1A:[解放此卡]:让对方随机除外手牌1张
 """
 class TributeRandomBanishEnemyHand(Effect):
     effType = EFF_TYPE.active
@@ -939,7 +939,7 @@ class TributeRandomBanishEnemyHand(Effect):
 
 
 """
-1P:<场上效果>:对方不能特殊召唤LV5以上的怪兽
+1P:对方不能特殊召唤LV5以上的怪兽
 """
 # 暂未实现:依赖 PLAYER_BUFF.cantSpecialSummonLv5Up + y_specialSummon 内拒绝 LV5+ 的检查
 # class EnemyCantSpecialSummonLv5Up(Effect):
@@ -964,7 +964,7 @@ class TributeRandomBanishEnemyHand(Effect):
 
 
 """
-1A:<场上效果>[支付LP 500]:让对方随机丢弃手牌1张
+1A:[支付LP 500]:让对方随机丢弃手牌1张
 """
 class PayLP500RandomDiscardEnemy(Effect):
     effType = EFF_TYPE.active

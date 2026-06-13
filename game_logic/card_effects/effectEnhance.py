@@ -171,7 +171,7 @@ class SummonAddDestroy(Effect):
 
 
 """
-1A:<场上效果>[每回合同名1次]:选场上一只怪兽,本回合结束时回复该怪兽HP至满
+1A:[每回合同名1次]:选场上一只怪兽,本回合结束时回复该怪兽HP至满
 """
 
 class EffectRawRestoreEndOfturn(Effect):
@@ -255,7 +255,7 @@ class EffectFree(Effect):
 
 
 """
-1P:<场上效果>:我方机械族怪兽{ATK}+1,{DEF}+1
+1P:我方机械族怪兽{ATK}+1,{DEF}+1
 """
 class EffectOtherAdd(Effect):
     effType = EFF_TYPE.permanent
@@ -285,7 +285,7 @@ class EffectOtherAdd(Effect):
 
 
 """
-1P:<场上效果>:我方场上存在机械族怪兽时,此卡{ATK}+2,{DEF}+2
+1P:我方场上存在机械族怪兽时,此卡{ATK}+2,{DEF}+2
 """
 class EffectAdd2(Effect):
     effType = EFF_TYPE.permanent
@@ -304,7 +304,7 @@ class EffectAdd2(Effect):
 
 
 
-#1A:<场上效果>:此回合我方怪兽不能直接攻击
+#1A:此回合我方怪兽不能直接攻击
 class CantDirectAttack(Effect):
     effType = EFF_TYPE.active
     activateLocation = LOCATION.monsterZone
@@ -330,7 +330,7 @@ class CantDirectAttack(Effect):
 
 
 
-#1P:<场上效果>:我方卡本应送入墓地时改为除外
+#1P:我方卡本应送入墓地时改为除外
 class BanishInsteadGrave(Effect):
     effType = EFF_TYPE.permanent
 
@@ -446,7 +446,7 @@ class MagicAddAtk(Effect):
         return True
 
 
-#1P:<场上效果>:我方场上天使族以外的怪兽{ATK}-200,{DEF}-200
+#1P:我方场上天使族以外的怪兽{ATK}-200,{DEF}-200
 class OtherDownHPMax(Effect):
     effType = EFF_TYPE.permanent
 
@@ -486,7 +486,7 @@ class OtherDownHPMax(Effect):
 
 
 
-#1A:<场上效果>:选场上一只怪兽{ATK}+500{UTIL}
+#1A:选场上一只怪兽{ATK}+500{UTIL}
 class GainAtkThisTurn(Effect):
     effType = EFF_TYPE.active
 
@@ -607,7 +607,7 @@ class AttackWhenAdd(Effect):
 
 
 """
-1P:<场上效果>:此卡{ATK}和{DEF}增加 我方手牌数×800
+1P:此卡{ATK}和{DEF}增加 我方手牌数×800
 """
 class AtkBecomeHand(Effect):
     effType = EFF_TYPE.permanent
@@ -655,7 +655,7 @@ class atkBecome2(Effect):
 
 
 """
-1A:<场上效果>:将场上一只怪兽变为暗属性
+1A:将场上一只怪兽变为暗属性
 """
 class makeDark(Effect):
     effType = EFF_TYPE.active
@@ -723,7 +723,7 @@ class NormalSummonAttack2(Effect):
 
 
 """
-1P:<场上效果>:此卡每回合最多攻击3次,但不能直接攻击
+1P:此卡每回合最多攻击3次,但不能直接攻击
 """
 class ThreeAttacksCantDirect(Effect):
     effType = EFF_TYPE.permanent
@@ -832,7 +832,7 @@ class Equip(Effect):
 
 
 """
-1P:<场上效果>:装备的怪兽{ATK}+800
+1P:装备的怪兽{ATK}+800
 """
 class FireBlade_AtkBoost(Effect):
     effType = EFF_TYPE.permanent
@@ -865,7 +865,7 @@ class FireBlade_AtkBoost(Effect):
 # ============================================================
 
 """
-1T:<场上效果>:每回合结束时,回复LP 200
+1T:每回合结束时,回复LP 200
 """
 class TurnEndHeal200(Effect):
     effType = EFF_TYPE.trigger
@@ -888,7 +888,7 @@ class TurnEndHeal200(Effect):
 
 
 """
-1A:<场上效果>[从手牌丢弃1张卡]:我方场上所有怪兽本回合{ATK}+500{UTIL}
+1A:[从手牌丢弃1张卡]:我方场上所有怪兽本回合{ATK}+500{UTIL}
 """
 class DiscardAllAtkUp500(Effect):
     effType = EFF_TYPE.active
@@ -923,7 +923,7 @@ class DiscardAllAtkUp500(Effect):
 
 
 """
-1P:<场上效果>:我方所有与此卡同种族的怪兽{ATK}+300
+1P:我方所有与此卡同种族的怪兽{ATK}+300
 """
 class SameRaceAtkUp300(Effect):
     effType = EFF_TYPE.permanent
@@ -960,7 +960,7 @@ class SameRaceAtkUp300(Effect):
 
 
 """
-1OT:<场上效果>[不限次数]:此卡与对方怪兽进行战斗时,本次战斗中此卡{DEF}+1000
+1OT:[不限次数]:此卡与对方怪兽进行战斗时,本次战斗中此卡{DEF}+1000
 """
 class InBattleSelfDef1000(Effect):
     effType = EFF_TYPE.optionalTrigger
@@ -1012,7 +1012,7 @@ class InBattleSelfDef1000(Effect):
 
 
 """
-1T:<场上效果>[不限次数]:我方其他怪兽被破坏时,回复LP 500
+1T:[不限次数]:我方其他怪兽被破坏时,回复LP 500
 """
 class OtherDestroyedHeal500(Effect):
     effType = EFF_TYPE.trigger
@@ -1040,7 +1040,7 @@ class OtherDestroyedHeal500(Effect):
 
 
 """
-1A:<场上效果>[支付LP 1000]:抽1张卡,此卡本回合{ATK}+500{UTIL}
+1A:[支付LP 1000]:抽1张卡,此卡本回合{ATK}+500{UTIL}
 """
 class PayLP1000DrawAndAtkUp500(Effect):
     effType = EFF_TYPE.active
@@ -1072,7 +1072,7 @@ class PayLP1000DrawAndAtkUp500(Effect):
 
 
 """
-1P:<场上效果>:我方场上每有1只其他怪兽,此卡{ATK}+200
+1P:我方场上每有1只其他怪兽,此卡{ATK}+200
 """
 class PerOtherMonsterAtk200(Effect):
     effType = EFF_TYPE.permanent
@@ -1102,7 +1102,7 @@ class PerOtherMonsterAtk200(Effect):
 
 
 """
-1OT:<场上效果>[不限次数]:此卡宣言攻击时,本次战斗中此卡{ATK}变为对方怪兽{ATK}+100{UTIL}
+1OT:[不限次数]:此卡宣言攻击时,本次战斗中此卡{ATK}变为对方怪兽{ATK}+100{UTIL}
 """
 class DeclareAttackAtkBecomeEnemyPlus100(Effect):
     effType = EFF_TYPE.optionalTrigger

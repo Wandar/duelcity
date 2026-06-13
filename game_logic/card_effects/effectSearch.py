@@ -41,7 +41,7 @@ class banishGraveSummon(Effect):
 
 
 """
-1T:<场上效果><我方回合结束时>:我方手牌不足3张时,抽卡至3张
+1T:<我方回合结束时>:我方手牌不足3张时,抽卡至3张
 """
 class AtEndOfTurnDrawCardTo3(Effect):
     effType = EFF_TYPE.trigger
@@ -77,7 +77,7 @@ class AtEndOfTurnDrawCardTo3(Effect):
 
 
 """
-1A:<场上效果>[从手牌丢弃1只怪兽]:抽1张卡
+1A:[从手牌丢弃1只怪兽]:抽1张卡
 """
 class Send1MonsterDraw(Effect):
     effType = EFF_TYPE.active
@@ -145,7 +145,7 @@ class DestroyedGetEnemyGraveMonster(Effect):
 
 
 """
-1T:<场上效果>:此卡从场上离开时,从手牌丢弃1只怪兽,然后抽1张卡
+1T:此卡从场上离开时,从手牌丢弃1只怪兽,然后抽1张卡
 """
 class LeaveFieldDiscardDraw(Effect):
     effType = EFF_TYPE.trigger
@@ -181,7 +181,7 @@ class LeaveFieldDiscardDraw(Effect):
 
 
 """
-1A:<场上效果>[献祭此卡]:从卡组检索1张魔法卡加入手牌
+1A:[献祭此卡]:从卡组检索1张魔法卡加入手牌
 """
 class TributeSelfSearchSpell(Effect):
     effType = EFF_TYPE.active
@@ -205,7 +205,7 @@ class TributeSelfSearchSpell(Effect):
 
 
 """
-1T:<场上效果>:此卡被通常召唤时,从卡组顶检查3张,选1张加入手牌,其余放回卡组下方
+1T:此卡被通常召唤时,从卡组顶检查3张,选1张加入手牌,其余放回卡组下方
 """
 class NormalSummonTop3Pick(Effect):
     effType = EFF_TYPE.trigger
@@ -277,7 +277,7 @@ class DiscardSelfDraw(Effect):
 
 
 """
-1T:<场上效果>:我方准备阶段时,若我方手牌为0,抽1张卡
+1T:我方准备阶段时,若我方手牌为0,抽1张卡
 """
 class StandbyEmptyHandDraw(Effect):
     effType = EFF_TYPE.trigger
@@ -310,7 +310,7 @@ class StandbyEmptyHandDraw(Effect):
 
 
 """
-1A:<场上效果>[献祭此卡]:从我方墓地将1只怪兽加入手牌
+1A:[献祭此卡]:从我方墓地将1只怪兽加入手牌
 """
 class TributeSelfReviveToHand(Effect):
     effType = EFF_TYPE.active
@@ -388,7 +388,7 @@ class DestroyedSearchSameRace(Effect):
 
 
 """
-1A:<场上效果>[从手牌丢弃1张卡]:从卡组顶检查5张,发现1只怪兽加入手牌,其余洗回卡组
+1A:[从手牌丢弃1张卡]:从卡组顶检查5张,发现1只怪兽加入手牌,其余洗回卡组
 """
 class DiscardHandPeek5(Effect):
     effType = EFF_TYPE.active
@@ -435,7 +435,7 @@ class DiscardHandPeek5(Effect):
 
 
 """
-1T:<场上效果>[不限次数]:对方在抽卡阶段以外抽卡时,抽1张卡
+1T:[不限次数]:对方在抽卡阶段以外抽卡时,抽1张卡
 """
 class OppDrawByEffectDraw(Effect):
     effType = EFF_TYPE.trigger

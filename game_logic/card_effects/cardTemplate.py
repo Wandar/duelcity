@@ -520,7 +520,7 @@ class gorgon1(Card):
         self.initEffect(gorgon_effect1)
 
 """
-<场上效果>[丢弃一张手牌]:对方场上一只怪兽的{ATK}下降200
+[丢弃一张手牌]:对方场上一只怪兽的{ATK}下降200
 """
 class gorgon_effect1(Effect):
     effType = EFF_TYPE.active

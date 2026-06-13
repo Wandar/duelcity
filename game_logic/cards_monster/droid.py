@@ -17,7 +17,7 @@ class droid(Card):
 
 
 """
-1A:<场上效果>:自己场上存在的5星以上的植物族怪兽被破坏的场合，墓地存在的这张卡可以在自己场上特殊召唤。
+1A:自己场上存在的5星以上的植物族怪兽被破坏的场合，墓地存在的这张卡可以在自己场上特殊召唤。
 1OT:<Graveyard effect>: When a Level 5 or higher MACHINE monster you control is destroyed, Special Summon this card.
 """
 class droid_SalvageProtocol(Effect):

@@ -17,7 +17,7 @@ class Triceratops(Card):
 
 
 """
-1T:<场上效果>:这张卡召唤成功时,自己回复1000基本分。2T:<墓地效果>:这张卡被破坏送去墓地时,自己受到2000点伤害。
+1T:这张卡召唤成功时,自己回复1000基本分。2T:<墓地效果>:这张卡被破坏送去墓地时,自己受到2000点伤害。
 1T:<FieldEffect>:When this card is summoned, recover 1000 LP.2T:<GraveEffect>:When this card is destroyed and sent to the Graveyard, take 2000 damage.
 """
 class Triceratops_NatureBlessing(Effect):

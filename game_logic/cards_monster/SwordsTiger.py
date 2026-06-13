@@ -17,7 +17,7 @@ class SwordsTiger(Card):
 
 
 """
-1I:<场上效果>:与光属性怪兽战斗的场合，在伤害步骤内{ATK}+1000。
+1I:与光属性怪兽战斗的场合，在伤害步骤内{ATK}+1000。
 1I:<Battle effect>: When battling a LIGHT monster, gain 1000 ATK during the Damage Step.
 """
 class SwordsTiger_LightHunter(Effect):

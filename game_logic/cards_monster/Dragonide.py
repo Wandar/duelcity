@@ -16,7 +16,7 @@ class Dragonide(Card):
 
 
 """
-1OT:<场上效果>:此卡通常召唤成功时,从墓地将1只3星以下的龙族怪兽特殊召唤。
+1OT:此卡通常召唤成功时,从墓地将1只3星以下的龙族怪兽特殊召唤。
 1OT:<When this card is Normal Summoned>:Special Summon 1 Level 3 or lower DRAGON monster from your Graveyard.
 """
 class Dragonide_DragonCall(Effect):

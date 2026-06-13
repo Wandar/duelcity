@@ -17,7 +17,7 @@ class werecrab(Card):
 
 
 """
-1T:<场上效果>:这张卡从墓地特殊召唤成功时,选择场上1只鱼族·海龙族·水族怪兽,其等级上升1星。
+1T:这张卡从墓地特殊召唤成功时,选择场上1只鱼族·海龙族·水族怪兽,其等级上升1星。
 1T:<FieldEffect>:When this card is Special Summoned from the Graveyard, choose 1 FISH/SEA_SERPENT/AQUA monster on the field; its Level increases by 1.
 """
 class werecrab_TidalBoost(Effect):

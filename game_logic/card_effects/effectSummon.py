@@ -111,7 +111,7 @@ class AllMonstersAreSpecialSummon(Effect):
         return True
 
 """
-1T:<场上效果>[不限次数]:当我方怪兽特殊召唤时,生成并特殊召唤一只DragonBug
+1T:[不限次数]:当我方怪兽特殊召唤时,生成并特殊召唤一只DragonBug
 """
 class MeSpecialSummonWhile(Effect):
     effType = EFF_TYPE.trigger
@@ -322,7 +322,7 @@ class SpecialSummonSummonWithMonsterOnField(Effect):
 
 
 """
-<场上效果>[丢弃一张手牌]:从手卡·卡组特殊召唤一只LV8以下的不死族怪兽
+[丢弃一张手牌]:从手卡·卡组特殊召唤一只LV8以下的不死族怪兽
 """
 class DiscardSpecial(Effect):
     effType = EFF_TYPE.active
@@ -847,7 +847,7 @@ class NormalSummonMaxSpecial(Effect):
 
 
 
-#<场上效果>:对方把怪兽召唤成功时,选择我方卡组中一只怪兽除外或者送入墓地
+#对方把怪兽召唤成功时,选择我方卡组中一只怪兽除外或者送入墓地
 class EnemySummonSendOrBanish(Effect):
     effType = EFF_TYPE.trigger
 
@@ -880,7 +880,7 @@ class EnemySummonSendOrBanish(Effect):
 
 
 
-#<场上效果>:从卡组内选择两只LV4以下的兽族怪兽,分别特殊召唤到我方和对方场上
+#从卡组内选择两只LV4以下的兽族怪兽,分别特殊召唤到我方和对方场上
 class Summon2Beast(Effect):
     effType = EFF_TYPE.active
 
@@ -1005,7 +1005,7 @@ class monsterDestroySummon(Effect):
 
 
 """
-<场上效果>:如果你的墓地内只有一张怪兽卡没有其他卡,额外召唤该怪兽
+如果你的墓地内只有一张怪兽卡没有其他卡,额外召唤该怪兽
 """
 class GraveOnly1MonsterESummon(Effect):
     effType = EFF_TYPE.active
@@ -1253,7 +1253,7 @@ class voidSummonFromHG(Effect):
 
 
 """
-<场上效果>:回合结束时,特殊召唤墓地一只LV4以下的XX族怪兽
+回合结束时,特殊召唤墓地一只LV4以下的XX族怪兽
 """
 
 
@@ -1395,7 +1395,7 @@ class EnemyAttackSummonFromHand(Effect):
 
 
 """
-<场上效果>:当此卡被效果破坏时,从卡组特殊召唤一只4级以下与此卡同属性的怪兽
+当此卡被效果破坏时,从卡组特殊召唤一只4级以下与此卡同属性的怪兽
 """
 class EffectDestroyedSummonFromDeck(Effect):
     effType = EFF_TYPE.trigger
@@ -1534,7 +1534,7 @@ class FullFieldSummonSwap(Effect):
 
 
 """
-<场上效果>:当我方回合结束时,从墓地特殊召唤一只5级以下的暗属性怪兽
+当我方回合结束时,从墓地特殊召唤一只5级以下的暗属性怪兽
 """
 class TurnEndSummonFromGrave(Effect):
     effType = EFF_TYPE.trigger
@@ -1716,7 +1716,7 @@ class TributedReviveLv3(Effect):
 
 
 """
-1A:<场上效果>[解放此卡]:从手牌特殊召唤一只LV5以上的怪兽
+1A:[解放此卡]:从手牌特殊召唤一只LV5以上的怪兽
 """
 class TributeSummonHandLv5Up(Effect):
     effType = EFF_TYPE.active
@@ -1909,7 +1909,7 @@ class FriendDestroyedSelfSummon(Effect):
 
 
 """
-1T:<场上效果>:我方回合开始时,从卡组顶检查3张,特殊召唤其中1只LV4以下的怪兽,其余送去墓地
+1T:我方回合开始时,从卡组顶检查3张,特殊召唤其中1只LV4以下的怪兽,其余送去墓地
 """
 class MyTurnStartTopPeek3SummonRest(Effect):
     effType = EFF_TYPE.trigger
