@@ -897,6 +897,59 @@ class Card(CardData):
             buff.onBuff(self)
 
         self._mergeListToBuffs()
+        self._reconcileGrantedShortEffects()
+
+    def _reconcileGrantedShortEffects(self):
+        """
+        Keep runtime-granted short effects in sync with the ShortEffectBuffs currently
+        on this card: create+connect newly granted ones, disconnect+remove those whose
+        grant buff is gone. Static short effects (from card data) carry
+        _isGrantedShortEffect==False and are never touched here.
+
+        Runs inside _recalBuffs, so it rides every buff change/removal path
+        (turn-end sweep, battle-end sweep, remove-by-source, remove-by-id).
+        """
+        # short effect names still wanted by a grant buff -> the buff that wants it
+        desired = {}
+        for buff in self.buffList:
+            if buff.BUFF_ID == CARD_BUFF.shortEffectAdd:
+                if 0:buff:ShortEffectBuff=buff
+                desired[buff.shortEffectName] = buff
+
+        # names already realized as ANY effect (static or granted) + granted orders
+        presentNames = set()
+        grantedOrders = []
+        for order, eff in self.effects.items():
+            presentNames.add(eff.__class__.__name__)
+            if eff._isGrantedShortEffect:
+                grantedOrders.append(order)
+
+        if not desired and not grantedOrders:
+            return
+
+        # drop granted effects no longer wanted by any buff
+        for order in grantedOrders:
+            eff = self.effects[order]
+            if eff.__class__.__name__ not in desired:
+                self.game.effectDisconnect(eff)
+                del self.effects[order]
+
+        # create effects newly wanted that aren't realized yet (static one wins if present)
+        for name, buff in desired.items():
+            if name in presentNames:
+                continue
+            if name not in g_shortEffects:
+                ERROR_MSG("_reconcileGrantedShortEffects unknown shortEffect ", name, self.getName())
+                continue
+            ShortEffClass = g_shortEffects[name]
+            order = min(min(self.effects.keys(), default=0), 0) - 1
+            eff = ShortEffClass(self, order)   # Effect.__init__ registers it into self.effects
+            eff.shortEff = name
+            eff._isGrantedShortEffect = True
+            eff.data = buff.data
+            observeLocation = eff.observeSignals[0]
+            if observeLocation != 0 and observeLocation & self.location != 0:
+                self.game.effectConnect(eff)
 
     def recalBuffsAndOnDataChanged(self,fx=FX_ID.none,paraID=0):
         self._recalBuffs()

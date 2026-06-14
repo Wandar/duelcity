@@ -842,52 +842,42 @@ class GameFunc:
             yield game.y_sendSignal(sig)
 
 
-    def y_cardAddShortEffect(self, card, shortEffectName, effDuration=EFF_DURATION.onceForever, sourceID=0):
+    def y_cardAddShortEffect(self, card, shortEffectName, data="", effDuration=EFF_DURATION.onceForever, sourceID=0):
         """
-        Dynamically grant a named short effect (see shortEffects.py) to a card at runtime,
-        mirroring how Card.shortEffectsInit attaches the short effects declared in card data.
+        Dynamically grant a named short effect (see shortEffects.py) to a card at runtime.
+
+        The grant rides the buff system: a CardBuff.ShortEffectBuff is added via
+        y_addCardBuff, and Card._recalBuffs reconciliation creates/tears down the actual
+        Effect. So the short effect honours every EFF_DURATION (utilTurnEnds,
+        utilMyTurnEnds, utilBattleEnds, ...) and disappears exactly like a buff, and can
+        be removed with y_removeCardBuffBySource(sourceID).
 
         Parameters
         ----------
         card            : the Card that should gain the short effect
-        shortEffectName : g_shortEffects registry key, e.g. 'Pierce' / 'Evasion'. A trailing
-                          number ('Slow2') or a ':' data suffix ('Maintance:foo') is parsed
-                          the same way as static short effects. A ShortEffect subclass is
-                          also accepted (its class name is used).
-        effDuration     : EFF_DURATION. onceForever is fully supported. Timed durations are
-                          stored on the effect but there is no effect-duration sweep yet, so
-                          they will NOT auto-expire (a WARNING is logged); remove by sourceID.
-        sourceID        : grouping id kept on the effect so the grant can be located/removed
-                          by its source later.
+        shortEffectName : g_shortEffects registry key, e.g. 'Pierce' / 'Evasion'.
+                          A ShortEffect subclass is also accepted (its class name is used).
+        data            : single argument carrier — pass the number for NEED_NUM effects
+                          (e.g. data=2 for Slow) or the string for ':' data effects; read
+                          back on the effect via getShortEffectTailNumber() (int(self.data)).
+        effDuration     : EFF_DURATION for the grant; fully handled by the buff machinery.
+        sourceID        : uniqueSourceID of the grant buff; pass non-zero to allow later
+                          removal by source. NOTE: one sourceID maps to one grant slot, so
+                          granting two different short effects under the same non-zero
+                          sourceID will replace rather than stack — use distinct ids.
 
         Returns
         -------
-        The created Effect, the existing one if the card already had it, or None on failure.
+        The active Effect for this short effect, or None if it was not added (e.g. immune).
         """
         if not card:
             return None
-        game = self.game
 
-        # accept a ShortEffect subclass as well as a registry-key string
+        # Accept a ShortEffect subclass as well as a registry-key string
         if not isinstance(shortEffectName, str):
             shortEffectName = shortEffectName.__name__
 
-        # parse number suffix / ':' data exactly like Card.shortEffectsInit
-        hasNum = False
-        hasData = False
-        num = 0
-        data = ""
-        if ":" in shortEffectName:
-            temparr = shortEffectName.split(":")
-            if len(temparr) != 2:
-                ERROR_MSG("y_cardAddShortEffect parse error ", shortEffectName, card.getName())
-                return None
-            name = temparr[0].strip()
-            data = temparr[1]
-            hasData = True
-        else:
-            hasNum, name, num = split_string_with_number_suffix(shortEffectName)
-            name = name.strip()
+        name = shortEffectName
 
         if name not in g_shortEffects:
             ERROR_MSG("y_cardAddShortEffect not recognize shortEffect ", name, card.getName())
@@ -895,52 +885,17 @@ class GameFunc:
 
         ShortEffClass = g_shortEffects[name]
 
-        needNum = getattr(ShortEffClass, "NEED_NUM", False)
-        if needNum and not hasNum:
-            ERROR_MSG(f"{card.getName()} shortEffect {name} need a number")
-            hasNum = True
-            num = 1
-        elif not needNum and hasNum:
-            ERROR_MSG(f"{card.getName()} shortEffect {name} doesnt need a number")
-            hasNum = False
-            num = 0
+        data = str(data) if data != "" else ""
+        if getattr(ShortEffClass, "NEED_NUM", False) and not data:
+            ERROR_MSG(f"{card.getName()} shortEffect {name} needs a data argument")
+            data = "1"
 
-        # immunity: a card not affected by the dealing effect should not gain it
-        if effDuration != EFF_DURATION.fromSource:
-            effPeriod, dealingEff = game.getDealingEffect()
-            if dealingEff and not dealingEff.removeNotAffectedInList([card]):
-                return None
+        # Add the grant buff; y_addCardBuff applies immunity filtering, duration/sourceID,
+        # and triggers _recalBuffs -> reconciliation which connects the short effect
+        buff = CardBuff.ShortEffectBuff(name, data)
+        yield self.y_addCardBuff(card, buff, effDuration, sourceID)
 
-        # don't stack the same short effect twice
-        existing = card.getEffect(ShortEffClass)
-        if existing is not None:
-            return existing
-
-        if effDuration != EFF_DURATION.onceForever:
-            WARNING_MSG(f"y_cardAddShortEffect: timed duration {effDuration} is not auto-expired "
-                        f"for short effects ({name} on {card.getName()}); remove it by sourceID")
-
-        # short effects use negative orders (see Card.shortEffectsInit); take the next free one
-        order = min(min(card.effects.keys(), default=0), 0) - 1
-        eff = ShortEffClass(card, order)   # Effect.__init__ registers it into card.effects[order]
-        eff.shortEff = name
-        eff.effDuration = effDuration
-        eff.sourceID = sourceID
-        if hasNum:
-            eff.data = str(num)
-            eff.number_0 = num
-        if hasData:
-            eff.data = data
-
-        # connect to the signal bus if the card currently sits in an observed location
-        observeLocation = eff.observeSignals[0]
-        if observeLocation != 0 and observeLocation & card.location != 0:
-            game.effectConnect(eff)
-
-        # push updated card data (incl. the new effect) to the client
-        card.onDataChangedFx()
-
-        return eff
+        return card.getEffect(ShortEffClass)
 
 
     def y_damageCard(self,cardOrList: Union[Card, List[Card]],damageNumber:int,damageFX=FX_ID.effectDamage,rangedAttacker:Card=None,paraID=0):
@@ -1156,7 +1111,6 @@ class GameFunc:
             else:
                 ERROR_MSG("monster form error ",newForm)
                 continue
-
 
             card.cantChangeFormThisTurn=True
 

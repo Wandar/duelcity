@@ -57,6 +57,9 @@ class Effect(EffectData,GameFunc):
     _enableLocation=0
     # observeSignals include LeaveXXX
     _OBSERVE_LEAVE_FIELD_SIGNAL=False
+    # True when created at runtime by a ShortEffectBuff grant (see Card._recalBuffs);
+    # static short effects from card data keep the default False and are never reconciled away
+    _isGrantedShortEffect=False
 
     def __init__(self,card:Card,order:int):
         EffectData.__init__(self,None)

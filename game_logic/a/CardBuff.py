@@ -41,6 +41,28 @@ class CardBuff:
         pass
 
 
+class ShortEffectBuff(CardBuff):
+    """
+    Carries a runtime-granted short effect. The buff itself only rides the duration
+    machinery (turn-end / battle-end sweeps, remove-by-source); the actual Effect
+    instance is created and torn down by Card._recalBuffs reconciliation, so a
+    granted short effect disappears exactly like a buff when this buff expires.
+    """
+    BUFF_ID = CARD_BUFF.shortEffectAdd
+
+    def __init__(self, shortEffectName="", data="",
+                 duration=EFF_DURATION.onceForever, uniqueSourceID=0):
+        CardBuff.__init__(self, duration, uniqueSourceID)
+        self.shortEffectName = shortEffectName
+        # single carrier for any number/data; the granted effect reads it via
+        # getShortEffectTailNumber() (int(self.data)) just like static short effects
+        self.data = data
+
+    def onBuff(self, card):
+        # connection is handled by Card._recalBuffs reconciliation, not here
+        pass
+
+
 class attackChange(CardBuff):
     number=0
     IS_CHANGE_TO = True
