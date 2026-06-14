@@ -758,32 +758,6 @@ class Effect(EffectData,GameFunc):
         return len(self.game.decks[side])
 
 
-    def ________________simpleEffect(self):
-        pass
-
-    def y_discover1MonsterFromDeck(self):
-        target=yield self.y_discover1CardFromDeck(CARD_TYPE.monster)
-        return target
-
-    def y_discover1SpellTrapFromDeck(self):
-        target=yield self.y_discover1CardFromDeck(CARD_TYPE.mask_spellTrap)
-        return target
-
-    def y_discover1CardFromDeck(self,cardType:CARD_TYPE)->Card:
-        cardInDeck=self.searchCards(LOCATION.deck,self.getSide(),cardType)
-        if len(cardInDeck)==0:
-            self.duel.avatars[self.getSide()].showPopup(True,"title_discover","title_notarget",["OK"],waitForAnim=True)
-            return None
-        if len(cardInDeck)>3:
-            cardInDeck=random.sample(cardInDeck,3)
-        thetarget=yield self.y_select1Card(cardInDeck,TITLE.addToHand)
-        yield self.y_returnCardToHand(thetarget)
-        return thetarget
-
-
-    def ________________simpleEffectEnd(self):
-        pass
-
     def ____________fastFuncEnd(self):
         pass
 

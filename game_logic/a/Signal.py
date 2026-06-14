@@ -24,7 +24,9 @@ class Signal:
         return self.__class__.__name__
 
     def getSelfAndFatherSignalNames(self):
-        allNames=getattr(self.__class__, "__ALL_SIGNAL__", None)
+        # read from this class's own __dict__ only; getattr would walk the MRO and
+        # let a subclass inherit its parent's cached list, dropping its own name
+        allNames=self.__class__.__dict__.get("__ALL_SIGNAL__", None)
         if allNames==None:
             base_classes = list(self.__class__.__bases__)
             all_base_classes = set(base_classes)
@@ -333,7 +335,7 @@ class BeforeActivateEffect(Signal):
     effect=None
     cardType=CARD_TYPE.none
 
-class BeforeActivateEffectOnField(Signal):
+class BeforeActivateEffectOnField(BeforeActivateEffect):
     isActively=False
     effect=None
     cardType=CARD_TYPE.none
@@ -343,7 +345,7 @@ class BeforeActivateEffectOnField(Signal):
 class ActivateFinish(Signal):
     isActively=False
 
-class ActivateMonsterEffectFinish(Signal):
+class ActivateMonsterEffectFinish(ActivateFinish):
     isActively=False
 
 class ActivateSpellFinish(ActivateFinish):

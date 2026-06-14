@@ -452,11 +452,11 @@ class GameFunc:
 
         if cardOrList:
             effect.addFlagCount(EFF_FLAG.activateCountered)
-            signal=Signal.ActivateCountered()
-            signal.effect=effect
-            signal.card=effect.owner
-            game.makeSignalReason(signal)
-            yield game.y_sendSignal(signal)
+            sig=Signal.ActivateCountered()
+            sig.effect=effect
+            sig.card=effect.owner
+            game.makeSignalReason(sig)
+            yield game.y_sendSignal(sig)
             return True
         return False
 
@@ -843,7 +843,104 @@ class GameFunc:
 
 
     def y_cardAddShortEffect(self, card, shortEffectName, effDuration=EFF_DURATION.onceForever, sourceID=0):
-        pass
+        """
+        Dynamically grant a named short effect (see shortEffects.py) to a card at runtime,
+        mirroring how Card.shortEffectsInit attaches the short effects declared in card data.
+
+        Parameters
+        ----------
+        card            : the Card that should gain the short effect
+        shortEffectName : g_shortEffects registry key, e.g. 'Pierce' / 'Evasion'. A trailing
+                          number ('Slow2') or a ':' data suffix ('Maintance:foo') is parsed
+                          the same way as static short effects. A ShortEffect subclass is
+                          also accepted (its class name is used).
+        effDuration     : EFF_DURATION. onceForever is fully supported. Timed durations are
+                          stored on the effect but there is no effect-duration sweep yet, so
+                          they will NOT auto-expire (a WARNING is logged); remove by sourceID.
+        sourceID        : grouping id kept on the effect so the grant can be located/removed
+                          by its source later.
+
+        Returns
+        -------
+        The created Effect, the existing one if the card already had it, or None on failure.
+        """
+        if not card:
+            return None
+        game = self.game
+
+        # accept a ShortEffect subclass as well as a registry-key string
+        if not isinstance(shortEffectName, str):
+            shortEffectName = shortEffectName.__name__
+
+        # parse number suffix / ':' data exactly like Card.shortEffectsInit
+        hasNum = False
+        hasData = False
+        num = 0
+        data = ""
+        if ":" in shortEffectName:
+            temparr = shortEffectName.split(":")
+            if len(temparr) != 2:
+                ERROR_MSG("y_cardAddShortEffect parse error ", shortEffectName, card.getName())
+                return None
+            name = temparr[0].strip()
+            data = temparr[1]
+            hasData = True
+        else:
+            hasNum, name, num = split_string_with_number_suffix(shortEffectName)
+            name = name.strip()
+
+        if name not in g_shortEffects:
+            ERROR_MSG("y_cardAddShortEffect not recognize shortEffect ", name, card.getName())
+            return None
+
+        ShortEffClass = g_shortEffects[name]
+
+        needNum = getattr(ShortEffClass, "NEED_NUM", False)
+        if needNum and not hasNum:
+            ERROR_MSG(f"{card.getName()} shortEffect {name} need a number")
+            hasNum = True
+            num = 1
+        elif not needNum and hasNum:
+            ERROR_MSG(f"{card.getName()} shortEffect {name} doesnt need a number")
+            hasNum = False
+            num = 0
+
+        # immunity: a card not affected by the dealing effect should not gain it
+        if effDuration != EFF_DURATION.fromSource:
+            effPeriod, dealingEff = game.getDealingEffect()
+            if dealingEff and not dealingEff.removeNotAffectedInList([card]):
+                return None
+
+        # don't stack the same short effect twice
+        existing = card.getEffect(ShortEffClass)
+        if existing is not None:
+            return existing
+
+        if effDuration != EFF_DURATION.onceForever:
+            WARNING_MSG(f"y_cardAddShortEffect: timed duration {effDuration} is not auto-expired "
+                        f"for short effects ({name} on {card.getName()}); remove it by sourceID")
+
+        # short effects use negative orders (see Card.shortEffectsInit); take the next free one
+        order = min(min(card.effects.keys(), default=0), 0) - 1
+        eff = ShortEffClass(card, order)   # Effect.__init__ registers it into card.effects[order]
+        eff.shortEff = name
+        eff.effDuration = effDuration
+        eff.sourceID = sourceID
+        if hasNum:
+            eff.data = str(num)
+            eff.number_0 = num
+        if hasData:
+            eff.data = data
+
+        # connect to the signal bus if the card currently sits in an observed location
+        observeLocation = eff.observeSignals[0]
+        if observeLocation != 0 and observeLocation & card.location != 0:
+            game.effectConnect(eff)
+
+        # push updated card data (incl. the new effect) to the client
+        card.onDataChangedFx()
+
+        return eff
 
 
     def y_damageCard(self,cardOrList: Union[Card, List[Card]],damageNumber:int,damageFX=FX_ID.effectDamage,rangedAttacker:Card=None,paraID=0):
@@ -2009,6 +2106,79 @@ class GameFunc:
         return successNum
 
 
+
+    def y_discoverCard(self,
+                       side: int = 0,
+                       poolName: str = None,
+                       race=None,
+                       attr=None,
+                       cardType=None,
+                       minLevel: int = None,
+                       maxLevel: int = None,
+                       count: int = 3,
+                       title: str = None,
+                       canCancel: bool = False) -> Card:
+        """
+        Hearthstone-style Discover: show count random cards from a pool, let the
+        player pick one, add it to hand, and silently discard the rest.
+
+        Source selection (mutually exclusive, poolName takes priority):
+          poolName  — draw from a manually registered DiscoverPool named pool
+          race/attr/cardType/minLevel/maxLevel — draw from the auto-filter pool
+
+        Parameters
+        ----------
+        side        : player side; 0 = this effect's owner
+        poolName    : name passed to DiscoverPool.getFromPool(); ignores filter args
+        race        : RACE enum (e.g. RACE.DINOSAUR); None = no filter
+        attr        : ATTR enum (e.g. ATTR.DARK); None = no filter
+        cardType    : CARD_TYPE enum (monster/spell/trap/all); None = monsters only
+        minLevel    : minimum level (inclusive); None = no limit
+        maxLevel    : maximum level (inclusive); None = no limit
+        count       : number of choices shown to the player (default 3)
+        title       : selector title; defaults to TITLE.addToHand
+        canCancel   : whether the player can skip the discover
+
+        Returns
+        -------
+        The Card added to hand, or None if cancelled / pool empty.
+        """
+        from DiscoverPool import DiscoverPool
+
+        if title is None:
+            title = TITLE.addToHand
+
+        # --- draw keys from the appropriate pool ---
+        if poolName is not None:
+            keys = DiscoverPool.instance().getFromPool(poolName, count)
+        else:
+            keys = DiscoverPool.instance().get(
+                race=race, attr=attr, cardType=cardType,
+                minLevel=minLevel, maxLevel=maxLevel, count=count,
+            )
+
+        if not keys:
+            return None
+
+        # --- create temporary cards at LOCATION.none ---
+        tempCards = [self.game.createCard(k, self._parseSide(side)[0]) for k in keys]
+        tempCards = [c for c in tempCards if c]   # filter out any createCard failures
+
+        if not tempCards:
+            return None
+
+        # --- let the player choose ---
+        picked = yield self.y_select1Card(tempCards, title, side, canCancel=canCancel)
+
+        # --- move picked card to hand; clean up the rest ---
+        for c in tempCards:
+            if c is picked:
+                yield self.y_returnCardToHand(c)
+            else:
+                # remove temp card from usedCards without triggering game events
+                self.game.duel.usedCards.pop(c.uniID, None)
+
+        return picked
 
     def y_winGameByEffect(self,winnerSide,reasonCard:Card):
         duel=self.duel

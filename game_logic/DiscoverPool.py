@@ -11,10 +11,11 @@ Responsibilities:
 ── Auto filter pool (built from ALL_DATA) ──────────────────────
     keys = DiscoverPool.instance().get(race=RACE.DINOSAUR, count=3)
 
-All filter params are optional (omit = no filter on that dimension):
+All filter params are optional (omit = no filter on that dimension) and take
+Constants enums, never strings:
     get(race=RACE.DINOSAUR)               # all dinosaur-race cards
     get(attr=ATTR.DARK, maxLevel=4)       # dark-attr cards LV4 or below
-    get(cardType='SPELL')                 # all spell cards
+    get(cardType=CARD_TYPE.spell)         # all spell cards
     get(minLevel=5)                       # monsters LV5 or above (default: monsters only)
 
 ── Manual named pool (explicit card key list) ────────────────────────
@@ -37,11 +38,12 @@ from util import *
 
 from KBEDebug import *
 from globalvars import D_CARD
-from Constants import RACE, ATTR
+from Constants import RACE, ATTR, CARD_TYPE
 
 # ─────────────────────────────────────────────
-# Enum int → D_CARD string lookup tables
-# race/attr are stored as uppercase strings in D_CARD, e.g. "DINOSAUR", "DARK"
+# Constants enum int → D_CARD string lookup tables
+# D_CARD stores race/attr/type as uppercase strings, e.g. "DINOSAUR", "DARK",
+# "MONSTER"; the public API takes Constants enums and we translate here.
 # ─────────────────────────────────────────────
 _RACE_INT_TO_STR: Dict[int, str] = {
     1:  'WARRIOR',    2:  'SPELLCASTER', 4:  'FIEND',
@@ -57,39 +59,41 @@ _ATTR_INT_TO_STR: Dict[int, str] = {
     0x08: 'WATER',  0x10: 'FIRE',   0x20: 'WIND',   0x40: 'GRASS',
 }
 
-# D_CARD type field keywords
-_MONSTER_TYPE_KEYWORDS = ('MONSTER',)   # covers 'MONSTER' / 'ORANGE_MONSTER' / 'WHITE_MONSTER'
-_SPELL_TYPE_KEYWORDS   = ('SPELL',)
-_TRAP_TYPE_KEYWORDS    = ('TRAP',)
-
-
 def _toStr(val, table: Dict[int, str]) -> Optional[str]:
-    """Normalize an enum int or string to the uppercase D_CARD string; pass None through."""
+    """Map a Constants enum int (RACE / ATTR) to the uppercase D_CARD string; pass None through."""
     if val is None:
         return None
-    if isinstance(val, str):
-        return val.upper()
     if isinstance(val, int):
         return table.get(val)
+    ERROR_MSG(f"[DiscoverPool] expected a Constants enum int, got {val!r}")
     return None
 
 
 def _typeMatches(dtype: str, cardType) -> bool:
     """
     Check whether a D_CARD['type'] string matches the cardType filter.
-    cardType values:
-      None          -> monsters only (default; this function is not called in that path)
-      'MONSTER'     -> types containing 'MONSTER'
-      'SPELL'       -> types containing 'SPELL'
-      'TRAP'        -> types containing 'TRAP'
-      'ALL'/'ANY'   -> any type
+    cardType is a Constants CARD_TYPE enum:
+      None              -> monsters only (default)
+      CARD_TYPE.all     -> any type
+      CARD_TYPE.monster -> types containing 'MONSTER' (incl. fusion/orange/white)
+      CARD_TYPE.spell   -> types containing 'SPELL'  (incl. continuous/equip)
+      CARD_TYPE.trap    -> types containing 'TRAP'   (incl. continuous)
+    Bitmask tests are used so monster/spell/trap subtype enums also match.
     """
     if cardType is None:
         return 'MONSTER' in dtype
-    ct = cardType.upper() if isinstance(cardType, str) else str(cardType).upper()
-    if ct in ('ALL', 'ANY'):
+    if not isinstance(cardType, int):
+        ERROR_MSG(f"[DiscoverPool] cardType expects a CARD_TYPE enum, got {cardType!r}")
+        return False
+    if cardType == CARD_TYPE.all:
         return True
-    return ct in dtype
+    if cardType & CARD_TYPE.monster:
+        return 'MONSTER' in dtype
+    if cardType & CARD_TYPE.spell:
+        return 'SPELL' in dtype
+    if cardType & CARD_TYPE.trap:
+        return 'TRAP' in dtype
+    return False
 
 
 # ─────────────────────────────────────────────
@@ -224,9 +228,9 @@ class DiscoverPool(Reload):
 
         Parameters
         ----------
-        race        : RACE.DINOSAUR or 'DINOSAUR'; None = no filter
-        attr        : ATTR.DARK or 'DARK'; None = no filter
-        cardType    : 'MONSTER'/'SPELL'/'TRAP'/'ALL'; None = monsters only
+        race        : RACE enum (e.g. RACE.DINOSAUR); None = no filter
+        attr        : ATTR enum (e.g. ATTR.DARK); None = no filter
+        cardType    : CARD_TYPE enum (monster/spell/trap/all); None = monsters only
         minLevel    : minimum level (inclusive); None = no limit
         maxLevel    : maximum level (inclusive); None = no limit
         onlyEnabled : True = only cards with disable==9; False = all cards

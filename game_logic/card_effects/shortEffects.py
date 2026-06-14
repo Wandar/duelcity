@@ -285,6 +285,11 @@ class Pierce(ShortEffect):
     pass
 
 
+class Evasion(ShortEffect):
+    """Monsters with Evasion can only be attacked after all non-Evasion monsters on the same side are gone."""
+    pass
+
+
 """
 战斗复活: T:此卡被战斗破坏的回合结束阶段临时召唤
 """

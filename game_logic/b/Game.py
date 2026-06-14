@@ -919,7 +919,9 @@ class Game(Reload, GameFunc):
 
             notHideMonsters = self.getNotHideMonsterList(enemySide)
             if notHideMonsters:
-                result[0].extend(notHideMonsters)
+                # Evasion: monsters with Evasion can only be attacked when no normal monsters remain
+                normalMonsters = [m for m in notHideMonsters if not m.getEffect(shortEffects.Evasion)]
+                result[0].extend(normalMonsters if normalMonsters else notHideMonsters)
             else:
                 hideMonsters = self.getHideMonsterList(enemySide)
                 result[0].extend(hideMonsters)
@@ -2065,7 +2067,7 @@ class Game(Reload, GameFunc):
 
         beforeActivateSignalEffect=None
         if isSignal(signal, Signal.BeforeActivateEffect):
-            beforeActivateSignalEffect=getattr(signal, "effect", None)
+            beforeActivateSignalEffect=signal.effect
 
         #check instant and trigger effects
         for effect in allObserveEffectList:
@@ -2104,7 +2106,7 @@ class Game(Reload, GameFunc):
             optionalInstantList.clear()
 
         tempTriggerList.sort(key=lambda effect: (
-            effect.getSide() == self.whoseTurn,
+            effect.getSide() != self.whoseTurn,
             effect.owner.location,
             effect.manaCost
         ))
