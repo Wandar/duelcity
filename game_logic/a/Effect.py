@@ -766,3 +766,45 @@ class Effect(EffectData,GameFunc):
 
     def onDestroy(self):
         GameFunc.onDestroy(self)
+
+
+class EquipSpellEffect(Effect):
+    """
+    Built-in activation effect for equip spells. It is auto-attached to every card whose
+    cardType is equipSpell (see Card._autoInitBuiltinEffects), so card authors no longer
+    write `initEffect(...)` for the equip activation themselves.
+
+    What stays per-card:
+      - legal targets: override Card.equipCardFilter(card) -> bool (default: any monster)
+      - the equipped bonus: a separate effect observing Signal.EquipTo / Signal.EquipCancel
+        (e.g. apply a buff with effDuration=fromSource + uniqueSourceID=self.effUniID)
+    Opt out of the auto-attach by setting Card.AUTO_EQUIP_EFFECT = False.
+    """
+    effType = EFF_TYPE.active
+    activateLocation = LOCATION.hand
+
+    def y_cost(self, justCheck, signal):
+        # only need to know whether at least one legal target exists while checking
+        maxFound = 1 if justCheck else 999999
+        targets = self.searchCards(LOCATION.monsterZone, self.getSide(),
+                                   CARD_TYPE.monster, self, self.owner.equipCardFilter, maxFound)
+        if not targets:
+            return False
+        if justCheck:
+            return True
+        target = yield self.y_select1Card(targets, TITLE.equip, canCancel=True)
+        if not target:
+            return False
+        self.saveTarget1(target)
+        return True
+
+    def y_activate(self, justCheck, signal):
+        if justCheck:
+            return True
+        target = self.getLegalTarget1()
+        if not target:
+            return False
+        # the spell card itself was already moved hand->spellTrapZone by y_costSuper;
+        # this binds it to the chosen monster (the re-move is a no-op) and sends EquipTo
+        yield self.y_moveCardToSpellZone(self.owner, self.getSide(), equipToMonster=target)
+        return True

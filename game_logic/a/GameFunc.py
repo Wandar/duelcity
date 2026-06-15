@@ -1095,33 +1095,39 @@ class GameFunc:
         signals=[]
         paraID=game.genUniID()
         for card in cardOrList:
-            if newForm==FORM.none:
-                newForm=FORM.attack
+            # resolve the target form per-card into a local var; never mutate newForm,
+            # otherwise the first card's result leaks into the rest of the list
+            thisForm=newForm
+            if thisForm==FORM.none:
+                #FORM.none means "flip" -> toggle attack/defence based on current form
+                thisForm=FORM.attack
                 if card.form==FORM.attack:
-                    newForm=FORM.defence
+                    thisForm=FORM.defence
             if card.defence==ATK.none:
-                newForm=FORM.attack
-            if newForm==FORM.attack:
+                thisForm=FORM.attack
+            if thisForm==FORM.attack:
                 anim=ANIM.changeToAttack
-            elif newForm==FORM.defence:
+            elif thisForm==FORM.defence:
                 anim=ANIM.changeToDefence
-            elif newForm==FORM.defenceSet:
+            elif thisForm==FORM.defenceSet:
                 ERROR_MSG("defence set not implemented")
                 continue
             else:
-                ERROR_MSG("monster form error ",newForm)
+                ERROR_MSG("monster form error ",thisForm)
                 continue
 
-            card.cantChangeFormThisTurn=True
-
-            if card.form==newForm:
+            if card.form==thisForm:
+                #already in the target form: still counts as a change attempt -> lock it
                 successNum+=1
+                card.cantChangeFormThisTurn=True
                 continue
 
-            if card.canChangeForm(newForm):
+            if card.canChangeForm(thisForm):
                 successNum+=1
+                #lock on change too; applies to effect changes as well
+                card.cantChangeFormThisTurn=True
                 preForm=card.form
-                card.form=newForm
+                card.form=thisForm
 
                 card.playanimFx(FX_ID.none,anim,paraID=paraID)
 
@@ -1740,6 +1746,66 @@ class GameFunc:
             yield game.y_sendSignal(signal)
         return successNum
 
+
+    def y_transformCard(self, cardOrList: Union[Card, List[Card]], newKey: str, fx=FX_ID.changeData):
+        """
+        Transform a card into another card (newKey) IN PLACE — no summon / special summon.
+        The card keeps its uniID, location, controller side, attached equips and buffs; only
+        its identity (cardKey / type / base stats) and effect set change. Cards on the field
+        must transform into a same-zone-compatible card (monster<->monster, spell/trap zone
+        keeps spell/trap); off-field cards may become any type.
+
+        fx : FX_ID played on each transformed card (pass the transform flash in as a param).
+
+        Returns the number of cards actually transformed.
+        """
+        if not cardOrList:
+            return 0
+        if type(cardOrList) != list:
+            cardOrList = [cardOrList]
+
+        game = self.game
+
+        # immunity: a card not affected by the dealing effect is not transformed
+        effPeriod, effect = game.getDealingEffect()
+        if effect:
+            cardOrList = effect.removeNotAffectedInList(cardOrList)
+
+        if newKey not in D_CARD:
+            ERROR_MSG("y_transformCard unknown cardKey ", newKey)
+            return 0
+        newType = cardTypeStrToInt(D_CARD[newKey]["type"], newKey)
+
+        successNum = 0
+        signals = []
+        for card in cardOrList:
+            # keep field placement valid: don't turn a field monster into a spell, etc.
+            if card.isInMonsterZone() and newType & CARD_TYPE.monster == 0:
+                ERROR_MSG("y_transformCard: cannot turn a monster-zone card into a non-monster ",
+                          card.getName(), newKey)
+                continue
+            if card.isInSpellZone() and newType & (CARD_TYPE.spell | CARD_TYPE.trap) == 0:
+                ERROR_MSG("y_transformCard: cannot turn a spell/trap-zone card into a non-spell/trap ",
+                          card.getName(), newKey)
+                continue
+
+            oldKey = card.cardKey
+            card._transformInPlace(newKey)
+            successNum += 1
+
+            # play the transform fx and push the new card data to the client
+            card.onDataChangedFx(fx)
+
+            sig = Signal.CardTransformed(card)
+            sig.card = card
+            sig.oldCardKey = oldKey
+            sig.newCardKey = newKey
+            signals.append(sig)
+
+        for signal in signals:
+            game.makeSignalReason(signal)
+            yield game.y_sendSignal(signal)
+        return successNum
 
 
     def y_damagePlayer(self, sideOrTuple:Union[int,Tuple], damageNum:int,fx=FX_ID.effectDamage):

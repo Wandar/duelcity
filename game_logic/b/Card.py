@@ -6,7 +6,7 @@ from a.DuelConstants import *
 from card_effects import shortEffects
 from util import *
 from UserType import CardData
-from a.Effect import Effect
+from a.Effect import Effect, EquipSpellEffect
 from a import Signal, fitter,CardBuff
 
 if 0:from b.Game import Game
@@ -143,6 +143,9 @@ class Card(CardData):
     # info1 = info2 = None
 
     summonedTurn=0
+    # equip spells auto-get the built-in EquipSpellEffect; set False to opt out and
+    # supply a custom equip activation effect instead
+    AUTO_EQUIP_EFFECT=True
     def __init__(self, cardKey="", game: Game = None, side=0):
         CardData.__init__(self, None)
         self.__dict__ = CardData.genDefaultAttr()
@@ -249,7 +252,8 @@ class Card(CardData):
         self.materialMaxNum=0
         self.settedMaterialFilter=None # function([Card]):
         self.materialCardFilter=None # function(Card):
-        self.equipCardFilter=None # function(Card):
+        # NOTE: equipCardFilter is a method (see below); don't set an instance attr here
+        # or it would shadow subclass overrides. Override the method to restrict targets.
         #==============
 
         self.game: Game = game
@@ -261,6 +265,7 @@ class Card(CardData):
 
         self.shortEffectsInit()
         self.effectsInit()
+        self._autoInitBuiltinEffects()
 
         if not self.settedMaterialFilter:
             if self.cardType&CARD_TYPE.whiteMonster==CARD_TYPE.whiteMonster:
@@ -375,6 +380,13 @@ class Card(CardData):
     def effectsInit(self):
         #init effect
         pass
+
+    def _autoInitBuiltinEffects(self):
+        """Attach type-driven built-in effects that every such card shares, so authors
+        don't wire them by hand. Currently: the equip-spell activation effect."""
+        if self.AUTO_EQUIP_EFFECT and self.cardType_0 & CARD_TYPE.equipSpell == CARD_TYPE.equipSpell:
+            if self.getEffect(EquipSpellEffect) is None:
+                self.initEffect(EquipSpellEffect)
 
     def initEffect(self, EffectClass):
         if len(self.effects):
@@ -735,7 +747,7 @@ class Card(CardData):
     def _equipToCard(self,thecard:Card):
         self.equipToUID=thecard.uniID
         if self not in thecard.equipCardList:
-            thecard.eequipCardList.append(self)
+            thecard.equipCardList.append(self)
 
     def getEquipedCardList(self):
         pass
@@ -1078,7 +1090,51 @@ class Card(CardData):
         self._modifiedEffectList.clear()
         self.shortEffectsInit()
         self.effectsInit()
+        self._autoInitBuiltinEffects()
         self._recalBuffs()
+
+    def _transformInPlace(self, newKey):
+        """
+        Swap this card's identity to newKey IN PLACE (no summon / no new entity).
+        uniID, location, side (controller), equipCardList and buffList are preserved;
+        only the printed identity (cardKey/type/base stats) and the effect set change.
+
+        Safe for on-field cards: old effects are detached from the signal bus before the
+        swap and the new card's effects are connected for the current location afterwards,
+        so no stale observers are left in the signal lists.
+        """
+        game = self.game
+
+        # 1. tear the old effects off the signal bus (effectDisconnect is a no-op if not
+        #    connected); also drop any pending leave-location entries
+        for eff in tuple(self.effects.values()):
+            game.effectDisconnect(eff)
+            if eff in game._leaveLocationEffectList:
+                game._leaveLocationEffectList.remove(eff)
+        self.effects.clear()
+        self._modifiedEffectList.clear()
+
+        # 2. load the new identity's base data; keep side/location/uniID/equips/buffs.
+        #    NOTE: do NOT call reinitAttr() here — it resets side to side_0, which would
+        #    desync a controlled monster from the monster list it actually sits in.
+        self.loadAttrFromDATA(newKey)
+        self.cardType = self.cardType_0
+        self._reinitBuffAttr()        # atk/def/attr/race/level -> new base (leaves side/location)
+
+        # 3. build the new card's effects, then reapply existing buffs on the new base
+        self.shortEffectsInit()
+        self.effectsInit()
+        self._autoInitBuiltinEffects()
+        self._recalBuffs()
+
+        # 4. connect the new effects for the current location (mirror y_cardChangeLocation)
+        for eff in tuple(self.effects.values()):
+            observeLocation = eff.observeSignals[0]
+            if observeLocation != 0:
+                if observeLocation & self.location != 0:
+                    game.effectConnect(eff)
+                elif eff._OBSERVE_LEAVE_FIELD_SIGNAL:
+                    game._leaveLocationEffectList.append(eff)
 
     def playanimTargetTo(self, cardDataList: [Card]):
         pass

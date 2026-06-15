@@ -291,6 +291,12 @@ class CardAttrChanged(CardDataChanged):
 class CardRaceChanged(CardDataChanged):
     card:Card=None
 
+class CardTransformed(CardDataChanged):
+    # a card's identity was changed in place (not a summon); see GameFunc.y_transformCard
+    card:Card=None
+    oldCardKey=""
+    newCardKey=""
+
 
 class CardEffectChanged(CardDataChanged):
     pass

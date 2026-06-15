@@ -784,51 +784,12 @@ CardName: FireBlade
 class FireBlade(Card):
     AUTHOR = "Unnamed"
     def effectsInit(self):
-        self.initEffect(Equip)
+        # the equip-spell activation (EquipSpellEffect) is auto-attached by Card for any
+        # equipSpell-type card; only the equipped bonus needs to be declared here
         self.initEffect(FireBlade_AtkBoost)     # 装备时给目标 +800 atk
 
     def equipCardFilter(self,card:Card):
         return card.attr==ATTR.FIRE
-
-"""
-1A:可装备给炎属性怪兽
-1P:装备怪兽{ATK}+800
-"""
-class Equip(Effect):
-    effType = EFF_TYPE.active
-    activateLocation = LOCATION.hand   # 从手牌发动
-
-    def y_cost(self, justCheck, signal):
-        if justCheck:
-            maxFound=1
-        else:
-            maxFound=999999
-        targets = self.searchCards(
-            LOCATION.monsterZone, self.getSide(), CARD_TYPE.monster,
-            self, self.owner.equipCardFilter,maxFound
-        )
-        if not targets:
-            return False
-
-        if justCheck:
-            return True
-
-        target = yield self.y_select1Card(targets, TITLE.equip, canCancel=True)
-        if not target:
-            return False
-        self.saveTarget1(target)
-        return True
-
-    def y_activate(self, justCheck, signal):
-        if justCheck:
-            return True
-
-        target = self.getLegalTarget1()
-        if not target:
-            return False
-        # 装备卡(self.owner)从手牌移到魔陷区,绑定到 target
-        yield self.y_moveCardToSpellZone(self.owner, self.getSide(), equipToMonster=target)
-        return True
 
 
 """
