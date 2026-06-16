@@ -5,58 +5,44 @@ from annos import *
 """
 CardName:Were Anglerfish
 卡名:鱼人安康
+效果:1A:宣言1个等级,翻开自己卡组顶端1张卡,是该等级的怪兽则将其特殊召唤,否则送入弃牌区。
 """
 
 class weranglerfish(Card):
-    CARD_KEY = "weranglerfish"
+    CARD_KEY = 'weranglerfish'
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
-        self.initEffect(weranglerfish_LegacyTide)
+        self.initEffect(weranglerfish_e1)
 
 
-
-"""
-1OT:<被战斗破坏>:从卡组把1只攻击力1500以下的水属性怪兽攻击表示特殊召唤。
-1OT:<When destroyed by battle>:Special Summon 1 WATER monster with 1500 or less ATK from your Deck in Attack Position.
-"""
-class weranglerfish_LegacyTide(Effect):
-    effType = EFF_TYPE.optionalTrigger
-
-    observeSignals = (LOCATION.grave, [Signal.DestroyedByBattle])
-
+class weranglerfish_e1(Effect):
+    # 1A:宣言1个等级,翻开卡组顶端1张:是该等级的怪兽则特殊召唤,否则送墓。
+    effType = EFF_TYPE.active
+    activateLocation = LOCATION.monsterZone
     AI_HINT = [AI_HINT.summoner]
     EFF_POWER = 3
 
-    def y_cost(self, justCheck: bool, signal):
-        if not isSignal(signal, Signal.DestroyedByBattle, self.owner):
+    def y_cost(self, justCheck, signal):
+        if len(self.game.decks[self.getSide()]) < 1:
             return False
-
-        def isTarget(card):
-            return card.atk <= 1500 and card.attr == ATTR.WATER
-
-        targets = self.searchCards(
-            LOCATION.deck, self.getSide(), CARD_TYPE.monster, self, isTarget
-        )
-        if not targets:
-            return False
-        if self.freeMonsterSpace() == 0:
-            return False
-
         if justCheck:
             return True
-
-        chosen = yield self.y_select1Card(targets, TITLE.specialSummon, canCancel=True)
-        if not chosen:
-            return False
-        self.saveTarget1(chosen)
         return True
 
-    def y_activate(self, justCheck: bool, signal):
+    def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        target = self.getLegalTarget1(checkLocationChange=False)
-        if not target:
+        deck = self.game.decks[self.getSide()]
+        if not deck:
             return False
-        yield self.y_specialSummon(target)
+        levels = [str(i) for i in range(1, 13)]
+        option = yield self.y_showOptionsPopUp("title_target", "title_target", self.getSide(), levels, 0)
+        wantLevel = option + 1
+        topCard = deck[-1]
+        if topCard.isMonster() and topCard.level == wantLevel and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(topCard)
+        else:
+            yield self.y_sendCardToGrave(topCard)
         return True
+

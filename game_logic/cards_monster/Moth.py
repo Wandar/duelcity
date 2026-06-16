@@ -5,58 +5,46 @@ from annos import *
 """
 CardName:Moth
 卡名:蛾
+效果:1T:<召唤时>:从弃牌区把1只昆虫族怪兽返回手牌。
 """
 
 class Moth(Card):
-    CARD_KEY = "Moth"
+    CARD_KEY = 'Moth'
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
-        self.initEffect(Moth_InheritedSwarm)
+        self.initEffect(Moth_e1)
 
 
-
-"""
-1T:<被战斗破坏时>:可以从卡组把1只攻击力1500以下的炎属性怪兽攻击表示特殊召唤。
-1OT:<When destroyed by battle>: Special Summon 1 FIRE monster with 1500 ATK or less from your Deck in Attack Position.
-"""
-class Moth_InheritedSwarm(Effect):
-    effType = EFF_TYPE.optionalTrigger
-
-    observeSignals = (LOCATION.grave, [Signal.DestroyedByBattle])
-
-    AI_HINT = [AI_HINT.summoner]
+class Moth_e1(Effect):
+    # 1T:<召唤时>:从弃牌区把1只昆虫族怪兽返回手牌。
+    effType = EFF_TYPE.trigger
+    observeSignals = (LOCATION.monsterZone, [Signal.Summon])
+    AI_HINT = [AI_HINT.earn]
     EFF_POWER = 3
 
-    def y_cost(self, justCheck: bool, signal):
-        if not isSignal(signal, Signal.DestroyedByBattle, self.owner):
+    def y_cost(self, justCheck, signal):
+        if not isSignal(signal, Signal.Summon, self.owner):
             return False
-
-        def isTarget(card):
-            return c.atk <= 1500 and c.attr == ATTR.FIRE
-
-        targets = self.searchCards(
-            LOCATION.deck, self.getSide(), CARD_TYPE.monster, self, isTarget
-        )
+        def isInsect(c):
+            return c.race == RACE.INSECT
+        targets = self.searchCards(LOCATION.grave, self.getSide(), CARD_TYPE.monster, self, isInsect)
         if not targets:
             return False
-        if self.freeMonsterSpace() == 0:
-            return False
-
         if justCheck:
             return True
-
-        chosen = yield self.y_select1Card(targets, TITLE.specialSummon, canCancel=True)
+        chosen = yield self.y_select1Card(targets, TITLE.addToHand, canCancel=True)
         if not chosen:
             return False
         self.saveTarget1(chosen)
         return True
 
-    def y_activate(self, justCheck: bool, signal):
+    def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        target = self.getLegalTarget1(checkLocationChange=False)
-        if not target:
+        t = self.getLegalTarget1()
+        if not t:
             return False
-        yield self.y_specialSummon(target)
+        yield self.y_returnCardToHand(t)
         return True
+

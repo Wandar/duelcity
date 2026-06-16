@@ -5,65 +5,41 @@ from annos import *
 """
 CardName:Triceratops
 卡名:三角龙
+效果:1T:<手牌效果:自己的恐龙族怪兽被攻击时>:把此卡以守备表示特殊召唤。
 """
 
 class Triceratops(Card):
-    CARD_KEY = "Triceratops"
+    CARD_KEY = 'Triceratops'
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
-        self.initEffect(Triceratops_NatureBlessing)
-        self.initEffect(Triceratops_FallenCurse)
+        self.initEffect(Triceratops_e1)
 
 
-"""
-1T:这张卡召唤成功时,自己回复1000基本分。2T:<墓地效果>:这张卡被破坏送去墓地时,自己受到2000点伤害。
-1T:<FieldEffect>:When this card is summoned, recover 1000 LP.2T:<GraveEffect>:When this card is destroyed and sent to the Graveyard, take 2000 damage.
-"""
-class Triceratops_NatureBlessing(Effect):
-    effType = EFF_TYPE.trigger
-
-    observeSignals = (LOCATION.monsterZone, [Signal.Summon])
-
-    AI_HINT = [AI_HINT.recoverLP]
+class Triceratops_e1(Effect):
+    # 1T:<手牌效果:自己的恐龙族怪兽被攻击时>:把此卡以守备表示特殊召唤。
+    effType = EFF_TYPE.instant
+    observeSignals = (LOCATION.hand, [Signal.RequestBattle])
+    AI_HINT = [AI_HINT.summoner]
     EFF_POWER = 2
 
-    def y_cost(self, justCheck: bool, signal):
-        if not isSignal(signal, Signal.Summon, self.owner):
+    def y_cost(self, justCheck, signal):
+        if not isSignal(signal, Signal.RequestBattle):
+            return False
+        if self.owner.location != LOCATION.hand:
+            return False
+        rc = signal.receiverCard
+        if rc is None or not self.checkAlly(rc) or rc.race != RACE.DINOSAUR:
+            return False
+        if self.freeMonsterSpace() == 0:
             return False
         if justCheck:
             return True
         return True
 
-    def y_activate(self, justCheck: bool, signal):
+    def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-
-        yield self.y_healPlayer(self.getSide(), 1000)
+        yield self.y_specialSummon(self.owner, form=FORM.defence)
         return True
 
-
-"""
-1T: <被破坏时,>:你受到2000点伤害。
-"""
-class Triceratops_FallenCurse(Effect):
-    effType = EFF_TYPE.trigger
-
-    observeSignals = (LOCATION.grave, [Signal.Destroyed])
-
-    AI_HINT = [AI_HINT.damager]
-    EFF_POWER = -2
-
-    def y_cost(self, justCheck: bool, signal):
-        if not isSignal(signal, Signal.Destroyed, self.owner):
-            return False
-        if justCheck:
-            return True
-        return True
-
-    def y_activate(self, justCheck: bool, signal):
-        if justCheck:
-            return True
-
-        yield self.y_damagePlayer(self.getSide(), 2000)
-        return True

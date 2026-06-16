@@ -5,51 +5,42 @@ from annos import *
 """
 CardName:Swords Tiger
 卡名:剑虎
+效果:1T:[不限次数]:此卡战斗破坏对方怪兽后,此卡可以再进行1次攻击。
 """
 
 class SwordsTiger(Card):
-    CARD_KEY = "SwordsTiger"
+    CARD_KEY = 'SwordsTiger'
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
-        self.initEffect(SwordsTiger_LightHunter)
+        self.initEffect(SwordsTiger_e1)
 
 
+class SwordsTiger_e1(Effect):
+    # 1T:[不限次数]:此卡战斗破坏对方怪兽后,此卡可以再进行1次攻击。
+    effType = EFF_TYPE.trigger
+    observeSignals = (LOCATION.monsterZone, [Signal.BattleFinish])
+    AI_HINT = [AI_HINT.battleBenefit]
+    EFF_POWER = 4
+    countLimit = COUNT_LIMIT.unlimited
 
-"""
-1I:与光属性怪兽战斗的场合，在伤害步骤内{ATK}+1000。
-1I:<Battle effect>: When battling a LIGHT monster, gain 1000 ATK during the Damage Step.
-"""
-class SwordsTiger_LightHunter(Effect):
-    effType = EFF_TYPE.instant
-
-    observeSignals = (LOCATION.monsterZone, [Signal.InBattle])
-
-    AI_HINT = [AI_HINT.addAtk]
-    EFF_POWER = 3
-
-    def y_activate(self, justCheck: bool, signal: Signal.InBattle):
-        if not isSignal(signal, Signal.InBattle):
+    def y_cost(self, justCheck, signal):
+        if not isSignal(signal, Signal.BattleFinish):
             return False
-        myCard = None
-        oppCard = None
-        if signal.attackerCard == self.owner:
-            myCard = signal.attackerCard
-            oppCard = signal.receiverCard
-        elif signal.receiverCard == self.owner:
-            myCard = signal.receiverCard
-            oppCard = signal.attackerCard
-        else:
+        if signal.attackerCard != self.owner:
             return False
-        if oppCard is None or oppCard.attr != ATTR.LIGHT:
+        rc = signal.receiverCard
+        if rc is None or rc.isMonsterOnField():
             return False
         if not self.owner.isMonsterOnField():
             return False
-
         if justCheck:
             return True
-
-        yield self.y_addCardData(
-            self.owner, attackAdd=1000, effDuration=EFF_DURATION.utilBattleEnds,
-        )
         return True
+
+    def y_activate(self, justCheck, signal):
+        if justCheck:
+            return True
+        yield self.y_addCardData(self.owner, attackTimesAdd=1, effDuration=EFF_DURATION.utilTurnEnds)
+        return True
+

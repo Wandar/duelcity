@@ -570,10 +570,6 @@ class Card(CardData):
         if self.location==0:
             return False
 
-        #monster cant be setted
-        if self.cardType&CARD_TYPE.monster:
-            return False
-
         if side == self.side and self.location & LOCATION.spellTrapZone > 0 and self.form==FORM.set:
             #alreay set in SpellZone
             return False

@@ -5,58 +5,46 @@ from annos import *
 """
 CardName:Rhinoceros Beetle
 卡名:独角仙
+效果:1A:破坏对方场上1只守备表示的怪兽,此回合此卡不能攻击。
 """
 
 class RhinocerosBeetle(Card):
-    CARD_KEY = "RhinocerosBeetle"
+    CARD_KEY = 'RhinocerosBeetle'
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
-        self.initEffect(RhinocerosBeetle_InheritedSwarm)
+        self.initEffect(RhinocerosBeetle_e1)
 
 
-
-"""
-1T:<被战斗破坏时>:可以从卡组把1只攻击力1500以下的光属性怪兽攻击表示特殊召唤。
-1OT:<When destroyed by battle>: Special Summon 1 LIGHT monster with 1500 ATK or less from your Deck in Attack Position.
-"""
-class RhinocerosBeetle_InheritedSwarm(Effect):
-    effType = EFF_TYPE.optionalTrigger
-
-    observeSignals = (LOCATION.grave, [Signal.DestroyedByBattle])
-
-    AI_HINT = [AI_HINT.summoner]
+class RhinocerosBeetle_e1(Effect):
+    # 1A:破坏对方场上1只守备表示的怪兽,此回合此卡不能攻击。
+    effType = EFF_TYPE.active
+    activateLocation = LOCATION.monsterZone
+    AI_HINT = [AI_HINT.eraser]
     EFF_POWER = 3
 
-    def y_cost(self, justCheck: bool, signal):
-        if not isSignal(signal, Signal.DestroyedByBattle, self.owner):
-            return False
-
-        def isTarget(card):
-            return c.atk <= 1500 and c.attr == ATTR.LIGHT
-
-        targets = self.searchCards(
-            LOCATION.deck, self.getSide(), CARD_TYPE.monster, self, isTarget
-        )
+    def y_cost(self, justCheck, signal):
+        def isDef(c):
+            return c.form in (FORM.defence, FORM.defenceSet)
+        targets = self.searchCards(LOCATION.monsterZone, self.getEnemySideTuple(), CARD_TYPE.monster, self, isDef)
         if not targets:
             return False
-        if self.freeMonsterSpace() == 0:
-            return False
-
         if justCheck:
             return True
-
-        chosen = yield self.y_select1Card(targets, TITLE.specialSummon, canCancel=True)
-        if not chosen:
+        t = yield self.y_select1Card(targets, TITLE.destroy, canCancel=True)
+        if not t:
             return False
-        self.saveTarget1(chosen)
+        self.saveTarget1(t)
         return True
 
-    def y_activate(self, justCheck: bool, signal):
+    def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        target = self.getLegalTarget1(checkLocationChange=False)
-        if not target:
+        t = self.getLegalTarget1()
+        if not t:
             return False
-        yield self.y_specialSummon(target)
+        yield self.y_destroyCard(t)
+        if self.owner.isMonsterOnField():
+            yield self.y_changeCardData(self.owner, newAttackTimes=0, effDuration=EFF_DURATION.utilTurnEnds)
         return True
+

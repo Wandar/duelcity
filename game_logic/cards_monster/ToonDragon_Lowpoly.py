@@ -5,71 +5,53 @@ from annos import *
 """
 CardName:Sproutling Sky Dragon
 卡名:豆芽小飞龙
+效果:1OT:<我方回合结束时>[献祭此卡]:从手牌把1只LV6以下龙族怪兽特殊召唤。
 """
 
 class ToonDragon_Lowpoly(Card):
-    CARD_KEY = "ToonDragon_Lowpoly"
+    CARD_KEY = 'ToonDragon_Lowpoly'
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
-        self.initEffect(ToonDragon_Lowpoly_ElementalChorus)
+        self.initEffect(ToonDragon_Lowpoly_e1)
 
 
-"""
-1P:场上的炎属性怪兽的攻击力上升500，水属性怪兽的攻击力下降400。
-1P: <While on the field>: All FIRE monsters on the field gain 500 ATK; all WATER monsters on the field lose 400 ATK.
-"""
-class ToonDragon_Lowpoly_ElementalChorus(Effect):
-    effType = EFF_TYPE.permanent
-
-    observeSignals = (LOCATION.monsterZone, [
-        Signal.AttachMonsterZone,
-        Signal.DetachMonsterZone,
-        Signal.CardAttrChanged,
-    ])
-
-    AI_HINT = [AI_HINT.permanent, AI_HINT.addAtk]
+class ToonDragon_Lowpoly_e1(Effect):
+    # 1OT:<我方回合结束时>[献祭此卡]:从手牌把1只LV6以下龙族怪兽特殊召唤。
+    effType = EFF_TYPE.optionalTrigger
+    observeSignals = (LOCATION.monsterZone, [Signal.TurnEnds])
+    AI_HINT = [AI_HINT.summoner]
     EFF_POWER = 3
 
-    def y_signal(self, signal):
-        # 此卡离场：清除所有加成
-        if isSignal(signal, Signal.DetachMonsterZone, self.owner):
-            allCards = self.searchCards(LOCATION.mask_all, -1, CARD_TYPE.all, None)
-            yield self.y_removeBuffEffectSource(allCards, self.effUniID)
-            return
-
-        # 其他怪兽离场：移除对它的加成
-        if isSignal(signal, Signal.DetachMonsterZone):
-            yield self.y_removeBuffEffectSource(signal.card, self.effUniID)
-            return
-
+    def y_cost(self, justCheck, signal):
+        if not isSignal(signal, Signal.TurnEnds):
+            return False
+        if self.game.whoseTurn != self.getSide():
+            return False
         if not self.owner.isMonsterOnField():
-            return
+            return False
+        def isTarget(c):
+            return c.race == RACE.DRAGON and c.level <= 6
+        targets = self.searchCards(LOCATION.hand, self.getSide(), CARD_TYPE.monster, self, isTarget)
+        if not targets:
+            return False
+        if justCheck:
+            return True
+        chosen = yield self.y_select1Card(targets, TITLE.specialSummon, canCancel=True)
+        if not chosen:
+            return False
+        successNum = yield self.y_tributeCard(self.owner)
+        if not successNum:
+            return False
+        self.saveTarget1(chosen)
+        return True
 
-        def isFire(card):
-            return card.attr == ATTR.FIRE
+    def y_activate(self, justCheck, signal):
+        if justCheck:
+            return True
+        t = self.getLegalTarget1()
+        if not t or self.freeMonsterSpace() == 0:
+            return False
+        yield self.y_specialSummon(t)
+        return True
 
-        def isWater(card):
-            return card.attr == ATTR.WATER
-
-        fireMonsters = self.searchCards(
-            LOCATION.monsterZone, -1, CARD_TYPE.monster, None, isFire
-        )
-        waterMonsters = self.searchCards(
-            LOCATION.monsterZone, -1, CARD_TYPE.monster, None, isWater
-        )
-
-        if fireMonsters:
-            yield self.y_addCardData(
-                fireMonsters,
-                attackAdd=500,
-                effDuration=EFF_DURATION.fromSource,
-                uniqueSourceID=self.effUniID,
-            )
-        if waterMonsters:
-            yield self.y_addCardData(
-                waterMonsters,
-                attackAdd=-400,
-                effDuration=EFF_DURATION.fromSource,
-                uniqueSourceID=self.effUniID,
-            )

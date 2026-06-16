@@ -5,51 +5,43 @@ from annos import *
 """
 CardName:Velociraptor
 卡名:迅猛龙
+效果:1T:<召唤时>:从卡组检索一张「迅猛龙」。
 """
 
 class Velociraptor(Card):
-    CARD_KEY = "Velociraptor"
+    CARD_KEY = 'Velociraptor'
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
-        self.initEffect(Velociraptor_Frenzy)
+        self.initEffect(Velociraptor_e1)
 
 
-"""
-1OT:<战斗效果>:战斗破坏对方怪兽后,{ATK}+1000
-1OT:<BattleEffect>:After destroying an opponent's monster by battle,{ATK}+1000
-"""
-class Velociraptor_Frenzy(Effect):
-    effType = EFF_TYPE.optionalTrigger
+class Velociraptor_e1(Effect):
+    # 1T:<召唤时>:从卡组检索一张「迅猛龙」。
+    effType = EFF_TYPE.trigger
+    observeSignals = (LOCATION.monsterZone, [Signal.Summon])
+    AI_HINT = [AI_HINT.searchMonster]
+    EFF_POWER = 3
 
-    observeSignals = (LOCATION.monsterZone, [Signal.BattleFinish])
-
-    AI_HINT = [AI_HINT.addAtk]
-    EFF_POWER = 4
-
-    def y_cost(self, justCheck: bool, signal: Signal.BattleFinish):
-        if not isSignal(signal, Signal.BattleFinish):
+    def y_cost(self, justCheck, signal):
+        if not isSignal(signal, Signal.Summon, self.owner):
             return False
-        if signal.attackerCard != self.owner:
+        def isTarget(c):
+            return c != self.owner and c.cardKey == "Velociraptor"
+        targets = self.searchCards(LOCATION.deck, self.getSide(), CARD_TYPE.monster, self, isTarget)
+        if not targets:
             return False
-        if signal.receiverCard is None:
-            return False
-        if signal.receiverCard.isMonsterOnField():
-            return False
-        if not self.owner.isMonsterOnField():
-            return False
-
         if justCheck:
             return True
+        self.saveTarget1(targets[0])
         return True
 
-    def y_activate(self, justCheck: bool, signal):
+    def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-
-        yield self.y_addCardData(
-            self.owner,
-            attackAdd=1000,
-            effDuration=EFF_DURATION.permanent,
-        )
+        t = self.getLegalTarget1()
+        if not t:
+            return False
+        yield self.y_returnCardToHand(t)
         return True
+

@@ -5,58 +5,47 @@ from annos import *
 """
 CardName:Mantis
 卡名:螳螂
+效果:1T:<对方怪兽攻击自己的其他昆虫族怪兽后>:此卡立即直接攻击对方玩家。
 """
 
 class Mantis(Card):
-    CARD_KEY = "Mantis"
+    CARD_KEY = 'Mantis'
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
-        self.initEffect(Mantis_InheritedSwarm)
+        self.initEffect(Mantis_e1)
 
 
-
-"""
-1OT:<被战斗破坏时>:从卡组把1只攻击力1500以下的地属性怪兽攻击表示特殊召唤。
-1OT:<When destroyed by battle>: Special Summon 1 EARTH monster with 1500 ATK or less from your Deck in Attack Position.
-"""
-class Mantis_InheritedSwarm(Effect):
-    effType = EFF_TYPE.optionalTrigger
-
-    observeSignals = (LOCATION.grave, [Signal.DestroyedByBattle])
-
-    AI_HINT = [AI_HINT.summoner]
+class Mantis_e1(Effect):
+    # 1T:<对方怪兽攻击自己的其他昆虫族怪兽后>:此卡立即直接攻击对方玩家。
+    effType = EFF_TYPE.trigger
+    observeSignals = (LOCATION.monsterZone, [Signal.BattleFinish])
+    AI_HINT = [AI_HINT.battleBenefit]
     EFF_POWER = 3
 
-    def y_cost(self, justCheck: bool, signal):
-        if not isSignal(signal, Signal.DestroyedByBattle, self.owner):
+    def y_cost(self, justCheck, signal):
+        if not isSignal(signal, Signal.BattleFinish):
             return False
-
-        def isTarget(card):
-            return c.atk <= 1500 and c.attr == ATTR.EARTH
-
-        targets = self.searchCards(
-            LOCATION.deck, self.getSide(), CARD_TYPE.monster, self, isTarget
-        )
-        if not targets:
+        attacker = signal.attackerCard
+        receiver = signal.receiverCard
+        if attacker is None or receiver is None:
             return False
-        if self.freeMonsterSpace() == 0:
+        if not (attacker.side in self.getEnemySideTuple()):
             return False
-
+        if receiver == self.owner or not self.checkAlly(receiver) or receiver.race != RACE.INSECT:
+            return False
+        if not self.owner.isMonsterOnField():
+            return False
         if justCheck:
             return True
-
-        chosen = yield self.y_select1Card(targets, TITLE.specialSummon, canCancel=True)
-        if not chosen:
-            return False
-        self.saveTarget1(chosen)
         return True
 
-    def y_activate(self, justCheck: bool, signal):
+    def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        target = self.getLegalTarget1(checkLocationChange=False)
-        if not target:
+        if not self.owner.isMonsterOnField():
             return False
-        yield self.y_specialSummon(target)
+        enemySide = self.getEnemySideTuple()[0]
+        yield self.y_battleByEffect(self.owner, enemySide)
         return True
+
