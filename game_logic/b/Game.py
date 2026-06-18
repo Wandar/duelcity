@@ -680,6 +680,9 @@ class Game(Reload, GameFunc):
             #check can set to spellZone
             if getBoolYieldReturn(self.y_player_setCardToSpellZone(True, card)):
                 availOperates.append(OPERATE.setSpell)
+            #check can return a face-down set card back to hand
+            if getBoolYieldReturn(self.y_player_returnSetCardToHand(True, card)):
+                availOperates.append(OPERATE.returnSetCard)
 
         canActivateEffectList = self.player_getCardCanActivateEffectList(card)
         activateEffectList=card.getCurLocationActivateEffectList()
@@ -712,6 +715,32 @@ class Game(Reload, GameFunc):
 
         successNum = yield self.y_setCardToSpellZone(card)
 
+        self.playerop=(0,0)
+        return successNum != 0
+
+    def y_player_returnSetCardToHand(self, justCheck, card: Card) -> bool:
+        #pick up a face-down Spell/Trap from the field back to hand
+        if not self.isMainPhase():
+            self.CANTUSE_LOG("canOnlyReturnInMainPhase")
+            return False
+        if not card.isSpellTrapCard():
+            return False
+        if card.location != LOCATION.spellTrapZone:
+            return False
+        if card.form & FORM.set == 0:
+            return False
+        if card.side != self.whoseTurn:
+            return False
+        #the turn this card was set, it cannot be returned (same rule as activating a just-set card)
+        if card.beSetTurn == self.curTurn:
+            self.CANTUSE_LOG("cantReturnSetCardThisTurn")
+            return False
+
+        if justCheck:
+            return True
+
+        self.playerop=(card.side, OPERATE.returnSetCard)
+        successNum = yield self.y_returnCardToHand(card)
         self.playerop=(0,0)
         return successNum != 0
 
