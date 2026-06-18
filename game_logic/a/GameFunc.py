@@ -2033,7 +2033,9 @@ class GameFunc:
 
         newform = card.getDefaultForm()
 
-        yield self.y_specialSummon(card,side,newform,summonSignal=sig,fxID=FX_ID.bigfireSpecialSummon)
+        successNum=yield self.y_specialSummon(card,side,newform,summonSignal=sig,fxID=FX_ID.bigfireSpecialSummon)
+        if not successNum:
+            return False
 
         if costExtraChance:
             game.extraSummonCntThisTurn[side]+=1
