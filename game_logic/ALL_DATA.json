@@ -30412,6 +30412,23 @@
             "id": ""
         },
         {
+            "key": "returnSetCard",
+            "ui": true,
+            "en": "Return To Hand",
+            "zh": "返回手牌",
+            "ja": "",
+            "zh_tr": "",
+            "de": "",
+            "ko": "",
+            "fr": "",
+            "pt_br": "",
+            "es": "",
+            "it": "",
+            "ru": "",
+            "vi": "",
+            "id": ""
+        },
+        {
             "key": "destroyDuel",
             "ui": true,
             "en": "Destroy Duel",
