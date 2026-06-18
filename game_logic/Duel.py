@@ -533,6 +533,10 @@ class Duel(Reload):
             #set spell card to field
             operateSuccess = yield self.game.y_player_setCardToSpellZone(False, card)
 
+        elif operate2 == OPERATE.returnSetCard:
+            #return a face-down set card back to hand
+            operateSuccess = yield self.game.y_player_returnSetCardToHand(False, card)
+
         elif operate2 == OPERATE.directAttack:
             enemySides = availAttackTargetTuple[1]
             # if len(enemySides)>1:
