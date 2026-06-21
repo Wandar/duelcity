@@ -5,6 +5,7 @@ from annos import *
 """
 CardName:Parasaurolophus
 卡名:副栉龙
+效果:1T:<召唤时>:发现1张等级4以下的恐龙族怪兽卡并特殊召唤。
 """
 
 class Parasaurolophus(Card):
@@ -12,51 +13,31 @@ class Parasaurolophus(Card):
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
-        self.initEffect(Parasaurolophus_EchoingRecall)
+        self.initEffect(Parasaurolophus_e1)
 
 
-"""
-1A:<战斗效果>:这张卡战斗破坏对方场上1只怪兽并将送其进墓地时，可以把那张卡放回对方卡组最上面。
-1OT: <Battle effect>: When this card destroys a monster your opponent controls by battle and sends it to the Graveyard, you can return that card to the top of your opponent's Deck.
-"""
-class Parasaurolophus_EchoingRecall(Effect):
-    effType = EFF_TYPE.optionalTrigger
+class Parasaurolophus_e1(Effect):
+    # 1T:<召唤时>:发现1张等级4以下的恐龙族怪兽卡并特殊召唤。
+    effType = EFF_TYPE.trigger
+    observeSignals = (LOCATION.monsterZone, [Signal.Summon])
+    AI_HINT = [AI_HINT.summoner]
+    EFF_POWER = 4
 
-    observeSignals = (LOCATION.monsterZone, [Signal.BattleFinish])
-
-    AI_HINT = [AI_HINT.eraser]
-    EFF_POWER = 2
-
-    def y_cost(self, justCheck: bool, signal: Signal.BattleFinish):
-        if not isSignal(signal, Signal.BattleFinish):
+    def y_cost(self, justCheck, signal):
+        if not isSignal(signal, Signal.Summon, self.owner):
             return False
-        if signal.attackerCard != self.owner:
+        if self.freeMonsterSpace() == 0:
             return False
-
-        target = signal.receiverCard
-        if target is None:
-            return False
-        if target.side_0 not in self.getEnemySideTuple():
-            return False
-        # 已被战斗破坏送去墓地
-        if target.isMonsterOnField():
-            return False
-        if target.location != LOCATION.grave:
-            return False
-
         if justCheck:
             return True
-
-        self.saveTarget1(target)
         return True
 
-    def y_activate(self, justCheck: bool, signal):
+    def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-
-        target = self.getLegalTarget1(checkLocationChange=False)
-        if not target:
-            return False
-
-        yield self.y_returnCardToDeck(target, returnType=RETURN_TO_DECK.top)
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.DINOSAUR,
+                                           cardType=CARD_TYPE.monster, maxLevel=4,
+                                           count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked)
         return True

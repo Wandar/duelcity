@@ -4,7 +4,8 @@ from dutil import *
 from annos import *
 """
 CardName:Salvage Droid
-卡名:回收机兵
+卡名:迷彩机甲兵
+效果:1T:<被破坏后>:发现1张机械族怪兽卡并以守备表示特殊召唤。
 """
 
 class droid(Card):
@@ -12,35 +13,18 @@ class droid(Card):
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
-        self.initEffect(droid_SalvageProtocol)
+        self.initEffect(droid_e1)
 
 
-
-"""
-1A:自己场上存在的5星以上的植物族怪兽被破坏的场合，墓地存在的这张卡可以在自己场上特殊召唤。
-1OT:<Graveyard effect>: When a Level 5 or higher MACHINE monster you control is destroyed, Special Summon this card.
-"""
-class droid_SalvageProtocol(Effect):
-    effType = EFF_TYPE.optionalTrigger
-
+class droid_e1(Effect):
+    # 1T:<被破坏后>:发现1张机械族怪兽卡并以守备表示特殊召唤。
+    effType = EFF_TYPE.trigger
     observeSignals = (LOCATION.grave, [Signal.Destroyed])
-
     AI_HINT = [AI_HINT.summoner]
     EFF_POWER = 3
 
-    def y_cost(self, justCheck: bool, signal):
-        if not isSignal(signal, Signal.Destroyed):
-            return False
-        if self.owner.location != LOCATION.grave:
-            return False
-        card = signal.card
-        if card is None or card == self.owner:
-            return False
-        if card.side != self.getSide():
-            return False
-        if card.race != RACE.MACHINE:
-            return False
-        if card.level < 5:
+    def y_cost(self, justCheck, signal):
+        if not isSignal(signal, Signal.Destroyed, self.owner):
             return False
         if self.freeMonsterSpace() == 0:
             return False
@@ -48,8 +32,11 @@ class droid_SalvageProtocol(Effect):
             return True
         return True
 
-    def y_activate(self, justCheck: bool, signal):
+    def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        yield self.y_specialSummon(self.owner)
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.MACHINE,
+                                           cardType=CARD_TYPE.monster, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked, form=FORM.defence)
         return True

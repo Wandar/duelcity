@@ -240,7 +240,7 @@ class Game(Reload, GameFunc):
 
 
     def y_testScene(self):
-        ME_START_HAND = ["47lightning","Dragonrace","StoneBeast","48fly"]
+        ME_START_HAND = ["47lightning","Griffin","StoneBeast","48fly"]
         ME_START_FIELD = ["StoneBeast"]
         ME_START_GRAVE = []
         EN_START_HAND = ["StoneBeast","Dragonrace","Beast_1"]

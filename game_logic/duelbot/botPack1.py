@@ -134,6 +134,13 @@ class DuelAIBase(Reload):
     def onTurnStart(self):
         pass
 
+    #开局异步初始化(向玩家 base 请求本局赢/输等); 默认无操作
+    def y_initDuelAI(self):
+        yield None
+
+    def onDuelEnd(self,duel):
+        pass
+
     def y_signal(self,signal):
         pass
 
@@ -247,6 +254,15 @@ USED_CARD=[]
 KEY_CARD=[]
 
 
+# ============================================================
+# 赢局/输局池在账号侧 (AccountFunc.playerDataJ["winLose"])。
+# bot AI 通过协程异步访问 (cell <-> base, #p 暴露):
+#   开局: y_initDuelAI -> playerCE.base.reqDuelShouldWin(duelNode)
+#         base 抽取 -> duelNode.onDuelShouldWinResult -> 解开 WaitForCB
+#   终局: onDuelEnd -> playerCE.base.reportDuelOutcome(intended, botWon)
+# ============================================================
+
+
 class DuelAINormal(DuelAIBase):
     turnWaitedAtStart=False
 
@@ -268,26 +284,95 @@ class DuelAINormal(DuelAIBase):
         self.initGeneratePool()
         self.duelStartTurn=duel.game.curTurn
 
-        # 根据 MENU_BOTS 配置的 botWinRate 决定本局赢输
-        config=self.getBotConfig()
-        botWinRate=config.get("botWinRate",0.5)
-        self.shouldWin=random.random()<botWinRate
+        # 本局赢/输改由开局后的 y_initDuelAI 异步向玩家 base 请求决定,
+        # 这里先给安全默认值(y_initDuelAI 会覆盖)
+        self.shouldWin=False
+        self._outcomeReported=False
         self.signatureOnField=False
 
         # 招牌怪登场冷却: 至少 cheatTurn 回合, 再随机 ±2 让时机不固定
+        config=self.getBotConfig()
         cheatTurn=config.get("cheatTurn",6)
         self.cheatTurnRolled=max(1, cheatTurn+random.randint(-1,2))
 
-        AI_MSG("bot duel start, shouldWin=",self.shouldWin,
-               "cheatTurn=",self.cheatTurnRolled)
+        AI_MSG("bot duel start (shouldWin pending y_initDuelAI), cheatTurn=",
+               self.cheatTurnRolled)
 
+
+    # ============================================================
+    # 开局异步初始化: 向玩家 base 请求本局赢/输, 等回包后设定 shouldWin
+    #   由 Duel.y_startDuel -> y_initBotAIs 在 duelNode 协程里 yield 调用,
+    #   所以 base 的回包要回到 duelNode (作为 callbacker 传过去)。
+    # ============================================================
+    def y_initDuelAI(self):
+        config=self.getBotConfig()
+        botWinRate=config.get("botWinRate",0.5)
+        sw=None
+        playerCE=self._getOutcomePlayerCE()
+        if playerCE is not None and getattr(playerCE,"base",None):
+            # base 抽取后回调 duelNode.onDuelShouldWinResult -> 解开下面的 WaitForCB
+            playerCE.base.reqDuelShouldWin(self.duel.duelNode)
+            waitResult=yield WaitForCB("onDuelShouldWinResult",5)
+            if waitResult.called and waitResult.args:
+                sw=bool(waitResult.args[0])
+        if sw is None:
+            sw=random.random()<botWinRate    # 无真人玩家/超时兜底
+        self.shouldWin=bool(sw)
+        self._outcomeReported=False
+        AI_MSG("y_initDuelAI shouldWin=",self.shouldWin)
+
+
+    def getBotName(self):
+        """本局使用的 MENU_BOTS key (由 Duel._botName 指定)"""
+        try:
+            return self.duel._botName
+        except Exception:
+            return None
 
     def getBotConfig(self):
         """获取 MENU_BOTS 中对应本 bot 的配置,子类可覆盖"""
+        botName=self.getBotName()
+        if botName and botName in MENU_BOTS:
+            return MENU_BOTS[botName]
+        # 兜底: 旧逻辑, 按 aiClass 匹配第一个
         for key,cfg in MENU_BOTS.items():
             if cfg.get("aiClass")==self.__class__ or cfg.get("aiClass")==DuelAINormal:
                 return cfg
         return {}
+
+
+    # ============================================================
+    # 终局: 对比预定结果与实际胜负, 不符则把预定结果塞回池里补偿
+    # ============================================================
+    def _getOutcomePlayerCE(self):
+        """取人类玩家的 AvatarCE(持久池在其 base/账号侧); 无则 None(bot对bot/测试)"""
+        try:
+            return self.duel.getNotBotAvatar(self.getEnemySideTuple()[0])
+        except Exception:
+            return None
+
+    def onDuelEnd(self, duel):
+        if getattr(self, "_outcomeReported", False):
+            return
+        self._outcomeReported=True
+
+        try:
+            losers=duel._losers or {}
+        except Exception:
+            return
+        if not losers:
+            return
+
+        botLost=self.getSide() in losers
+        # 平局(双方都输)不补偿
+        if len(losers)>=2 and botLost:
+            AI_MSG("[outcome] draw, skip")
+            return
+
+        # 终局 -> 玩家 base 做补偿+持久化 (cell->base, 无需回包)
+        playerCE=self._getOutcomePlayerCE()
+        if playerCE is not None and getattr(playerCE,"base",None):
+            playerCE.base.reportDuelOutcome(self.shouldWin, not botLost)
 
 
     # ============================================================
@@ -908,10 +993,7 @@ class DuelAINormal(DuelAIBase):
             progressed=False
 
             for monster in myCanAttackMonsters:
-                # 输局: 概率性跳过, 降低输出节奏
-                if not self.shouldWin and random.random()>self.losingAttackChance:
-                    continue
-
+                # 能攻击就攻击 (输局也照常出手, 只在"会致死"时收手, 见下)
                 enemyMonsters=game.searchCards(LOCATION.monsterZone,self.getEnemySideTuple(),CARD_TYPE.monster)
 
                 if len(enemyMonsters)>0:
@@ -925,19 +1007,9 @@ class DuelAINormal(DuelAIBase):
                             break
                 else:
                     # 没有敌方怪兽: 直攻玩家
+                    # 输局 bot 也照常打, 不作弊也不手下留情(能打死就打死),
+                    # 胜负偏差交给全局赢局/输局池补偿
                     targetSide=random.choice(self.getEnemySideTuple())
-
-                    # 输局: 玩家血量低时手下留情, 血越低越倾向于不打
-                    if not self.shouldWin:
-                        maxLP=self.duel.INIT_LP or 8000
-                        playerLP=game.LPs.get(targetSide,maxLP)
-                        hpRatio=playerLP/maxLP if maxLP else 1.0
-                        if hpRatio<self.losingMercyHpRatio:
-                            # 线性映射: 在阈值时跳过概率=0, 血量=0时跳过概率=1
-                            skipChance=1-hpRatio/self.losingMercyHpRatio
-                            if random.random()<skipChance:
-                                continue
-
                     yield game.y_player_monsterAttack(monster,targetSide)
                     yield WaitForSeconds(3)
                     progressed=True
