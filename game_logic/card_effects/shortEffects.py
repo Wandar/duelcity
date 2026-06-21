@@ -26,7 +26,7 @@ class ShortEffect(Effect):
 """
 
 """
-当此卡因其他卡的效果即将从怪兽区离开时,此卡除外,回合结束时从除外区无视条件特殊召唤,保留离开时的hp.注:支付代价不算卡的效果
+避难:当此卡因其他卡的效果即将从怪兽区离开时,此卡除外,回合结束时从除外区无视条件特殊召唤,保留离开时的ATK
 """
 class Refuge(ShortEffect):
     effType = EFF_TYPE.permanent
@@ -43,6 +43,7 @@ class Refuge(ShortEffect):
             if 0:signal:Signal.BeforeRemovedByEffect=signal
 
             if self.owner in signal.cardList and signal.reasonEffect and signal.reasonEffect.owner!=self.owner and signal.reasonEffectPeriod!=EFF_PERIOD.costing:
+                signal.reasonEffect.addFlagCount(EFF_FLAG.resistFromRemovedByEffect, self.owner)
                 self.shouldSpecialsummonTurn=self.game.curTurn
                 yield self.y_banishCard(self.owner)
         elif isSignal(signal,Signal.TurnEnds):
@@ -117,32 +118,6 @@ class Resistance(ShortEffect):
             yield self.owner.y_becomeHalfLife()
 
 
-class Berserker(ShortEffect):
-    effType = EFF_TYPE.permanent
-
-    observeSignals = (LOCATION.monsterZone, [Signal.DetachMonsterZone])
-    def y_signal(self,signal):
-        if isSignal(signal,Signal.DetachMonsterZone,self.owner) and not self.owner.isMonsterOnField():
-            self.owner.delData("berserberUsed")
-
-class DamageReduction(ShortEffect):
-    effType = EFF_TYPE.permanent
-    NEED_NUM = True
-
-
-class Maintance(ShortEffect):
-    effType = EFF_TYPE.permanent
-
-    NEED_NUM = True
-
-    observeSignals = (LOCATION.monsterZone,[Signal.AttachMonsterZone,Signal.DetachMonsterZone])
-
-    def y_signal(self,signal):
-        if isSignal(signal,Signal.AttachMonsterZone,self.owner):
-            yield self.game.y_addMaintance(self.getShortEffectTailNumber())
-        elif isSignal(signal,Signal.DetachMonsterZone,self.owner):
-            yield self.game.y_removeMaintance(self.getShortEffectTailNumber())
-
 """
 怪兽区的此卡获得魔法免疫
 """
@@ -173,6 +148,36 @@ class SpellTrapImmunity(ShortEffect):
 class EffectDamageImmunity(ShortEffect):
     effType = EFF_TYPE.permanent
 
+class SelfDescend(ShortEffect):
+    # Marker short effect (无法特召): a card with it cannot be Normal Summoned, nor Special
+    # Summoned by a FOREIGN card's effect. Own-effect / ignoreRequirement / player-initiated
+    # summons are still allowed. Read in Card.checkBuffCanSpecialSummon / checkBuffCanNormalSummon.
+    pass
+
+
+class RevivalRestriction(ShortEffect):
+    # RevivalRestriction (苏生限制): does NOT block summoning. Instead, when this card is summoned
+    # by a FOREIGN card's effect, it immediately becomes half-broken (its ATK drops to its DEF).
+    # Handled in y_signal below (own-effect / normal / player summons are unaffected).
+    effType = EFF_TYPE.permanent
+    observeSignals = (LOCATION.monsterZone, [Signal.Summon])
+    AI_HINT = [AI_HINT.permanent]
+    def y_signal(self, signal):
+        if not isSignal(signal, Signal.Summon, self.owner):
+            return
+        de = self.game.getDealingEffect()
+        effect = de[1] if de else None
+        if effect and effect.owner is not self:
+            yield self.owner.y_becomeHalfLife()
+
+
+class CantBeTributed(ShortEffect):
+    # Marker short effect: a card with it cannot be tributed (released / used as tribute).
+    # Detected in Card.checkBuffCanTribute via getEffect('CantBeTributed');
+    # no buff and no signal observing needed (same marker style as Pierce/Protected).
+    pass
+
+
 class Slow(ShortEffect):
     effType = EFF_TYPE.permanent
     observeSignals = (LOCATION.monsterZone,[Signal.Summon])
@@ -180,21 +185,24 @@ class Slow(ShortEffect):
         if isSignal(signal,Signal.Summon,self.owner):
             yield self.y_changeCardData(self.owner,newAttackTimes=0,effDuration=EFF_DURATION.utilTurnEnds)
 
-class SimpleShield(ShortEffect):
-    effType = EFF_TYPE.permanent
-    observeSignals = (LOCATION.monsterZone,[Signal.Summon])
-    def y_signal(self,signal):
-        if isSignal(signal,Signal.Summon,self.owner):
-            yield self.y_addShield(self.owner,self.getShortEffectTailNumber())
 
 class Revive(ShortEffect):
-    effType = EFF_TYPE.trigger
-    countLimit = COUNT_LIMIT.onlyOncePerDuel
-    observeSignals = (LOCATION.grave,[Signal.EnterGrave,Signal.TurnEnds])
-    enterGraveTurn=0
+    # Revive: after being destroyed, at that turn's end, special summon this card back with halfBroken + temporary.
+    # The temporary-summoned monster is sent to the graveyard at turn end; once per duel.
+    effType = EFF_TYPE.permanent
+    observeSignals = (LOCATION.grave,[Signal.Destroyed,Signal.TurnEnds])
+    shouldSummonTurn=0
+    revivedOnce=False
     def y_signal(self,signal):
-        if isSignal(signal,Signal.EnterGrave,self.owner):
-            yield self.y_specialSummon(self.owner,hp=1)
+        if isSignal(signal,Signal.Destroyed,self.owner):
+            if not self.revivedOnce:
+                self.shouldSummonTurn=self.game.curTurn
+        elif isSignal(signal,Signal.TurnEnds):
+            if self.shouldSummonTurn!=0 and self.game.curTurn==self.shouldSummonTurn:
+                self.shouldSummonTurn=0
+                if not self.revivedOnce and self.owner.location==LOCATION.grave and self.freeMonsterSpace()>0:
+                    self.revivedOnce=True
+                    yield self.y_specialSummon(self.owner,halfBroken=True,buffIDOrList=CARD_BUFF.temporary)
 
 
 
@@ -222,28 +230,6 @@ class Trade(ShortEffect):
         yield self.y_returnCardToHand(thedeckCard)
         return True
 
-
-class Dredge(ShortEffect):
-    effType = EFF_TYPE.active
-
-    activateLocation = LOCATION
-
-    def y_activate(self,justCheck,signal):
-        deckCards=self.game.decks[self.getSide()]
-        if not deckCards:
-            return False
-
-        if justCheck:
-            return True
-
-        l=[]
-        for i in range(3):
-            l.append(deckCards[len(deckCards)-1-i])
-
-        card=yield self.y_select1Card(l,TITLE.toDeckTop)
-        if card:
-            deckCards.remove(card)
-            deckCards.insert(0,card)
 
 #
 # class AutoDefend(Effect):
@@ -281,44 +267,312 @@ class Dredge(ShortEffect):
 
 
 
+class DoubleAttack(ShortEffect):
+    # Combo: this card can attack twice per turn.
+    # Mirrors the permanent attack-count pattern (see BattleDragon01): while on the
+    # field, set the per-turn attack limit to 2 via a fromSource buff; remove on leave.
+    effType = EFF_TYPE.permanent
+    observeSignals = (LOCATION.monsterZone, [Signal.AttachMonsterZone, Signal.DetachMonsterZone])
+    AI_HINT = [AI_HINT.permanent, AI_HINT.battleBenefit]
+    EFF_POWER = 4
+    def y_signal(self, signal):
+        if isSignal(signal, Signal.DetachMonsterZone, self.owner):
+            yield self.y_removeBuffEffectSource(self.owner, self.effUniID)
+            return
+        if not self.owner.isMonsterOnField():
+            return
+        yield self.y_changeCardData(self.owner, newAttackTimes=2,
+                                    effDuration=EFF_DURATION.fromSource, uniqueSourceID=self.effUniID)
+
+
+class DirectAttack(ShortEffect):
+    # Marker: this card can attack the opponent directly even when they control monsters.
+    # Read in Game.player_getAttackTargetListOfCard; still blocked by cantDirectAttack buffs.
+    pass
+
+
+class CannotAttack(ShortEffect):
+    # Marker: this card cannot declare an attack.
+    # Read via Card.checkBuffCanAttack, gated in Card.canBattle(isAttacker).
+    pass
+
+
+class EffectImmune(ShortEffect):
+    # Marker: this card is unaffected by a FOREIGN card's effects (own/controller effects still apply).
+    # Read in Effect.removeNotAffectedInList, the shared target filter for all effect operations.
+    pass
+
+
+class Strafe(ShortEffect):
+    # Marker: this card's ranged attack hits ALL enemy monsters (each takes rangeAtk damage),
+    # instead of only the highest-ATK one. Read in Game.y_rangedAttack.
+    pass
+
+
+class Regeneration(ShortEffect):
+    # Regen N (NEED_NUM): at the controller's end phase, if current ATK is below the
+    # original ATK, restore ATK by N, capped so it never exceeds the original ATK.
+    NEED_NUM = True
+    effType = EFF_TYPE.permanent
+    observeSignals = (LOCATION.monsterZone, [Signal.TurnEnds])
+    AI_HINT = [AI_HINT.permanent]
+    EFF_POWER = 2
+    def y_signal(self, signal):
+        if not isSignal(signal, Signal.TurnEnds):
+            return
+        if self.game.whoseTurn != self.owner.side:
+            return
+        if not self.owner.isMonsterOnField():
+            return
+        origAtk = self.owner.atk_0
+        curAtk = self.owner.atk
+        if curAtk >= origAtk:
+            return
+        heal = min(self.number_0, origAtk - curAtk)
+        if heal > 0:
+            yield self.y_healCard(self.owner, heal)
+
+
+class FixedStance(ShortEffect):
+    # FixedStance: the player cannot manually change this card's battle position on the turn it
+    # was summoned. Reuses cantChangeFormThisTurn (the existing position-change gate in
+    # Game.player_getChangingMonsterFormOperates), which is reset on turn start.
+    effType = EFF_TYPE.permanent
+    observeSignals = (LOCATION.monsterZone, [Signal.Summon])
+    AI_HINT = [AI_HINT.permanent]
+    def y_signal(self, signal):
+        if isSignal(signal, Signal.Summon, self.owner):
+            self.owner.cantChangeFormThisTurn = True
+        return
+        yield
+
+
+class Absorb(ShortEffect):
+    # Absorb N (NEED_NUM): after this card attacks a monster, it permanently gains N ATK.
+    NEED_NUM = True
+    effType = EFF_TYPE.permanent
+    observeSignals = (LOCATION.monsterZone, [Signal.BattleFinish])
+    AI_HINT = [AI_HINT.addAtk]
+    def y_signal(self, signal):
+        if not isSignal(signal, Signal.BattleFinish):
+            return
+        if signal.attackerCard is not self.owner:
+            return
+        if signal.receiverCard is None:
+            return
+        if not self.owner.isMonsterOnField():
+            return
+        yield self.y_addCardData(self.owner, attackAdd=self.number_0, effDuration=EFF_DURATION.onceForever)
+
+
+class WarSpirit(ShortEffect):
+    # WarSpirit N (NEED_NUM): when this card declares an attack, it gains N ATK until the battle ends.
+    NEED_NUM = True
+    effType = EFF_TYPE.permanent
+    observeSignals = (LOCATION.monsterZone, [Signal.RequestBattle])
+    AI_HINT = [AI_HINT.addAtk]
+    def y_signal(self, signal):
+        if not isSignal(signal, Signal.RequestBattle):
+            return
+        if signal.attackerCard is not self.owner:
+            return
+        yield self.y_addCardData(self.owner, attackAdd=self.number_0, effDuration=EFF_DURATION.utilBattleEnds)
+
+
+class DelayedSummon(ShortEffect):
+    # DelayedSummon N (NEED_NUM; active + permanent):
+    #   A: activate from hand -> place this card face-up in the spell zone as a continuous spell.
+    #   Then on each of the controller's standby phases (handled in y_signal), count down; after N
+    #   of them, special summon this card from the spell zone (restoring its monster card type).
+    NEED_NUM = True
+    effType = EFF_TYPE.active | EFF_TYPE.permanent
+    activateLocation = LOCATION.hand
+    observeSignals = (LOCATION.spellTrapZone, [Signal.StandbyPhase])
+    AI_HINT = [AI_HINT.summoner]
+    EFF_POWER = 3
+    remaining = 0
+    def y_cost(self, justCheck, signal):
+        # active activation from hand
+        if not (self.owner.location & LOCATION.hand):
+            return False
+        if self.game.freeSpellSpace(self.getSide()) == 0:
+            return False
+        if justCheck:
+            return True
+        return True
+    def y_activate(self, justCheck, signal):
+        if justCheck:
+            return True
+        successNum = yield self.y_moveCardToSpellZone(self.owner, newCardType=CARD_TYPE.continuousSpell)
+        if not successNum:
+            return False
+        self.remaining = self.number_0
+        return True
+    def y_signal(self, signal):
+        if not isSignal(signal, Signal.StandbyPhase):
+            return
+        if self.game.whoseTurn != self.getSide():
+            return
+        if not (self.owner.location & LOCATION.spellTrapZone):
+            return
+        if self.remaining <= 0:
+            return
+        self.remaining -= 1
+        if self.remaining > 0:
+            return
+        if self.freeMonsterSpace() == 0:
+            self.remaining = 1   # retry next own standby
+            return
+        yield self.y_specialSummon(self.owner)
+
+
+class EmptyFieldSpecialSummon(ShortEffect):
+    # While you control no monsters, you may Special Summon this card from your hand (A).
+    effType = EFF_TYPE.active
+    activateLocation = LOCATION.hand
+    AI_HINT = [AI_HINT.summoner]
+    EFF_POWER = 3
+    def y_cost(self, justCheck, signal):
+        if self.searchCards(LOCATION.monsterZone, self.getSide(), CARD_TYPE.monster, self):
+            return False
+        if self.freeMonsterSpace() == 0:
+            return False
+        if justCheck:
+            return True
+        return True
+    def y_activate(self, justCheck, signal):
+        if justCheck:
+            return True
+        yield self.y_specialSummon(self.owner)
+        return True
+
+
+class EmptyFieldExtraSummon(ShortEffect):
+    # While you control no monsters, you may Extra Summon this card from your hand (A);
+    # this consumes one of your per-turn extra-summon allowances.
+    effType = EFF_TYPE.active
+    activateLocation = LOCATION.hand
+    AI_HINT = [AI_HINT.summoner]
+    EFF_POWER = 3
+    def y_cost(self, justCheck, signal):
+        side = self.getSide()
+        if self.searchCards(LOCATION.monsterZone, side, CARD_TYPE.monster, self):
+            return False
+        if self.freeMonsterSpace() == 0:
+            return False
+        if self.game.extraSummonCntThisTurn[side] >= self.game.extraSummonCntLimit[side]:
+            return False
+        if justCheck:
+            return True
+        return True
+    def y_activate(self, justCheck, signal):
+        if justCheck:
+            return True
+        self.game.extraSummonCntThisTurn[self.getSide()] += 1
+        yield self.y_specialSummon(self.owner)
+        return True
+
+
+class MoveCards(ShortEffect):
+    # MoveCards N (NEED_NUM): after this card is summoned, once per duel, randomly set N 'move
+    # cards' drawn from the named discover pool (POOL_NAME) face-down in your spell/trap zone.
+    # NOTE: the pool must be registered first, e.g.
+    #   DiscoverPool.instance().registerPool(MoveCards.POOL_NAME, [<move-card keys>])
+    NEED_NUM = True
+    countLimit = COUNT_LIMIT.onlyOncePerDuel
+    effType = EFF_TYPE.trigger
+    observeSignals = (LOCATION.monsterZone, [Signal.Summon])
+    AI_HINT = [AI_HINT.summoner]
+    EFF_POWER = 3
+    POOL_NAME = '招式卡'
+    def y_cost(self, justCheck, signal):
+        if not isSignal(signal, Signal.Summon, self.owner):
+            return False
+        if self.game.freeSpellSpace(self.getSide()) == 0:
+            return False
+        if justCheck:
+            return True
+        return True
+    def y_activate(self, justCheck, signal):
+        if justCheck:
+            return True
+        from DiscoverPool import DiscoverPool
+        side = self.getSide()
+        n = min(self.number_0, self.game.freeSpellSpace(side))
+        if n <= 0:
+            return False
+        keys = DiscoverPool.instance().getFromPool(self.POOL_NAME, n)
+        if not keys:
+            return False
+        changePlaceSigs = []
+        for k in keys:
+            if self.game.freeSpellSpace(side) == 0:
+                break
+            card = self.game.createCard(k, side)
+            if not card:
+                continue
+            t = yield self.game._y_changeCardLocation(card, LOCATION.spellTrapZone, side, FORM.set, ANIM.leaveListToField, summonFx=FX_ID.setCard)
+            if t:
+                changePlaceSigs.extend(t)
+        for s in changePlaceSigs:
+            yield self.game.y_sendSignal(s)
+        return True
+
+
+class TripleTribute(ShortEffect):
+    # TripleTribute (active): from your hand, tribute 3 of your monsters, then Extra Summon this
+    # card (consumes one of your per-turn extra-summon allowances). Independent of y_normalSummon.
+    effType = EFF_TYPE.active
+    activateLocation = LOCATION.hand
+    AI_HINT = [AI_HINT.summoner, AI_HINT.costMonster]
+    EFF_POWER = 4
+    def y_cost(self, justCheck, signal):
+        side = self.getSide()
+        if self.game.extraSummonCntThisTurn[side] >= self.game.extraSummonCntLimit[side]:
+            return False
+        def isTributable(c):
+            return c.canTribute()
+        monsters = self.searchCards(LOCATION.monsterZone, side, CARD_TYPE.monster, self, isTributable)
+        if len(monsters) < 3:
+            return False
+        if justCheck:
+            return True
+        selected = yield self.y_selectCards(monsters, TITLE.tribute, side, 3, 3, canCancel=True)
+        if not selected or len(selected) < 3:
+            return False
+        yield self.y_tributeCard(selected, toSummonCard=self.owner)
+        return True
+    def y_activate(self, justCheck, signal):
+        if justCheck:
+            return True
+        if not self.owner.settedMaterialFilter:
+            # y_extraSummon requires a material filter; this card pays its cost via the 3 tributes
+            # taken in y_cost, so a trivial filter is enough to pass the check (needTribute=False).
+            self.owner.settedMaterialFilter = lambda cards: True
+        ok = yield self.y_extraSummon(False, self.owner, needTribute=False)
+        return ok
+class CannotSpecialSummon(ShortEffect):
+    # Marker (无法特召): literally cannot be Special Summoned, but CAN be Normal Summoned and
+    # Extra Summoned. Read in Card.checkBuffCanSpecialSummon (extra summon is exempt).
+    pass
+
+
 class Pierce(ShortEffect):
     pass
 
 
-class Evasion(ShortEffect):
-    """Monsters with Evasion can only be attacked after all non-Evasion monsters on the same side are gone."""
+#受保护
+
+
+class Protected(ShortEffect):
+    # Protected (formerly Evasion): this monster can only be chosen as a melee attack
+    # target when no non-protected attackable monster remains on its side.
+    # Read in Game.player_getAttackTargetListOfCard.
     pass
 
 
-"""
-战斗复活: T:此卡被战斗破坏的回合结束阶段临时召唤
-"""
-class BattleRevive(ShortEffect):
-    effType = EFF_TYPE.trigger
-
-    observeSignals = (LOCATION.monsterZone,[Signal.TurnEnds])
-
-    activatedTurn=0
-
-    AI_HINT = [AI_HINT.eraser]
-    AI_POWER = 1
-    def y_signal(self,signal):
-        if isSignal(signal,Signal.DestroyedByBattle,self):
-            self.activatedTurn=self.game.curTurn
-
-    def y_cost(self,justCheck:bool,signal:Signal.TurnEnds):
-        if isSignal(signal,Signal.TurnEnds) and self.activatedTurn==self.game.curTurn and not self.owner.isMonsterOnField():
-            pass
-        else:
-            return
-
-        if justCheck:
-            return True
-        return True
-
-    def y_activate(self,justCheck:bool,signal):
-        if justCheck:
-            return True
-
-        yield self.y_specialSummon(self.owner)
-        return True
+class CannotBeAttacked(ShortEffect):
+    # Marker: the opponent cannot choose this monster as a (melee) attack target, and it does
+    # NOT block direct attacks. Ranged attacks (Game.y_rangedAttack) can still hit it.
+    # Read in Game.player_getAttackTargetListOfCard.
+    pass

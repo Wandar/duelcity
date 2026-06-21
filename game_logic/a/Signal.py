@@ -291,6 +291,12 @@ class CardAttrChanged(CardDataChanged):
 class CardRaceChanged(CardDataChanged):
     card:Card=None
 
+class CardCounterChanged(CardDataChanged):
+    card:Card=None
+    counterID=0
+    count=0      # resulting count of this counterID after the change
+    delta=0      # how much changed (positive=added, negative=removed)
+
 class CardTransformed(CardDataChanged):
     # a card's identity was changed in place (not a summon); see GameFunc.y_transformCard
     card:Card=None

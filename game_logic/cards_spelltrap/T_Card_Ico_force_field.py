@@ -6,7 +6,7 @@ from annos import *
 CardName:T_Card_Ico_force_field  【陷阱】
 卡图:蓝紫背景,多道蓝白光束汇聚击打青色球体,力场防护。
 效果(AOTIP):
-1OT:<对方怪兽宣告攻击时>:展开力场——这个回合中,自己场上的怪兽不会被战斗破坏(不受战斗伤害)。
+1OT:<对方怪兽攻击宣言时>:把该攻击怪兽返回持有者手牌。
 """
 
 class tT_Card_Ico_force_field(Card):
@@ -16,24 +16,25 @@ class tT_Card_Ico_force_field(Card):
         self.initEffect(tT_Card_Ico_force_field_eff)
 
 class tT_Card_Ico_force_field_eff(Effect):
+    # 1OT:<对方怪兽攻击宣言时>:把该攻击怪兽返回持有者手牌。
     effType = EFF_TYPE.optionalTrigger
     observeSignals = (LOCATION.spellTrapZone, [Signal.RequestBattle])
-    AI_HINT = [AI_HINT.enhance]
-    EFF_POWER = 3
+    AI_HINT = [AI_HINT.eraser]
+    EFF_POWER = 4
 
     def y_cost(self, justCheck: bool, signal):
         if not isSignal(signal, Signal.RequestBattle): return False
         atkCard = signal.attackerCard
         if atkCard is None or atkCard.side not in self.getEnemySideTuple(): return False
-        myMons = self.searchCards(LOCATION.monsterZone, self.getSide(), CARD_TYPE.monster, self)
-        if not myMons: return False
+        if not atkCard.isMonsterOnField(): return False
         if justCheck: return True
+        self.saveTarget1(atkCard)
         return True
 
     def y_activate(self, justCheck: bool, signal):
         if justCheck: return True
-        myMons = self.searchCards(LOCATION.monsterZone, self.getSide(), CARD_TYPE.monster, self)
-        if myMons:
-            yield self.y_addImmunityBuffToCard(myMons, IMMUNITY_MASK.battleDamage,
-                                               EFF_DURATION.utilTurnEnds, self.effUniID)
+        t = self.getLegalTarget1()
+        if not t:
+            return False
+        yield self.y_returnCardToHand(t)
         return True

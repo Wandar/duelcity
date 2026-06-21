@@ -198,6 +198,7 @@ class Card(CardData):
         self.shortEffectsStr_0: str = ""
 
         self.flag:CARD_FLAG=0
+        self.counterList:List[int]=[]   # flat pairs: [counterID, count, counterID, count, ...]
 
         self.tributes:List[CardData]=[]
 
@@ -376,6 +377,7 @@ class Card(CardData):
                 e.number_0 = num
             if hasData:
                 e.data = data
+            e.onAdded()
 
     def effectsInit(self):
         #init effect
@@ -394,6 +396,7 @@ class Card(CardData):
         else:
             order = 1
         self.effects[order] = EffectClass(self, order)
+        self.effects[order].onAdded()
 
     #TODO add remove
     def _addEffect(self,EffectClass):
@@ -542,6 +545,8 @@ class Card(CardData):
             return False
         if self.location & (LOCATION.grave + LOCATION.banish):
             return False
+        if not self.checkBuffCanTribute():
+            return False
         return True
 
     def canReturnToHand(self, newside):
@@ -618,7 +623,7 @@ class Card(CardData):
             return self.level
 
 
-    def canSummon(self, side, signal=None):
+    def canSummon(self, side, signal=None, ignoreRequirement=False):
         if not self.cardType_0&CARD_TYPE.monster:
             return False
         if self.isInMonsterZone():
@@ -627,11 +632,12 @@ class Card(CardData):
         if isSignal(signal, Signal.NormalSummon):
             if not self.checkBuffCanNormalSummon():
                 return False
-        elif isSignal(signal, Signal.ExtraSummon):
-            if not self.checkBuffCanExtraSummon():
-                return False
         else:
-            if not self.checkBuffCanSpecialSummon():
+            # Extra summon and plain special summon are both special summons; both must pass checkBuffCanSpecialSummon
+            if isSignal(signal, Signal.ExtraSummon):
+                if not self.checkBuffCanExtraSummon():
+                    return False
+            if not ignoreRequirement and not self.checkBuffCanSpecialSummon(signal):
                 return False
         return True
 
@@ -665,9 +671,22 @@ class Card(CardData):
         pass
 
     def checkBuffCanNormalSummon(self):
+        if self.getEffect('SelfDescend') or self.getEffect('DelayedSummon'):
+            return False
         return True
 
-    def checkBuffCanSpecialSummon(self):
+    def checkBuffCanSpecialSummon(self, summonSignal=None):
+        # CannotSpecialSummon: blocks any special summon EXCEPT an extra summon (normal summon allowed elsewhere)
+        if self.getEffect('CannotSpecialSummon') and not isSignal(summonSignal, Signal.ExtraSummon):
+            return False
+        if not self.getEffect('SelfDescend'):
+            return True
+        # SelfDescend: only a FOREIGN card's effect is blocked; own effect / no dealing
+        # effect (player-initiated) is allowed (ignoreRequirement is allowed separately in canSummon).
+        de = self.game.getDealingEffect()
+        effect = de[1] if de else None
+        if effect and effect.owner is not self:
+            return False
         return True
 
     def checkBuffCanExtraSummon(self):
@@ -680,9 +699,13 @@ class Card(CardData):
         return True
 
     def checkBuffCanAttack(self):
+        if self.getEffect('CannotAttack'):
+            return False
         return True
 
     def checkBuffCanTribute(self):
+        if self.getEffect('CantBeTributed'):
+            return False
         return True
 
     def checkBuffCanTakeDamage(self):
@@ -763,6 +786,11 @@ class Card(CardData):
         else:
             self.beSetTurn=0
 
+        #counters are removed when the card leaves the field
+        if (preLocation & LOCATION.mask_onField) and not (self.location & LOCATION.mask_onField):
+            if self.counterList:
+                self.counterList=[]
+
         #effects
         for effect in tuple(self.effects.values()):
             observeLocation=effect.observeSignals[0]
@@ -794,6 +822,8 @@ class Card(CardData):
             ERROR_MSG("card on monsterField but no cardEntity")
             return False
         if isAttacker and self.form!=FORM.attack:
+            return False
+        if isAttacker and not self.checkBuffCanAttack():
             return False
 
         return True
@@ -939,6 +969,7 @@ class Card(CardData):
         for order in grantedOrders:
             eff = self.effects[order]
             if eff.__class__.__name__ not in desired:
+                eff.onRemoved()
                 self.game.effectDisconnect(eff)
                 del self.effects[order]
 
@@ -958,6 +989,7 @@ class Card(CardData):
             observeLocation = eff.observeSignals[0]
             if observeLocation != 0 and observeLocation & self.location != 0:
                 self.game.effectConnect(eff)
+            eff.onAdded()
 
     def recalBuffsAndOnDataChanged(self,fx=FX_ID.none,paraID=0):
         self._recalBuffs()
@@ -1069,6 +1101,56 @@ class Card(CardData):
             self.game.modifyCardList(self.side, self.location, 0, self, anim)
 
 
+    def _____________counters(self):
+        pass
+
+    def _syncCounterToClient(self):
+        #push the whole cardData (incl. counterList) to all clients
+        en=self.getCardEntity()
+        if en:
+            en.c_cardData=self
+
+    def getCounter(self, counterID:int)->int:
+        #return the count of the given counter id (0 if none)
+        lst=self.counterList
+        for i in range(0, len(lst)-1, 2):
+            if lst[i]==counterID:
+                return lst[i+1]
+        return 0
+
+    def addCounter(self, counterID:int, num:int=1)->int:
+        #add num counters of counterID, return the new count
+        if num<=0:
+            return self.getCounter(counterID)
+        lst=self.counterList
+        for i in range(0, len(lst)-1, 2):
+            if lst[i]==counterID:
+                lst[i+1]=min(65535, lst[i+1]+num)
+                self._syncCounterToClient()
+                return lst[i+1]
+        lst.append(counterID)
+        lst.append(min(65535, num))
+        self._syncCounterToClient()
+        return self.getCounter(counterID)
+
+    def reduceCounter(self, counterID:int, num:int=1)->int:
+        #remove num counters of counterID (clamped at 0; pair removed when it hits 0), return the remaining count
+        lst=self.counterList
+        for i in range(0, len(lst)-1, 2):
+            if lst[i]==counterID:
+                lst[i+1]-=num
+                if lst[i+1]<=0:
+                    del lst[i:i+2]
+                self._syncCounterToClient()
+                return self.getCounter(counterID)
+        return 0
+
+    def clearCounters(self):
+        if self.counterList:
+            self.counterList=[]
+            self._syncCounterToClient()
+
+
     def changeCard(self,newKey):
         if self.hasShown:
             ERROR_MSG("jcakjsbcjc")
@@ -1082,6 +1164,8 @@ class Card(CardData):
 
         self.loadAttrFromDATA(newKey)
         self.reinitAttr()
+        for _eff in self.effects.values():
+            _eff.onRemoved()
         self.effects.clear()
         self._modifiedEffectList.clear()
         self.shortEffectsInit()
@@ -1104,6 +1188,7 @@ class Card(CardData):
         # 1. tear the old effects off the signal bus (effectDisconnect is a no-op if not
         #    connected); also drop any pending leave-location entries
         for eff in tuple(self.effects.values()):
+            eff.onRemoved()
             game.effectDisconnect(eff)
             if eff in game._leaveLocationEffectList:
                 game._leaveLocationEffectList.remove(eff)
@@ -1212,6 +1297,7 @@ class Card(CardData):
 
     def onDestroy(self):
         for effect in self.effects.values():
+            effect.onRemoved()
             effect.onDestroy()
         self.effects.clear()
         self._modifiedEffectList.clear()

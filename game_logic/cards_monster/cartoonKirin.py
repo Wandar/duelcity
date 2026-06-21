@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Cloudhoof
 卡名:云云麟角
-效果:1P:只要此卡在场上,所有怪兽都不会被战斗破坏。
+效果:1T:<召唤时>:把对方场上1只怪兽返回持有者手牌,然后自己抽1张卡。
 """
 
 class cartoonKirin(Card):
@@ -17,15 +17,33 @@ class cartoonKirin(Card):
 
 
 class cartoonKirin_e1(Effect):
-    # 1P:只要此卡在场上,所有怪兽都不会被战斗破坏。
-    # NOTE: 引擎暂无"战斗不被破坏"的全局钩子,登记为常驻标记效果,
-    #       待战斗结算时查询场上是否存在本效果以跳过战斗破坏。
-    effType = EFF_TYPE.permanent
-    observeSignals = (LOCATION.monsterZone, [Signal.AttachMonsterZone, Signal.DetachMonsterZone])
-    AI_HINT = [AI_HINT.permanent]
+    # 1T:<召唤时>:把对方场上1只怪兽返回持有者手牌,然后自己抽1张卡。
+    effType = EFF_TYPE.trigger
+    observeSignals = (LOCATION.monsterZone, [Signal.Summon])
+    AI_HINT = [AI_HINT.eraser, AI_HINT.drawCard]
     EFF_POWER = 4
 
-    def y_signal(self, signal):
-        return
-        yield
+    def y_cost(self, justCheck, signal):
+        if not isSignal(signal, Signal.Summon, self.owner):
+            return False
+        enemies = self.searchCards(LOCATION.monsterZone, self.getEnemySideTuple(), CARD_TYPE.monster, self)
+        if not enemies:
+            return False
+        if justCheck:
+            return True
+        t = yield self.y_select1Card(enemies, TITLE.returnToHand, canCancel=True)
+        if not t:
+            return False
+        self.saveTarget1(t)
+        return True
 
+    def y_activate(self, justCheck, signal):
+        if justCheck:
+            return True
+        t = self.getLegalTarget1()
+        if not t:
+            return False
+        yield self.y_returnCardToHand(t)
+        if len(self.game.decks[self.getSide()]) > 0:
+            yield self.y_drawCard(self.getSide(), 1)
+        return True

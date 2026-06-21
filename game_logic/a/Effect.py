@@ -560,6 +560,9 @@ class Effect(EffectData,GameFunc):
     def removeNotAffectedInList(self, cardList:List[Card]):
         newList=[]
         for card in cardList:
+            # EffectImmune: unaffected by a FOREIGN card's effect (own/controller effects still apply)
+            if self.owner is not card and self.owner.side != card.side and card.getEffect('EffectImmune'):
+                continue
             if not card.immunityMask:
                 newList.append(card)
                 continue
@@ -762,6 +765,16 @@ class Effect(EffectData,GameFunc):
 
 
     def ____________fastFuncEnd(self):
+        pass
+
+    def onAdded(self):
+        # Called when this effect is attached to its owner (static at card build, or granted at runtime).
+        # Override to attach a buff. Recal-safe rule: use owner._addBuff + buff.onBuff(owner); never call removeBuffByID here.
+        pass
+
+    def onRemoved(self):
+        # Called when this effect is removed from its owner (granted revoked / card transformed / destroyed).
+        # Override to detach the buff: delete from owner.buffList by uniqueSourceID; do NOT call removeBuffByID (it re-enters _recalBuffs).
         pass
 
     def onDestroy(self):
