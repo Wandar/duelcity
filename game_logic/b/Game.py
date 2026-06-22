@@ -947,10 +947,15 @@ class Game(Reload, GameFunc):
                 continue
 
             notHideMonsters = self.getNotHideMonsterList(enemySide)
-            if notHideMonsters:
-                # Evasion: monsters with Evasion can only be attacked when no normal monsters remain
-                normalMonsters = [m for m in notHideMonsters if not m.getEffect(shortEffects.Evasion)]
-                result[0].extend(normalMonsters if normalMonsters else notHideMonsters)
+            # CannotBeAttacked: cannot be chosen as a melee target and does not block direct attack
+            attackableFaceUp = [m for m in notHideMonsters if not m.getEffect(shortEffects.CannotBeAttacked)]
+            if attackableFaceUp:
+                # Protected: can only be attacked when no non-protected attackable monster remains
+                normalMonsters = [m for m in attackableFaceUp if not m.getEffect(shortEffects.Protected)]
+                result[0].extend(normalMonsters if normalMonsters else attackableFaceUp)
+                # DirectAttack: may hit the player directly even while the enemy has monsters
+                if (not cantDirectAttack) and (not card.hasBuff(CARD_BUFF.cantDirectAttack)) and card.getEffect(shortEffects.DirectAttack):
+                    result[1].append(enemySide)
             else:
                 hideMonsters = self.getHideMonsterList(enemySide)
                 result[0].extend(hideMonsters)
@@ -1084,6 +1089,9 @@ class Game(Reload, GameFunc):
         if not max_objs:
             return False
         receiver:Card=random.choice(max_objs)
+        # Strafe: a ranged attack hits ALL enemy monsters instead of only the highest-ATK one
+        isStrafe = bool(attacker.getEffect(shortEffects.Strafe))
+        receivers = list(enemyMonsters) if isStrafe else [receiver]
 
         attackerEntity=attacker.getCardEntity()
         receiverEntity=receiver.getCardEntity()
@@ -1117,7 +1125,9 @@ class Game(Reload, GameFunc):
         attackerEntity.playanimBattleResult(attackerBattleResult,paraID)
 
 
-        yield self.y_damageCard(receiver,attacker.rangeAtk,FX_ID.none,attacker,paraID)
+        for r in receivers:
+            if r.isMonsterOnField():
+                yield self.y_damageCard(r,attacker.rangeAtk,FX_ID.none,attacker,paraID)
 
         attacker.attackCntThisTurn+=1
         return True

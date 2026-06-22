@@ -855,7 +855,7 @@ class GameFunc:
         Parameters
         ----------
         card            : the Card that should gain the short effect
-        shortEffectName : g_shortEffects registry key, e.g. 'Pierce' / 'Evasion'.
+        shortEffectName : g_shortEffects registry key, e.g. 'Pierce' / 'Protected'.
                           A ShortEffect subclass is also accepted (its class name is used).
         data            : single argument carrier — pass the number for NEED_NUM effects
                           (e.g. data=2 for Slow) or the string for ':' data effects; read
@@ -897,6 +897,26 @@ class GameFunc:
 
         return card.getEffect(ShortEffClass)
 
+
+    def y_addCounter(self, card:Card, counterID:int, num:int=1, fx=FX_ID.changeData):
+        #add (num>0) or remove (num<0) counters on a card, sync to client and broadcast CardCounterChanged
+        if not card:
+            return 0
+        if num==0:
+            return card.getCounter(counterID)
+        if num>0:
+            newCount=card.addCounter(counterID, num)
+        else:
+            newCount=card.reduceCounter(counterID, -num)
+        card.onDataChangedFx(fx)
+        sig=Signal.CardCounterChanged()
+        sig.card=card
+        sig.counterID=counterID
+        sig.count=newCount
+        sig.delta=num
+        self.game.makeSignalReason(sig)
+        yield self.game.y_sendSignal(sig)
+        return newCount
 
     def y_damageCard(self,cardOrList: Union[Card, List[Card]],damageNumber:int,damageFX=FX_ID.effectDamage,rangedAttacker:Card=None,paraID=0):
         if not cardOrList:
@@ -2042,7 +2062,7 @@ class GameFunc:
 
         return True
 
-    def y_specialSummon(self, cardOrList: Union[Card, List[Card]], toWhoseSide=0, form: FORM = 0, buffIDOrList:Union[CARD_BUFF,List[CARD_BUFF]]=0, ignoreRequirement=False,summonSignal=None,fxID=FX_ID.specialSummon) -> int:
+    def y_specialSummon(self, cardOrList: Union[Card, List[Card]], toWhoseSide=0, form: FORM = 0, buffIDOrList:Union[CARD_BUFF,List[CARD_BUFF]]=0, ignoreRequirement=False,summonSignal=None,fxID=FX_ID.specialSummon, halfBroken=False) -> int:
         if not cardOrList:
             return 0
         game=self.game
@@ -2065,7 +2085,13 @@ class GameFunc:
             if game.freeMonsterSpace(tempside)==0:
                 continue
 
-            if card.canSummon(tempside):
+            if card.canSummon(tempside, summonSignal, ignoreRequirement=ignoreRequirement):
+                # ensure the summoned card is a monster card (e.g. a monster parked in the spell zone as a continuous spell)
+                if not (card.cardType & CARD_TYPE.monster):
+                    card.cardType = card.cardType_0
+                    if not (card.cardType & CARD_TYPE.monster):
+                        ERROR_MSG("y_specialSummon: card is not a monster card", card.getName())
+                        continue
                 if not summonSignal:
                     summonSignal = Signal.SpecialSummon(card)
                 game.makeSignalReason(summonSignal)
@@ -2124,6 +2150,13 @@ class GameFunc:
 
         for signal in sigs:
             yield game.y_sendSignal(signal)
+
+        # halfBroken: for each summoned monster with atk>def, lower atk to def via a onceForever attack buff (negative attackAdd)
+        if halfBroken:
+            for sc in successCardList:
+                if sc.isMonsterOnField() and isinstance(sc.atk, int) and isinstance(sc.defence, int) and sc.atk > sc.defence:
+                    yield self.y_addCardData(sc, attackAdd=sc.defence - sc.atk,
+                                             effDuration=EFF_DURATION.onceForever)
 
         return successNum
 

@@ -17,14 +17,13 @@ AI 决斗整体逻辑 (DuelAINormal)
 ================================================================================
 
 【核心设计】"娱乐型" AI: 不追求最优解, 而是按预设节奏给玩家输出体验。
-每一局开局时根据 MENU_BOTS 中的 botWinRate 概率决定 self.shouldWin (赢/输),
+每一局开局时由账号侧胜负池(AccountFunc)决定 self.shouldWin (赢/输),
 之后所有决策都围绕这个标志运行。
 
 【一局流程】
 1. onDuelStart:
    - 初始化怪兽池(从 D_CARD 按 level 切成 low / middle / high / extra)
-   - 掷骰决定 shouldWin = random() < botWinRate
-   - 记录 duelStartTurn
+   - 记录 duelStartTurn (shouldWin 由随后的 y_initDuelAI 向账号胜负池请求决定)
 
 2. 决定先后手 (TITLE.decideWhoFirst):
    - shouldWin=True  → 选先手
@@ -73,7 +72,6 @@ AI 决斗整体逻辑 (DuelAINormal)
             敌方守备表示 ×0.7
 
 【MENU_BOTS 配置项】
-    botWinRate          : 本局赢的概率 (0.0~1.0)
     funTurns         : 娱乐期回合数, 期间只铺小怪不出大怪
     preferCards      : 卡组高频卡 cardKey 列表(LV<=4 的会被视为"专属小怪"; 重复出现即权重)
     signatureMonsters: 招牌大怪 cardKey 列表; 留空则用全局 highLevelMonsterPool
@@ -257,7 +255,7 @@ KEY_CARD=[]
 # ============================================================
 # 赢局/输局池在账号侧 (AccountFunc.playerDataJ["winLose"])。
 # bot AI 通过协程异步访问 (cell <-> base, #p 暴露):
-#   开局: y_initDuelAI -> playerCE.base.reqDuelShouldWin(duelNode)
+#   开局: y_initDuelAI -> playerCE.base.reqDuelShou(duelNode)
 #         base 抽取 -> duelNode.onDuelShouldWinResult -> 解开 WaitForCB
 #   终局: onDuelEnd -> playerCE.base.reportDuelOutcome(intended, botWon)
 # ============================================================
@@ -305,18 +303,19 @@ class DuelAINormal(DuelAIBase):
     #   所以 base 的回包要回到 duelNode (作为 callbacker 传过去)。
     # ============================================================
     def y_initDuelAI(self):
-        config=self.getBotConfig()
-        botWinRate=config.get("botWinRate",0.5)
+        # win/lose is decided solely by the account-side pool (AccountFunc.drawDuelShouldWin),
+        # requested through the human player's base. With no human player (bot vs bot / test)
+        # or on timeout there is no account to draw from, so fall back to a 50/50 roll.
         sw=None
         playerCE=self._getOutcomePlayerCE()
         if playerCE is not None and getattr(playerCE,"base",None):
             # base 抽取后回调 duelNode.onDuelShouldWinResult -> 解开下面的 WaitForCB
-            playerCE.base.reqDuelShouldWin(self.duel.duelNode)
+            playerCE.base.reqDuelShou(self.duel.duelNode)
             waitResult=yield WaitForCB("onDuelShouldWinResult",5)
             if waitResult.called and waitResult.args:
                 sw=bool(waitResult.args[0])
         if sw is None:
-            sw=random.random()<botWinRate    # 无真人玩家/超时兜底
+            sw=random.random()<0.5    # no human player / timeout: 50/50
         self.shouldWin=bool(sw)
         self._outcomeReported=False
         AI_MSG("y_initDuelAI shouldWin=",self.shouldWin)
@@ -1039,7 +1038,6 @@ MENU_BOTS={
         "deck":decks.DEBUG_DECK1,
         "preferScene":DEBUG_SCENE,
         # --- AI 新配置 ---
-        "botWinRate":0.2,              # 赢的概率
         "funTurns":3,               # 娱乐期回合数(只铺小怪)
         "signatureMonsters":[],     # 留空则用全局 highLevelMonsterPool
     },
@@ -1051,7 +1049,6 @@ MENU_BOTS={
         "aiClass":DuelAINormal,
         "deck":decks.DEBUG_DECK1,
         "preferScene":"cc/factory_parking/factory_parking",
-        "botWinRate":0.2,              # 教程bot必输
         "funTurns":99,              # 永远只铺小怪
         "signatureMonsters":[],
     },
@@ -1069,7 +1066,6 @@ MENU_BOTS={
             "smallDragonWhelp_Rd","Fantasy Dragon-Blue","Drake Skinny",
         ],
         "preferScene":"cc/factory_parking/factory_parking",
-        "botWinRate":0.2,
         "funTurns":3,
         "signatureMonsters":[
             "MountainDragon","cartoonChineseDragon","Wyrm1_2","Wyvern","dragonrex",
@@ -1088,7 +1084,6 @@ MENU_BOTS={
             "weranglerfish","SKM_whale","Walrus_LOD0","SeaLion_LOD0","StoneBeast",
         ],
         "preferScene":"cc/modular_town/modular_town",
-        "botWinRate":0.2,
         "funTurns":3,
         "signatureMonsters":[
             "werecrab","Voidray","toon_Lobster","SKM_squid","Turtle_Blue_Shell_01",
@@ -1107,7 +1102,6 @@ MENU_BOTS={
             "Ladybug","Mantis","Moth","Beast_1",
         ],
         "preferScene":"cc/modular_town/modular_town",
-        "botWinRate":0.2,
         "funTurns":3,
         "signatureMonsters":[
             "GiantBeetle","RhinocerosBeetle",
@@ -1127,7 +1121,6 @@ MENU_BOTS={
             "Plant Chewer","TreantGuard-Green",
         ],
         "preferScene":"cc/modular_town/modular_town",
-        "botWinRate":0.2,
         "funTurns":3,
         "signatureMonsters":[
             "Sunflora Pixie",
@@ -1147,7 +1140,6 @@ MENU_BOTS={
             "smallDragonWhelp_Rd","Fantasy Dragon-Blue","Drake Skinny",
         ],
         "preferScene":"cc/modular_town/modular_town",
-        "botWinRate":0.2,
         "funTurns":3,
         "signatureMonsters":[
             "desertdragon","Wyrm1_2","plainsdragon","polardragon","dragonrex",
@@ -1166,7 +1158,6 @@ MENU_BOTS={
             "WerewolfMaskTint","Kitsune_2","Dragonide",
         ],
         "preferScene":"cc/modular_town/modular_town",
-        "botWinRate":0.2,
         "funTurns":3,
         "signatureMonsters":[
             "Dog Bowwow","SwordsTiger",
@@ -1184,7 +1175,6 @@ MENU_BOTS={
             "Whirlwind","tinyWind","Lyme",
         ],
         "preferScene":"cc/modular_town/modular_town",
-        "botWinRate":0.2,
         "funTurns":3,
         "signatureMonsters":[
             "Wind Mage","cartoonKitsune",
@@ -1204,7 +1194,6 @@ MENU_BOTS={
             "Dilophosaurus","Parasaurolophus",
         ],
         "preferScene":"cc/modular_town/modular_town",
-        "botWinRate":0.2,
         "funTurns":3,
         "signatureMonsters":[],  # disable=9åæ é«çº§æé¾æ
     },
@@ -1222,7 +1211,6 @@ MENU_BOTS={
             "toon_SnappingTurtle","Lynx_LOD0","Llama_LOD0",
         ],
         "preferScene":"cc/modular_town/modular_town",
-        "botWinRate":0.2,
         "funTurns":3,
         "signatureMonsters":[
             "toon_Crocodile","toon_Hedgehog","toon_Skunk","Moose_LOD0",
