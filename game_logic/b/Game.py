@@ -18,7 +18,6 @@ import traceback
 the state of duel and game logic of duel
 """
 
-
 class Game(Reload, GameFunc):
     def __init__(self, mduel):
         Reload.__init__(self, True, True)
