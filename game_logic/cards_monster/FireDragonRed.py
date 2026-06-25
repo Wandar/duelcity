@@ -5,6 +5,8 @@ from annos import *
 """
 CardName:Fire Dragon
 卡名:火龙
+effect:
+效果:1A:翻开自己卡组顶端5张卡,把最先找到的LV5以下的炎属性怪兽特殊召唤,其余的卡以原来的顺序放回原位.
 """
 
 class FireDragonRed(Card):
@@ -12,36 +14,35 @@ class FireDragonRed(Card):
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
-        self.initEffect(FireDragonRed_EmberRetaliation)
+        self.initEffect(FireDragonRed_e1)
 
 
-"""
-1I:我方怪兽被战斗破坏时,对对手造成300点LP伤害。
-1I:<When a monster on your field is destroyed by battle>:Inflict 300 LP damage to your opponent.
-"""
-class FireDragonRed_EmberRetaliation(Effect):
-    effType = EFF_TYPE.instant
+class FireDragonRed_e1(Effect):
+    # 1A:翻开自己卡组顶端5张卡,把最先找到的LV5以下的炎属性怪兽特殊召唤,其余的卡以原来的顺序放回原位.
+    effType = EFF_TYPE.active
+    AI_HINT = [AI_HINT.summoner]
+    EFF_POWER = 3
 
-    observeSignals = (LOCATION.monsterZone, [Signal.BattleFinish])
-
-    AI_HINT = [AI_HINT.damager]
-    EFF_POWER = 1
-
-    def y_activate(self, justCheck: bool, signal: Signal.BattleFinish):
-        if not isSignal(signal, Signal.BattleFinish):
+    def y_cost(self, justCheck, signal):
+        if self.getDeckLeftNum() == 0:
             return False
-        if signal.receiverCard is None:
+        if self.freeMonsterSpace() == 0:
             return False
-        # 接收方是我方怪兽且已被战斗破坏（离场）
-        if signal.receiverCard.side not in self.getAllySideTuple():
-            return False
-        if signal.receiverCard.isMonsterOnField():
-            return False
-        if not self.owner.isMonsterOnField():
-            return False
-
         if justCheck:
             return True
+        return True
 
-        yield self.y_damagePlayer(self.getEnemySideTuple(), 300)
+    def y_activate(self, justCheck, signal):
+        if justCheck:
+            return True
+        deck = self.game.decks[self.getSide()]
+        # the top of the deck is the last element; scan the top 5 from the very top downward
+        top5 = list(reversed(deck[-5:]))
+        target = None
+        for c in top5:
+            if (c.cardType & CARD_TYPE.monster) and c.attr == ATTR.FIRE and c.level <= 5:
+                target = c
+                break
+        if target and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(target)
         return True
