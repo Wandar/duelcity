@@ -101,6 +101,10 @@ class Effect(EffectData,GameFunc):
             if self.effType==EFF_TYPE.active:
                 self.observeSignals=(LOCATION.none, [])
 
+            # init-time hook for subclasses: may dynamically rebuild observeSignals, etc.
+            # runs before observeSignals is validated/processed below so changes take effect
+            self.onInit()
+
             if len(self.observeSignals)<2 or type(self.observeSignals[0])!=int or type(self.observeSignals[1])!=list:
                 ERROR_MSG("observeSignals format error:",card.getName())
                 self.observeSignals=(LOCATION.none, [])
@@ -117,6 +121,16 @@ class Effect(EffectData,GameFunc):
                     self._enableLocation|=self.activateLocation
                 if self.effType&EFF_TYPE.trigger or self.effType&EFF_TYPE.instant:
                     self._enableLocation|=self.observeSignals[0]
+
+
+    def onInit(self):
+        """
+        Called at the end of __init__ (after owner/game are set, before observeSignals is
+        validated/processed). Override to do init-time setup; e.g. build observeSignals
+        dynamically. Assign a new tuple to self.observeSignals rather than mutating the
+        shared class attribute.
+        """
+        pass
 
 
     def getClassName(self):
@@ -560,9 +574,6 @@ class Effect(EffectData,GameFunc):
     def removeNotAffectedInList(self, cardList:List[Card]):
         newList=[]
         for card in cardList:
-            # EffectImmune: unaffected by a FOREIGN card's effect (own/controller effects still apply)
-            if self.owner is not card and self.owner.side != card.side and card.getEffect('EffectImmune'):
-                continue
             if not card.immunityMask:
                 newList.append(card)
                 continue
@@ -821,3 +832,161 @@ class EquipSpellEffect(Effect):
         # this binds it to the chosen monster (the re-move is a no-op) and sends EquipTo
         yield self.y_moveCardToSpellZone(self.owner, self.getSide(), equipToMonster=target)
         return True
+
+
+class AuraEffect(Effect):
+    """
+    Base for continuous "aura" effects that grant a fromSource buff to a dynamic set of
+    cards, e.g. "my Warriors gain +500 ATK". The target set is NOT limited to the field —
+    override searchTargets() to affect cards in hand / grave / banish as well.
+
+    Concrete auras implement:
+        affectFilter(self, card) -> bool   which cards qualify (include any side check)
+        y_grant(self, cards)               apply the buff (a coroutine)
+    and, only when the targets are not on-field monsters, override searchTargets(). Set
+    observeSignals to the membership-changing signals for the chosen location — statically
+    or in onInit() (e.g. Enter/Leave-grave signals for a grave aura, CardAtkChanged for an
+    ATK-based filter).
+
+    Sync strategy (performance): on each observed signal it diffs the current eligible set
+    against the set it granted last time (self._granted) and only grants to newly-eligible
+    cards / removes from cards that dropped out. Work is proportional to the change, so
+    unchanged cards cause no recalc or signals. It tears down automatically when the source
+    leaves its operating location (eligible becomes empty).
+
+    Notes:
+      - isSilenced is intentionally NOT checked: silence only blocks effect *activation*,
+        not permanent/continuous effects. Override isActive() if you need a different gate.
+      - immune cards are auto-excluded (searchCards is given `self` as the affect source).
+      - immunity changes emit no signal yet, so a card that gains immunity after being
+        granted is only dropped on the next recompute triggered by another observed signal.
+      - The reentrancy guard makes it safe to observe data-change signals the buff emits.
+    """
+    effType = EFF_TYPE.permanent
+
+    observeSignals = (LOCATION.monsterZone, [
+        Signal.AttachMonsterZone, Signal.DetachMonsterZone
+    ])
+
+    AI_HINT = [AI_HINT.enhance]
+    EFF_POWER = 2
+
+    _recomputing = False
+    _granted = frozenset()   # uniIDs currently carrying this aura's buff (instance set after 1st run)
+
+    def affectFilter(self, card) -> bool:
+        """MUST override: whether `card` should receive the aura (include any side filtering)."""
+        ERROR_MSG(self.owner.getName(), "AuraEffect.affectFilter() must be overridden")
+        return False
+
+    def searchTargets(self):
+        """
+        Candidate cards to consider. Default: on-field monsters of both sides. Override to
+        target another zone, e.g.:
+            return self.searchCards(LOCATION.grave, self.getSide(), CARD_TYPE.monster, self, self.affectFilter)
+        searchCards already applies affectFilter (filterFunc) and drops immune cards (affect
+        source = self), so the returned list IS the eligible set.
+        """
+        return self.searchCards(LOCATION.monsterZone, -1, CARD_TYPE.monster, self, self.affectFilter)
+
+    def isActive(self):
+        """Whether the aura currently applies. Default: the source is in its operating
+        location (observeSignals[0]). isSilenced is NOT checked. Override for custom gating."""
+        return self.owner.location & self.observeSignals[0] != 0
+
+    def y_grant(self, cards):
+        """MUST override: apply the aura buff to `cards` (a coroutine)."""
+        ERROR_MSG(self.owner.getName(), "AuraEffect.y_grant() must be overridden")
+        return
+        yield   # never reached, marks this as a coroutine
+
+    def y_signal(self, signal):
+        # guard against the granted buff's own data-change signals re-triggering us
+        if self._recomputing:
+            return
+        self._recomputing = True
+        try:
+            yield self._y_recompute()
+        finally:
+            self._recomputing = False
+
+    def _y_recompute(self):
+        eligible = self.searchTargets() if self.isActive() else []
+        eligibleByUid = {c.uniID: c for c in eligible}
+        eligibleUids = set(eligibleByUid)
+
+        # diff against what we granted last time -> only touch cards that actually changed
+        addUids = eligibleUids - self._granted
+        removeUids = self._granted - eligibleUids
+
+        if removeUids:
+            usedCards = self.duel.usedCards
+            toRemove = [usedCards[uid] for uid in removeUids if uid in usedCards]
+            if toRemove:
+                yield self.y_removeBuffEffectSource(toRemove, self.effUniID)
+        if addUids:
+            yield self.y_grant([eligibleByUid[uid] for uid in addUids])
+
+        self._granted = eligibleUids
+
+
+class AuraToSelf(Effect):
+    """
+    Base for a continuous SELF-buff (the target is always the source itself).
+
+    Concrete auras implement:
+        condition(self) -> bool   whether the buff should currently be on (default: always).
+                                  Use for "while <state>, this card gets <buff>".
+        y_apply(self)             MUST override: apply the buff to self.owner as a fromSource
+                                  buff (a coroutine). Compute any dynamic value inside here,
+                                  e.g. newAtk = handCount * 500.
+    and set observeSignals to whatever changes the condition / value (statically or in onInit).
+
+    On each observed signal: if isActive() and condition() are both true, y_apply() runs
+    (fromSource + uniqueSourceID, so it replaces the previous buff with the fresh value);
+    otherwise the buff is removed. isSilenced is NOT checked (silence doesn't disable
+    permanent effects); override isActive() for custom gating. The reentrancy guard makes it
+    safe to observe the data-change signal the buff itself emits.
+    """
+    effType = EFF_TYPE.permanent
+
+    # source enter/leave is always needed (apply on entry, tear down on leave); subclasses
+    # extend this with whatever else changes the condition/value
+    observeSignals = (LOCATION.monsterZone, [
+        Signal.AttachMonsterZone, Signal.DetachMonsterZone, Signal.CardDataChanged,
+    ])
+
+    AI_HINT = [AI_HINT.enhance]
+    EFF_POWER = 2
+
+    _recomputing = False
+
+    def condition(self) -> bool:
+        """Override for conditional auras: whether the buff should currently be on. Default: always."""
+        return True
+
+    def y_apply(self):
+        """MUST override: apply the buff to self.owner as a fromSource buff (a coroutine)."""
+        ERROR_MSG(self.owner.getName(), "AuraToSelf.y_apply() must be overridden")
+        return
+        yield   # never reached, marks this as a coroutine
+
+    def isActive(self):
+        """Whether the aura currently applies. Default: the source is in its operating
+        location (observeSignals[0]). isSilenced is NOT checked. Override for custom gating."""
+        return self.owner.location & self.observeSignals[0] != 0
+
+    def y_signal(self, signal):
+        if self._recomputing:
+            return
+        self._recomputing = True
+        try:
+            yield self._y_recompute()
+        finally:
+            self._recomputing = False
+
+    def _y_recompute(self):
+        if self.isActive() and self.condition():
+            yield self.y_apply()
+        else:
+            yield self.y_removeBuffEffectSource(self.owner, self.effUniID)

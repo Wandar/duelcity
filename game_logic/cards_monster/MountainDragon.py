@@ -5,7 +5,6 @@ from annos import *
 """
 CardName:Terrabrown Horned Dragon
 卡名:地褐角龙
-效果:1T:<召唤时>:破坏对方场上1只守备表示的怪兽。
 """
 
 class MountainDragon(Card):
@@ -13,37 +12,42 @@ class MountainDragon(Card):
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
-        self.initEffect(MountainDragon_e1)
+        self.initEffect(MountainDragon_AvalancheBreath)
 
 
-class MountainDragon_e1(Effect):
-    # 1T:<召唤时>:破坏对方场上1只守备表示的怪兽。
+"""
+1T:此卡被召唤成功时,对对手场上所有怪兽各造成500点伤害。
+1T:<When this card is Summoned>:Deal 500 damage to all monsters on your opponent's field.
+"""
+class MountainDragon_AvalancheBreath(Effect):
     effType = EFF_TYPE.trigger
+
     observeSignals = (LOCATION.monsterZone, [Signal.Summon])
-    AI_HINT = [AI_HINT.eraser]
+
+    AI_HINT = [AI_HINT.damager, AI_HINT.eraser]
     EFF_POWER = 3
 
-    def y_cost(self, justCheck, signal):
+    def y_cost(self, justCheck: bool, signal):
         if not isSignal(signal, Signal.Summon, self.owner):
             return False
-        def isDefence(c):
-            return c.form in (FORM.defence, FORM.defenceSet)
-        targets = self.searchCards(LOCATION.monsterZone, self.getEnemySideTuple(), CARD_TYPE.monster, self, isDefence)
-        if not targets:
+
+        enemies = self.searchCards(
+            LOCATION.monsterZone, self.getEnemySideTuple(), CARD_TYPE.monster, self
+        )
+        if not enemies:
             return False
+
         if justCheck:
             return True
-        t = yield self.y_select1Card(targets, TITLE.destroy, canCancel=True)
-        if not t:
-            return False
-        self.saveTarget1(t)
         return True
 
-    def y_activate(self, justCheck, signal):
+    def y_activate(self, justCheck: bool, signal):
         if justCheck:
             return True
-        t = self.getLegalTarget1()
-        if not t:
-            return False
-        yield self.y_destroyCard(t)
+
+        enemies = self.searchCards(
+            LOCATION.monsterZone, self.getEnemySideTuple(), CARD_TYPE.monster, self
+        )
+        if enemies:
+            yield self.y_damageCard(enemies, 500)
         return True

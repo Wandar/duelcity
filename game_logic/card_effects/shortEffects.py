@@ -17,6 +17,38 @@ class ShortEffect(Effect):
 
 
 """
+避难 Refuge - 被效果移除时自动除外，回合结束时无视条件特召回
+抗性 Resistance - 被效果移除时以变为半破代替
+魔法免疫 SpellImmunity - 免疫魔法卡效果
+魔法陷阱免疫 SpellTrapImmunity - 免疫魔法和陷阱卡效果
+效果伤害免疫 EffectDamageImmunity - 免疫效果伤害
+自临 SelfDescend - 无法被通常召唤也无法被其他卡效果特召
+苏生限制 RevivalRestriction - 被其他卡效果召唤时立即变为半破
+献祭禁止 CantBeTributed - 无法被作为献祭素材
+迟缓 Slow - 召唤的回合无法攻击
+复生 Revive - 被破坏的回合结束时以半破临时特召回
+交易 Trade - 手牌效果：返回卡组后重新抽一张
+连击 DoubleAttack - 每回合可攻击2次
+直击 DirectAttack - 可以直接攻击对方玩家
+无法攻击 CannotAttack - 无法宣告攻击
+效果免疫 EffectImmunity - 不受其他卡效果影响
+扫射 Strafe - 远程攻击同时打击所有敌方怪兽
+回复 Regeneration{} - 自己回合结束时回复N点ATK
+吸能 Absorb{} - 攻击怪兽后永久获得N点ATK
+战意 WarSpirit{} - 我方战斗阶段时增加ATK和DEF直到我方战斗阶段结束
+延迟召唤 DelayedSummon{} - 手牌放入魔法区，经过N个己方准备阶段后特召
+空场特召 EmptyFieldSpecialSummon - 场上无怪兽时可从手牌特殊召唤
+空场额外召唤 EmptyFieldExtraSummon - 场上无怪兽时消耗额外召唤权从手牌特召
+招式卡 SkillCards{} - 召唤时从指定池中随机放N张招式卡到魔陷区
+三召 TripleTribute - 手牌效果：献祭3只怪兽后额外召唤此卡
+无法特召 CannotSpecialSummon - 不能被特殊召唤（可通常/额外召唤）
+穿刺 Pierce - 攻击守备怪兽时造成穿刺伤害
+受保护 Protected - 场上有非受保护怪兽时不能被指定为近战攻击目标
+无法被攻击 CannotBeAttacked - 不能被指定为近战攻击目标
+"""
+
+
+"""
 避难:当此卡因其他卡的效果即将从怪兽区离开时,此卡除外,回合结束时从除外区无视条件特殊召唤,保留离开时的ATK
 """
 class Refuge(ShortEffect):
@@ -98,7 +130,6 @@ class Refuge(ShortEffect):
 class Resistance(ShortEffect):
     effType = EFF_TYPE.permanent
 
-    NEED_NUM = True
     observeSignals = (LOCATION.monsterZone, [Signal.BeforeRemovedByEffect])
     def y_signal(self, signal:Signal.BeforeRemovedByEffect):
         if self.owner.isMonsterOnField() and isSignal(signal, Signal.BeforeRemovedByEffect) and self.owner in signal.cardList and signal.reasonEffect and signal.reasonEffect.owner!=self.owner and signal.reasonEffectPeriod!=EFF_PERIOD.costing:
@@ -106,7 +137,7 @@ class Resistance(ShortEffect):
         else:
             return
 
-        if self.owner.atk > self.owner.defence != 0:
+        if self.owner.hasLife():
             signal.reasonEffect.addFlagCount(EFF_FLAG.resistFromRemovedByEffect, self.owner)
             yield self.owner.y_becomeHalfLife()
 
@@ -140,10 +171,18 @@ class SpellTrapImmunity(ShortEffect):
             yield self.y_removeBuffEffectSource(self.owner,self.effUniID)
 
 """
-效果伤害免疫
+伤害免疫:免疫 y_damageCard(效果伤害)和远程攻击造成的伤害
 """
-class EffectDamageImmunity(ShortEffect):
+class DamageImmunity(ShortEffect):
     effType = EFF_TYPE.permanent
+
+    observeSignals = (LOCATION.monsterZone,[Signal.AttachMonsterZone,Signal.DetachMonsterZone])
+
+    def y_signal(self,signal):
+        if isSignal(signal,Signal.AttachMonsterZone,self.owner):
+            yield self.y_addImmunityBuffToCard(self.owner,IMMUNITY_MASK.damage,EFF_DURATION.fromSource,self.effUniID)
+        elif isSignal(signal,Signal.DetachMonsterZone,self.owner):
+            yield self.y_removeBuffEffectSource(self.owner,self.effUniID)
 
 
 """
@@ -198,20 +237,17 @@ class Slow(ShortEffect):
 """
 class Revive(ShortEffect):
     # Revive: after being destroyed, at that turn's end, special summon this card back with halfBroken + temporary.
-    # The temporary-summoned monster is sent to the graveyard at turn end; once per duel.
+    # The temporary-summoned monster is sent to the graveyard at turn end.
     effType = EFF_TYPE.permanent
     observeSignals = (LOCATION.grave,[Signal.Destroyed,Signal.TurnEnds])
     shouldSummonTurn=0
-    revivedOnce=False
     def y_signal(self,signal):
         if isSignal(signal,Signal.Destroyed,self.owner):
-            if not self.revivedOnce:
-                self.shouldSummonTurn=self.game.curTurn
+            self.shouldSummonTurn=self.game.curTurn
         elif isSignal(signal,Signal.TurnEnds):
             if self.shouldSummonTurn!=0 and self.game.curTurn==self.shouldSummonTurn:
                 self.shouldSummonTurn=0
-                if not self.revivedOnce and self.owner.location==LOCATION.grave and self.freeMonsterSpace()>0:
-                    self.revivedOnce=True
+                if self.owner.location==LOCATION.grave and self.freeMonsterSpace()>0:
                     yield self.y_specialSummon(self.owner,halfBroken=True,buffIDOrList=CARD_BUFF.temporary)
 
 
@@ -316,10 +352,19 @@ class CannotAttack(ShortEffect):
 """
 效果免疫
 """
-class EffectImmune(ShortEffect):
+class EffectImmunity(ShortEffect):
     # Marker: this card is unaffected by a FOREIGN card's effects (own/controller effects still apply).
     # Read in Effect.removeNotAffectedInList, the shared target filter for all effect operations.
-    pass
+    effType = EFF_TYPE.permanent
+
+    observeSignals = (LOCATION.monsterZone,[Signal.AttachMonsterZone,Signal.DetachMonsterZone])
+
+    def y_signal(self,signal):
+        if isSignal(signal,Signal.AttachMonsterZone,self.owner):
+            yield self.y_addImmunityBuffToCard(self.owner,IMMUNITY_MASK.spell|IMMUNITY_MASK.trap|IMMUNITY_MASK.monsterEffect,EFF_DURATION.fromSource,self.effUniID)
+        elif isSignal(signal,Signal.DetachMonsterZone,self.owner):
+            yield self.y_removeBuffEffectSource(self.owner,self.effUniID)
+
 
 """
 扫射
@@ -355,21 +400,6 @@ class Regeneration(ShortEffect):
         if heal > 0:
             yield self.y_healCard(self.owner, heal)
 
-"""
-固定姿态:召唤的回合无法切换表示形式
-"""
-class FixedStance(ShortEffect):
-    # FixedStance: the player cannot manually change this card's battle position on the turn it
-    # was summoned. Reuses cantChangeFormThisTurn (the existing position-change gate in
-    # Game.player_getChangingMonsterFormOperates), which is reset on turn start.
-    effType = EFF_TYPE.permanent
-    observeSignals = (LOCATION.monsterZone, [Signal.Summon])
-    AI_HINT = [AI_HINT.permanent]
-    def y_signal(self, signal):
-        if isSignal(signal, Signal.Summon, self.owner):
-            self.owner.cantChangeFormThisTurn = True
-        return
-        yield
 
 """
 吸能
@@ -395,17 +425,28 @@ class Absorb(ShortEffect):
 战意
 """
 class WarSpirit(ShortEffect):
-    # WarSpirit N (NEED_NUM): when this card declares an attack, it gains N ATK until the battle ends.
+    # WarSpirit N (NEED_NUM): during the controller's own Battle Phase this card gains N ATK and
+    # N DEF; the bonus is removed when that Battle Phase ends (entering Main Phase 2) or if the
+    # card leaves the monster zone before then.
     NEED_NUM = True
     effType = EFF_TYPE.permanent
-    observeSignals = (LOCATION.monsterZone, [Signal.RequestBattle])
+    observeSignals = (LOCATION.monsterZone, [Signal.ChangePhaseToBattle, Signal.AttachMonsterZone,
+                                             Signal.ChangePhaseToMainPhase2, Signal.TurnEnds, Signal.DetachMonsterZone])
     AI_HINT = [AI_HINT.addAtk]
+
+    def _inOwnBattlePhase(self):
+        return self.game.whoseTurn == self.getSide() and self.game.phase == PHASE.battle
+
     def y_signal(self, signal):
-        if not isSignal(signal, Signal.RequestBattle):
-            return
-        if signal.attackerCard is not self.owner:
-            return
-        yield self.y_addCardData(self.owner, attackAdd=self.number_0, effDuration=EFF_DURATION.utilBattleEnds)
+        # Grant on Battle Phase start, or on entering the zone if that phase is already underway.
+        if (isSignal(signal, Signal.ChangePhaseToBattle) or isSignal(signal, Signal.AttachMonsterZone, self.owner)) \
+                and self._inOwnBattlePhase():
+            yield self.y_addCardData(self.owner, attackAdd=self.number_0, defenceAdd=self.number_0,
+                                     effDuration=EFF_DURATION.fromSource, uniqueSourceID=self.effUniID)
+        # Remove when the Battle Phase ends (MP2 or a direct end of turn) or the card leaves the zone.
+        elif isSignal(signal, Signal.ChangePhaseToMainPhase2) or isSignal(signal, Signal.TurnEnds) \
+                or isSignal(signal, Signal.DetachMonsterZone, self.owner):
+            yield self.y_removeBuffEffectSource(self.owner, self.effUniID)
 
 """
 延迟召唤

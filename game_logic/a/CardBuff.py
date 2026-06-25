@@ -63,13 +63,15 @@ class ShortEffectBuff(CardBuff):
         pass
 
 
+# NOTE: stat buffs apply WITHOUT clamping here. Card._recalBuffs clamps once after every
+# buff is applied, so a large reduction followed by an addition lands on the true sum
+# instead of being lost at 0 mid-way.
 class attackChange(CardBuff):
     number=0
     IS_CHANGE_TO = True
     TYPE="attack"
     def onBuff(self,card : Card):
         card.atk=int(self.number)
-        card.atk=limit(card.atk,0,2147483647)
 
 
 class rangeAtkChange(CardBuff):
@@ -79,7 +81,6 @@ class rangeAtkChange(CardBuff):
     def onBuff(self,card : Card):
         if card.rangeAtk!=ATK.none:
             card.rangeAtk=int(self.number)
-            card.rangeAtk=limit(card.rangeAtk,0,60000)
 
 
 class defenceChange(CardBuff):
@@ -88,7 +89,6 @@ class defenceChange(CardBuff):
     TYPE="defence"
     def onBuff(self,card : Card):
         card.defence=int(self.number)
-        card.defence=limit(card.defence,0,2147483647)
 
 
 class attackAdd(CardBuff):
@@ -96,8 +96,6 @@ class attackAdd(CardBuff):
     TYPE="attack"
     def onBuff(self,card : Card):
         card.atk+=self.number
-        card.atk=int(card.atk)
-        card.atk=limit(card.atk,0,2147483647)
 
 
 class rangeAtkAdd(CardBuff):
@@ -106,15 +104,13 @@ class rangeAtkAdd(CardBuff):
     def onBuff(self,card : Card):
         if card.rangeAtk!=ATK.none:
             card.rangeAtk+=self.number
-            card.rangeAtk=limit(card.rangeAtk,0,60000)
 
 
 class defenceAdd(CardBuff):
     number=0
     TYPE="defence"
     def onBuff(self,card : Card):
-        card.defence+=int(self.number)
-        card.defence=limit(card.defence,0,2147483647)
+        card.defence+=self.number
 
 
 class attackMulti(CardBuff):
@@ -122,7 +118,6 @@ class attackMulti(CardBuff):
     TYPE="attack"
     def onBuff(self,card : Card):
         card.atk*=self.number
-        card.atk=limit(card.atk,0,2147483647)
 
 
 class rangeAtkMulti(CardBuff):
@@ -131,7 +126,6 @@ class rangeAtkMulti(CardBuff):
     def onBuff(self,card : Card):
         if card.rangeAtk!=ATK.none:
             card.rangeAtk*=self.number
-            card.rangeAtk=limit(card.rangeAtk,0,60000)
 
 
 class defenceMulti(CardBuff):
@@ -139,7 +133,6 @@ class defenceMulti(CardBuff):
     TYPE="defence"
     def onBuff(self,card : Card):
         card.defence*=self.number
-        card.defence=limit(card.defence,0,2147483647)
 
 
 class levelChange(CardBuff):
@@ -148,7 +141,6 @@ class levelChange(CardBuff):
     TYPE="level"
     def onBuff(self,card:Card):
         card.level=self.number
-        card.level=limit(card.level,0,127)
 
 
 class levelAdd(CardBuff):
@@ -156,7 +148,6 @@ class levelAdd(CardBuff):
     TYPE="level"
     def onBuff(self,card : Card):
         card.level+=self.number
-        card.level=limit(card.level,0,127)
 
 
 class attackTimesChange(CardBuff):
@@ -190,9 +181,8 @@ class raceChange(CardBuff):
 class controlled(CardBuff):
     pass
 
-#TODO
 class immunity(CardBuff):
-    immunityMask:IMMUNITY_MASK=IMMUNITY_MASK.effectDamage|IMMUNITY_MASK.battleDamage
+    immunityMask:IMMUNITY_MASK=IMMUNITY_MASK.damage
     def onBuff(self,card):
         card.immunityMask|=self.immunityMask
 

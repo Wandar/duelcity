@@ -5,7 +5,6 @@ from annos import *
 """
 CardName:Ankylosaurus
 卡名:甲龙
-效果:1T:<召唤时>:发现1张恐龙族怪兽卡。
 """
 
 class Ankylosaurus(Card):
@@ -13,26 +12,38 @@ class Ankylosaurus(Card):
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
-        self.initEffect(Ankylosaurus_e1)
+        self.initEffect(Ankylosaurus_TailSlam)
 
 
-class Ankylosaurus_e1(Effect):
-    # 1T:<召唤时>:发现1张恐龙族怪兽卡。
-    effType = EFF_TYPE.trigger
-    observeSignals = (LOCATION.monsterZone, [Signal.Summon])
-    AI_HINT = [AI_HINT.searchMonster]
-    EFF_POWER = 3
+"""
+1A:<战斗效果>:这张卡战斗破坏对方怪兽送去墓地时，给与对方基本分400分伤害。
+1OT: <Battle effect>: When this card destroys an opponent's monster by battle and sends it to the Graveyard, inflict 400 damage to your opponent.
+"""
+class Ankylosaurus_TailSlam(Effect):
+    effType = EFF_TYPE.optionalTrigger
 
-    def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.Summon, self.owner):
+    observeSignals = (LOCATION.monsterZone, [Signal.BattleFinish])
+
+    AI_HINT = [AI_HINT.damager]
+    EFF_POWER = 2
+
+    def y_cost(self, justCheck: bool, signal: Signal.BattleFinish):
+        if not isSignal(signal, Signal.BattleFinish):
             return False
+        if signal.attackerCard != self.owner:
+            return False
+        if signal.receiverCard is None:
+            return False
+        if signal.receiverCard.isMonsterOnField():
+            return False
+
         if justCheck:
             return True
         return True
 
-    def y_activate(self, justCheck, signal):
+    def y_activate(self, justCheck: bool, signal):
         if justCheck:
             return True
-        yield self.y_discoverCard(side=self.getSide(), race=RACE.DINOSAUR,
-                                  cardType=CARD_TYPE.monster, count=3, canCancel=True)
+
+        yield self.y_damagePlayer(self.getEnemySideTuple(), 400)
         return True

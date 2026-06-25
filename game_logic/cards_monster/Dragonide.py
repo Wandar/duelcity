@@ -5,7 +5,6 @@ from annos import *
 """
 CardName:Hammer Lizard
 卡名:铁锤蜥蜴
-效果:1T:<战斗破坏对方怪兽时>:破坏对方场上1张魔法·陷阱卡。
 """
 
 class Dragonide(Card):
@@ -13,40 +12,53 @@ class Dragonide(Card):
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
-        self.initEffect(Dragonide_e1)
+        self.initEffect(Dragonide_DragonCall)
 
 
-class Dragonide_e1(Effect):
-    # 1T:<战斗破坏对方怪兽时>:破坏对方场上1张魔法·陷阱卡。
-    effType = EFF_TYPE.trigger
-    observeSignals = (LOCATION.monsterZone, [Signal.BattleFinish])
-    AI_HINT = [AI_HINT.spellDestroyer]
-    EFF_POWER = 3
+"""
+1OT:此卡通常召唤成功时,从墓地将1只3星以下的龙族怪兽特殊召唤。
+1OT:<When this card is Normal Summoned>:Special Summon 1 Level 3 or lower DRAGON monster from your Graveyard.
+"""
+class Dragonide_DragonCall(Effect):
+    effType = EFF_TYPE.optionalTrigger
 
-    def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.BattleFinish):
+    observeSignals = (LOCATION.monsterZone, [Signal.NormalSummon])
+
+    AI_HINT = [AI_HINT.summoner]
+    EFF_POWER = 2
+
+    def y_cost(self, justCheck: bool, signal: Signal.NormalSummon):
+        if not isSignal(signal, Signal.NormalSummon, self.owner):
             return False
-        if signal.attackerCard != self.owner:
+
+        def isTarget(card):
+            return card.race == RACE.DRAGON and card.level <= 3
+
+        targets = self.searchCards(
+            LOCATION.grave, self.getSide(), CARD_TYPE.monster, self, isTarget
+        )
+        if not targets:
             return False
-        rc = signal.receiverCard
-        if rc is None or rc.isMonsterOnField():
+        if self.freeMonsterSpace() == 0:
             return False
-        enemyST = self.searchCards(LOCATION.spellTrapZone, self.getEnemySideTuple(), CARD_TYPE.all, self)
-        if not enemyST:
-            return False
+
         if justCheck:
             return True
-        t = yield self.y_select1Card(enemyST, TITLE.destroy, canCancel=True)
-        if not t:
+
+        chosen = yield self.y_select1Card(targets, TITLE.specialSummon, canCancel=True)
+        if not chosen:
             return False
-        self.saveTarget1(t)
+
+        self.saveTarget1(chosen)
         return True
 
-    def y_activate(self, justCheck, signal):
+    def y_activate(self, justCheck: bool, signal):
         if justCheck:
             return True
-        t = self.getLegalTarget1()
-        if not t:
+
+        target = self.getLegalTarget1(checkLocationChange=False)
+        if not target:
             return False
-        yield self.y_destroyCard(t)
+
+        yield self.y_specialSummon(target)
         return True

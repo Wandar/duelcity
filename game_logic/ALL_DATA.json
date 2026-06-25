@@ -313,7 +313,7 @@
             "type": "MONSTER",
             "chuangyi": "",
             "short_effects": "",
-            "effect_zh": "",
+            "effect_zh": "一种拥有微弱龙族血脉的幼虫。",
             "effect_en": "",
             "effect_zh_tr": "",
             "effect_ja": "",
@@ -1097,7 +1097,7 @@
             "type": "MONSTER",
             "chuangyi": "战斗类效果",
             "short_effects": "",
-            "effect_zh": "1P:此卡进行战斗的伤害计算时,使对方怪兽的{DEF}变为0(铁锤碎甲)。",
+            "effect_zh": "1T:<战斗破坏对方怪兽时>:破坏对方场上1张魔法·陷阱卡。",
             "effect_en": "",
             "effect_zh_tr": "",
             "effect_ja": "",
@@ -1197,7 +1197,7 @@
             "type": "MONSTER",
             "chuangyi": "",
             "short_effects": "",
-            "effect_zh": "1T:<召唤·特殊召唤时>:这个回合对方场上所有怪兽的效果无效(地鸣震慑)。",
+            "effect_zh": "1T:<召唤时>:破坏对方场上1只守备表示的怪兽。",
             "effect_en": "",
             "effect_zh_tr": "",
             "effect_ja": "",
@@ -1231,7 +1231,7 @@
             "type": "MONSTER",
             "chuangyi": "8星大怪,破坏场上怪兽时,从弃牌区特殊召唤一只4星龙族",
             "short_effects": "",
-            "effect_zh": "1P:此卡战斗破坏对方怪兽后可以再进行1次攻击。2P:只要此卡在场上,对方不能特殊召唤怪兽(暴君压制)。",
+            "effect_zh": "1T:<召唤时>:破坏对方场上攻击力最高的1只怪兽。",
             "effect_en": "",
             "effect_zh_tr": "",
             "effect_ja": "",
@@ -1264,7 +1264,7 @@
             "type": "MONSTER",
             "chuangyi": "风属性效果",
             "short_effects": "",
-            "effect_zh": "1P:此卡可以无视攻击表示怪兽直接攻击对方,但这样攻击时战斗伤害减半(翱翔强袭)。",
+            "effect_zh": "1T:<召唤时>:发现1张鸟兽族怪兽卡。",
             "effect_en": "",
             "effect_zh_tr": "",
             "effect_ja": "",
@@ -1528,7 +1528,7 @@
             "type": "MONSTER",
             "chuangyi": "",
             "short_effects": "",
-            "effect_zh": "1I:<对方发动以场上的卡为对象的效果时>:改由自己重新选择该效果的对象(萤光乱视:眩目光翼扰乱对方视线,使其效果转向自己指定的目标,可指回对方自身的卡)。",
+            "effect_zh": "1T:<召唤时>:发现1张等级4以下的昆虫族怪兽卡并特殊召唤。",
             "effect_en": "",
             "effect_zh_tr": "",
             "effect_ja": "",
@@ -2150,7 +2150,7 @@
             "type": "MONSTER",
             "chuangyi": "恐龙联动效果",
             "short_effects": "",
-            "effect_zh": "1OT:<战斗效果>:此卡战斗破坏对方怪兽送入墓地时,对对方造成400伤害(尾锤夯击)。",
+            "effect_zh": "1T:<召唤时>:发现1张恐龙族怪兽卡。",
             "effect_en": "",
             "effect_zh_tr": "",
             "effect_ja": "",
@@ -2215,7 +2215,7 @@
             "type": "MONSTER",
             "chuangyi": "恐龙联动效果",
             "short_effects": "",
-            "effect_zh": "1T:<召唤时>:对方场上1只怪兽这个回合效果无效且{ATK}减半(毒液喷射)。",
+            "effect_zh": "1T:<召唤时>:破坏对方场上1只怪兽,此卡本回合不能攻击。",
             "effect_en": "",
             "effect_zh_tr": "",
             "effect_ja": "",
@@ -2247,7 +2247,7 @@
             "type": "MONSTER",
             "chuangyi": "恐龙联动效果",
             "short_effects": "",
-            "effect_zh": "1P:被此卡攻击的怪兽,伤害计算后返回持有者手牌(顶撞)。",
+            "effect_zh": "1T:<战斗破坏对方怪兽时>:可再破坏对方场上1张卡。",
             "effect_en": "",
             "effect_zh_tr": "",
             "effect_ja": "",
@@ -2279,7 +2279,7 @@
             "type": "MONSTER",
             "chuangyi": "恐龙联动效果",
             "short_effects": "",
-            "effect_zh": "1T:<自己召唤恐龙族怪兽时>[不限次数]:自己回复200基本分(种群号角)。",
+            "effect_zh": "1T:<召唤时>:发现1张等级4以下的恐龙族怪兽卡并特殊召唤。",
             "effect_en": "",
             "effect_zh_tr": "",
             "effect_ja": "",
@@ -2311,7 +2311,7 @@
             "type": "MONSTER",
             "chuangyi": "恐龙联动效果",
             "short_effects": "",
-            "effect_zh": "1P:此卡为守备表示时,对方怪兽不能攻击此卡以外的恐龙族怪兽(骨板护群)。",
+            "effect_zh": "1T:守备表示的此卡被攻击的伤害计算后,破坏攻击怪兽。",
             "effect_en": "",
             "effect_zh_tr": "",
             "effect_ja": "",
@@ -2574,7 +2574,7 @@
             "type": "MONSTER",
             "chuangyi": "",
             "short_effects": "",
-            "effect_zh": "",
+            "effect_zh": "1A:[丢弃1张手牌]:破坏对方场上1只怪兽。",
             "effect_en": "",
             "effect_zh_tr": "",
             "effect_ja": "",
@@ -4754,7 +4754,7 @@
             "type": "MONSTER",
             "chuangyi": "",
             "short_effects": "",
-            "effect_zh": "",
+            "effect_zh": "1T:<被破坏后>:发现1张机械族怪兽卡并以守备表示特殊召唤。",
             "effect_en": "",
             "effect_zh_tr": "",
             "effect_ja": "",
@@ -5531,8 +5531,8 @@
         {
             "disable": 0,
             "key": "Caniathrox",
-            "name_zh": "",
-            "name_en": "",
+            "name_zh": "加斯爬行者",
+            "name_en": "Gathcrawler",
             "name_zh_tr": "",
             "name_ja": "",
             "image": "",
@@ -5554,13 +5554,16 @@
             "effect_zh_tr": "",
             "effect_ja": "",
             "rarity": "",
-            "extradata": {}
+            "extradata": {
+                "bt": 1,
+                "project": 2
+            }
         },
         {
             "disable": 0,
             "key": "Cephalonops",
-            "name_zh": "",
-            "name_en": "",
+            "name_zh": "沙渊八眼魔",
+            "name_en": "Desert Abyssal Octops",
             "name_zh_tr": "",
             "name_ja": "",
             "image": "",
@@ -5582,13 +5585,16 @@
             "effect_zh_tr": "",
             "effect_ja": "",
             "rarity": "",
-            "extradata": {}
+            "extradata": {
+                "bt": 1,
+                "project": 2
+            }
         },
         {
             "disable": 0,
             "key": "Pistriptere",
-            "name_zh": "",
-            "name_en": "",
+            "name_zh": "多鳍鲨",
+            "name_en": "Multifin Shark",
             "name_zh_tr": "",
             "name_ja": "",
             "image": "",
@@ -5610,13 +5616,16 @@
             "effect_zh_tr": "",
             "effect_ja": "",
             "rarity": "",
-            "extradata": {}
+            "extradata": {
+                "bt": 2,
+                "project": 2
+            }
         },
         {
             "disable": 0,
             "key": "Xenokarce",
-            "name_zh": "",
-            "name_en": "",
+            "name_zh": "六足蟹怪",
+            "name_en": "Hexalimb Crabfiend",
             "name_zh_tr": "",
             "name_ja": "",
             "image": "",
@@ -5638,13 +5647,16 @@
             "effect_zh_tr": "",
             "effect_ja": "",
             "rarity": "",
-            "extradata": {}
+            "extradata": {
+                "bt": 3,
+                "project": 2
+            }
         },
         {
             "disable": 0,
             "key": "Crassorrid",
-            "name_zh": "",
-            "name_en": "",
+            "name_zh": "荒漠暴食怪",
+            "name_en": "Desert Glutton",
             "name_zh_tr": "",
             "name_ja": "",
             "image": "",
@@ -5666,13 +5678,16 @@
             "effect_zh_tr": "",
             "effect_ja": "",
             "rarity": "",
-            "extradata": {}
+            "extradata": {
+                "bt": 1,
+                "project": 2
+            }
         },
         {
             "disable": 0,
             "key": "Feroptere",
-            "name_zh": "",
-            "name_en": "",
+            "name_zh": "水沼飞翼",
+            "name_en": "Swampwing",
             "name_zh_tr": "",
             "name_ja": "",
             "image": "",
@@ -5694,13 +5709,16 @@
             "effect_zh_tr": "",
             "effect_ja": "",
             "rarity": "",
-            "extradata": {}
+            "extradata": {
+                "bt": 2,
+                "project": 2
+            }
         },
         {
             "disable": 0,
             "key": "RostrokarckLarvae",
-            "name_zh": "",
-            "name_en": "",
+            "name_zh": "白壳幼螯",
+            "name_en": "Whiteshell Clawling",
             "name_zh_tr": "",
             "name_ja": "",
             "image": "",
@@ -5722,13 +5740,16 @@
             "effect_zh_tr": "",
             "effect_ja": "",
             "rarity": "",
-            "extradata": {}
+            "extradata": {
+                "bt": 1,
+                "project": 2
+            }
         },
         {
             "disable": 0,
             "key": "Carcinoptera",
-            "name_zh": "",
-            "name_en": "",
+            "name_zh": "裂空镰虫",
+            "name_en": "Riftscythera",
             "name_zh_tr": "",
             "name_ja": "",
             "image": "",
@@ -5750,13 +5771,16 @@
             "effect_zh_tr": "",
             "effect_ja": "",
             "rarity": "",
-            "extradata": {}
+            "extradata": {
+                "bt": 1,
+                "project": 2
+            }
         },
         {
             "disable": 0,
             "key": "Scolokarck_Tint3 Variant",
-            "name_zh": "",
-            "name_en": "",
+            "name_zh": "岩棘钳爪",
+            "name_en": "Rockspine Pincer",
             "name_zh_tr": "",
             "name_ja": "",
             "image": "",
@@ -5778,13 +5802,16 @@
             "effect_zh_tr": "",
             "effect_ja": "",
             "rarity": "",
-            "extradata": {}
+            "extradata": {
+                "bt": 1,
+                "project": 2
+            }
         },
         {
             "disable": 0,
             "key": "Crustaspikan",
-            "name_zh": "",
-            "name_en": "",
+            "name_zh": "棘骨荒暴王",
+            "name_en": "Spinebone Wastelord",
             "name_zh_tr": "",
             "name_ja": "",
             "image": "",
@@ -5806,13 +5833,16 @@
             "effect_zh_tr": "",
             "effect_ja": "",
             "rarity": "",
-            "extradata": {}
+            "extradata": {
+                "bt": 4,
+                "project": 2
+            }
         },
         {
             "disable": 0,
             "key": "CrustaspikanLarvae",
-            "name_zh": "",
-            "name_en": "",
+            "name_zh": "林地甲蛹",
+            "name_en": "Woodland Shellpupa",
             "name_zh_tr": "",
             "name_ja": "",
             "image": "",
@@ -5834,13 +5864,16 @@
             "effect_zh_tr": "",
             "effect_ja": "",
             "rarity": "N",
-            "extradata": {}
+            "extradata": {
+                "bt": 1,
+                "project": 2
+            }
         },
         {
             "disable": 0,
             "key": "Venodonte_Tint1",
-            "name_zh": "",
-            "name_en": "",
+            "name_zh": "电尾小褐蝎",
+            "name_en": "Thundersting Scorpionling",
             "name_zh_tr": "",
             "name_ja": "",
             "image": "",
@@ -5862,13 +5895,16 @@
             "effect_zh_tr": "",
             "effect_ja": "",
             "rarity": "",
-            "extradata": {}
+            "extradata": {
+                "bt": 1,
+                "project": 2
+            }
         },
         {
             "disable": 0,
             "key": "Arathrox",
-            "name_zh": "",
-            "name_en": "",
+            "name_zh": "畸足",
+            "name_en": "Malfoot",
             "name_zh_tr": "",
             "name_ja": "",
             "image": "",
@@ -5890,13 +5926,16 @@
             "effect_zh_tr": "",
             "effect_ja": "",
             "rarity": "",
-            "extradata": {}
+            "extradata": {
+                "bt": 0,
+                "project": 2
+            }
         },
         {
             "disable": 0,
             "key": "Fulgurodonte",
-            "name_zh": "",
-            "name_en": "",
+            "name_zh": "蓝冰刺魔虫",
+            "name_en": "Blueice Thornworm",
             "name_zh_tr": "",
             "name_ja": "",
             "image": "",
@@ -5918,13 +5957,16 @@
             "effect_zh_tr": "",
             "effect_ja": "",
             "rarity": "",
-            "extradata": {}
+            "extradata": {
+                "bt": 0,
+                "project": 2
+            }
         },
         {
             "disable": 0,
             "key": "Venosaur_Tint_Green",
-            "name_zh": "",
-            "name_en": "",
+            "name_zh": "腐沼獠牙怪",
+            "name_en": "Swamp Rotfang Fiend",
             "name_zh_tr": "",
             "name_ja": "",
             "image": "",
@@ -5946,7 +5988,10 @@
             "effect_zh_tr": "",
             "effect_ja": "",
             "rarity": "",
-            "extradata": {}
+            "extradata": {
+                "bt": 2,
+                "project": 2
+            }
         },
         {
             "disable": 0,
@@ -9303,7 +9348,7 @@
             "type": "MONSTER",
             "chuangyi": "",
             "short_effects": "",
-            "effect_zh": "",
+            "effect_zh": "1T:<召唤时>:发现1张水属性怪兽卡。",
             "effect_en": "",
             "effect_zh_tr": "",
             "effect_ja": "",
@@ -10718,6 +10763,7 @@
             "effect_ja": "",
             "rarity": "R",
             "extradata": {
+                "bt": 2,
                 "project": 4,
                 "tricount": "2332,1036,516"
             }
@@ -10749,6 +10795,7 @@
             "effect_ja": "",
             "rarity": "R",
             "extradata": {
+                "bt": 2,
                 "project": 4,
                 "tricount": "3980,1860,478"
             }
@@ -14912,6 +14959,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 3,
                 "project": 5,
                 "tricount": "72171,35093,16547,3563"
             }
@@ -14943,6 +14991,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 4,
                 "project": 5,
                 "tricount": "60126,29248,13824,2499"
             }
@@ -14974,6 +15023,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 2,
                 "project": 5,
                 "tricount": "59993,25931,9865,3821"
             }
@@ -15005,6 +15055,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 3,
                 "project": 5,
                 "tricount": "58046,28294,13448,2590"
             }
@@ -15036,6 +15087,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 4,
                 "project": 5,
                 "tricount": "74216,36382,17456,4363"
             }
@@ -15067,9 +15119,290 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 1,
                 "project": 5,
                 "tricount": "39300,19000,8876,1901"
             }
+        },
+        {
+            "disable": 0,
+            "key": "SciFi Crocodile_Skin3",
+            "name_zh": "",
+            "name_en": "",
+            "name_zh_tr": "",
+            "name_ja": "",
+            "image": "",
+            "prefab": "",
+            "package": "",
+            "diameter": 0.0,
+            "level": 0,
+            "attr": "",
+            "race": "",
+            "range": "",
+            "atk": "",
+            "def": "",
+            "series": "",
+            "type": "MONSTER",
+            "chuangyi": "",
+            "short_effects": "",
+            "effect_zh": "",
+            "effect_en": "",
+            "effect_zh_tr": "",
+            "effect_ja": "",
+            "rarity": "",
+            "extradata": {}
+        },
+        {
+            "disable": 0,
+            "key": "SciFi_Dinosaur2_Skin1",
+            "name_zh": "",
+            "name_en": "",
+            "name_zh_tr": "",
+            "name_ja": "",
+            "image": "",
+            "prefab": "",
+            "package": "",
+            "diameter": 0.0,
+            "level": 0,
+            "attr": "",
+            "race": "",
+            "range": "",
+            "atk": "",
+            "def": "",
+            "series": "",
+            "type": "MONSTER",
+            "chuangyi": "",
+            "short_effects": "",
+            "effect_zh": "",
+            "effect_en": "",
+            "effect_zh_tr": "",
+            "effect_ja": "",
+            "rarity": "",
+            "extradata": {}
+        },
+        {
+            "disable": 0,
+            "key": "SciFi Dinosaur3_Skin3",
+            "name_zh": "",
+            "name_en": "",
+            "name_zh_tr": "",
+            "name_ja": "",
+            "image": "",
+            "prefab": "",
+            "package": "",
+            "diameter": 0.0,
+            "level": 0,
+            "attr": "",
+            "race": "",
+            "range": "",
+            "atk": "",
+            "def": "",
+            "series": "",
+            "type": "MONSTER",
+            "chuangyi": "",
+            "short_effects": "",
+            "effect_zh": "",
+            "effect_en": "",
+            "effect_zh_tr": "",
+            "effect_ja": "",
+            "rarity": "",
+            "extradata": {}
+        },
+        {
+            "disable": 0,
+            "key": "SciFi Dinosaur4 Skin1",
+            "name_zh": "",
+            "name_en": "",
+            "name_zh_tr": "",
+            "name_ja": "",
+            "image": "",
+            "prefab": "",
+            "package": "",
+            "diameter": 0.0,
+            "level": 0,
+            "attr": "",
+            "race": "",
+            "range": "",
+            "atk": "",
+            "def": "",
+            "series": "",
+            "type": "MONSTER",
+            "chuangyi": "",
+            "short_effects": "",
+            "effect_zh": "",
+            "effect_en": "",
+            "effect_zh_tr": "",
+            "effect_ja": "",
+            "rarity": "",
+            "extradata": {}
+        },
+        {
+            "disable": 0,
+            "key": "SciFi Dinosaur5_Skin2",
+            "name_zh": "",
+            "name_en": "",
+            "name_zh_tr": "",
+            "name_ja": "",
+            "image": "",
+            "prefab": "",
+            "package": "",
+            "diameter": 0.0,
+            "level": 0,
+            "attr": "",
+            "race": "",
+            "range": "",
+            "atk": "",
+            "def": "",
+            "series": "",
+            "type": "MONSTER",
+            "chuangyi": "",
+            "short_effects": "",
+            "effect_zh": "",
+            "effect_en": "",
+            "effect_zh_tr": "",
+            "effect_ja": "",
+            "rarity": "",
+            "extradata": {}
+        },
+        {
+            "disable": 0,
+            "key": "SciFi Dinosaur6 Skin3",
+            "name_zh": "",
+            "name_en": "",
+            "name_zh_tr": "",
+            "name_ja": "",
+            "image": "",
+            "prefab": "",
+            "package": "",
+            "diameter": 0.0,
+            "level": 0,
+            "attr": "",
+            "race": "",
+            "range": "",
+            "atk": "",
+            "def": "",
+            "series": "",
+            "type": "MONSTER",
+            "chuangyi": "",
+            "short_effects": "",
+            "effect_zh": "",
+            "effect_en": "",
+            "effect_zh_tr": "",
+            "effect_ja": "",
+            "rarity": "",
+            "extradata": {}
+        },
+        {
+            "disable": 0,
+            "key": "Sci-Fi Frog Skin5",
+            "name_zh": "",
+            "name_en": "",
+            "name_zh_tr": "",
+            "name_ja": "",
+            "image": "",
+            "prefab": "",
+            "package": "",
+            "diameter": 0.0,
+            "level": 0,
+            "attr": "",
+            "race": "",
+            "range": "",
+            "atk": "",
+            "def": "",
+            "series": "",
+            "type": "MONSTER",
+            "chuangyi": "",
+            "short_effects": "",
+            "effect_zh": "",
+            "effect_en": "",
+            "effect_zh_tr": "",
+            "effect_ja": "",
+            "rarity": "",
+            "extradata": {}
+        },
+        {
+            "disable": 0,
+            "key": "Sci-Fi Shark Skin1",
+            "name_zh": "",
+            "name_en": "",
+            "name_zh_tr": "",
+            "name_ja": "",
+            "image": "",
+            "prefab": "",
+            "package": "",
+            "diameter": 0.0,
+            "level": 0,
+            "attr": "",
+            "race": "",
+            "range": "",
+            "atk": "",
+            "def": "",
+            "series": "",
+            "type": "MONSTER",
+            "chuangyi": "",
+            "short_effects": "",
+            "effect_zh": "",
+            "effect_en": "",
+            "effect_zh_tr": "",
+            "effect_ja": "",
+            "rarity": "",
+            "extradata": {}
+        },
+        {
+            "disable": 0,
+            "key": "SciFi HellCat Skin4",
+            "name_zh": "",
+            "name_en": "",
+            "name_zh_tr": "",
+            "name_ja": "",
+            "image": "",
+            "prefab": "",
+            "package": "",
+            "diameter": 0.0,
+            "level": 0,
+            "attr": "",
+            "race": "",
+            "range": "",
+            "atk": "",
+            "def": "",
+            "series": "",
+            "type": "MONSTER",
+            "chuangyi": "",
+            "short_effects": "",
+            "effect_zh": "",
+            "effect_en": "",
+            "effect_zh_tr": "",
+            "effect_ja": "",
+            "rarity": "",
+            "extradata": {}
+        },
+        {
+            "disable": 0,
+            "key": "SciFI_Crab_Skin4",
+            "name_zh": "",
+            "name_en": "",
+            "name_zh_tr": "",
+            "name_ja": "",
+            "image": "",
+            "prefab": "",
+            "package": "",
+            "diameter": 0.0,
+            "level": 0,
+            "attr": "",
+            "race": "",
+            "range": "",
+            "atk": "",
+            "def": "",
+            "series": "",
+            "type": "MONSTER",
+            "chuangyi": "",
+            "short_effects": "",
+            "effect_zh": "",
+            "effect_en": "",
+            "effect_zh_tr": "",
+            "effect_ja": "",
+            "rarity": "",
+            "extradata": {}
         },
         {
             "disable": 0,
@@ -15867,6 +16200,7 @@
             "effect_ja": "",
             "rarity": "UR",
             "extradata": {
+                "bt": 4,
                 "project": 6,
                 "tricount": "13971,5383,3663"
             }
@@ -15898,6 +16232,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 4,
                 "project": 6,
                 "tricount": "4530,2034,792"
             }
@@ -15929,6 +16264,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 4,
                 "project": 6,
                 "tricount": "29993,14563,6907,1507"
             }
@@ -15960,6 +16296,7 @@
             "effect_ja": "",
             "rarity": "UR",
             "extradata": {
+                "bt": 4,
                 "project": 6,
                 "tricount": "15444,7589,3716,1294"
             }
@@ -16023,6 +16360,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 5,
                 "project": 6,
                 "tricount": "6930,3180,1328,600"
             }
@@ -16054,6 +16392,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 4,
                 "project": 6,
                 "tricount": "37700,18800,9346,1713"
             }
@@ -16085,6 +16424,7 @@
             "effect_ja": "",
             "rarity": "UR",
             "extradata": {
+                "bt": 5,
                 "project": 6,
                 "tricount": "22362,11030,5362,1150"
             }
@@ -16116,6 +16456,7 @@
             "effect_ja": "",
             "rarity": "UR",
             "extradata": {
+                "bt": 4,
                 "project": 6,
                 "tricount": "68468,32512,14592,3652"
             }
@@ -16147,6 +16488,7 @@
             "effect_ja": "",
             "rarity": "UR",
             "extradata": {
+                "bt": 4,
                 "project": 6,
                 "tricount": "49987,23893,10759,5617"
             }
@@ -16178,6 +16520,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 3,
                 "project": 6,
                 "tricount": "14298,6372,2446,1330"
             }
@@ -16209,6 +16552,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 3,
                 "project": 6,
                 "tricount": "5662,2265,1199"
             }
@@ -16240,6 +16584,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 3,
                 "project": 6,
                 "tricount": "4907,2020,840"
             }
@@ -16271,6 +16616,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 4,
                 "project": 6,
                 "tricount": "6106,2654,1168"
             }
@@ -16302,6 +16648,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 4,
                 "project": 6,
                 "tricount": "39848,19612,9492,1170"
             }
@@ -16333,6 +16680,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 3,
                 "project": 6,
                 "tricount": "8784,3670,1529"
             }
@@ -16364,6 +16712,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 2,
                 "project": 6,
                 "tricount": "1386"
             }
@@ -16395,6 +16744,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 3,
                 "project": 6,
                 "tricount": "12"
             }
@@ -16426,6 +16776,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 4,
                 "project": 6,
                 "tricount": "3469"
             }
@@ -16457,6 +16808,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 4,
                 "project": 6,
                 "tricount": "7225"
             }
@@ -16488,6 +16840,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 3,
                 "project": 6,
                 "tricount": "3016"
             }
@@ -16519,6 +16872,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 3,
                 "project": 6,
                 "tricount": "9144,4568,2280,404",
                 "newbie": true
@@ -16551,6 +16905,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 3,
                 "project": 6,
                 "tricount": "9898,4946,2468,1170"
             }
@@ -16582,6 +16937,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 4,
                 "project": 6,
                 "tricount": "14312,6974,3368,868"
             }
@@ -16613,6 +16969,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 3,
                 "project": 6,
                 "tricount": "59656,28808,13348,2402"
             }
@@ -16644,6 +17001,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 4,
                 "project": 6,
                 "tricount": "6049,2541,1319"
             }
@@ -16675,6 +17033,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 4,
                 "project": 6,
                 "tricount": "6472,3056,1376,522"
             }
@@ -16706,6 +17065,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 3,
                 "project": 6,
                 "tricount": "12912,5446,2510,1653"
             }
@@ -16737,6 +17097,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 3,
                 "project": 6,
                 "tricount": "13104,6108,2638,1330"
             }
@@ -16768,6 +17129,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 3,
                 "project": 6,
                 "tricount": "6462,3020,1306,786"
             }
@@ -16799,6 +17161,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 3,
                 "project": 6,
                 "tricount": "64593,28158,10687,5079"
             }
@@ -16830,6 +17193,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 4,
                 "project": 6,
                 "tricount": "14784,6694,2661,1674"
             }
@@ -16861,6 +17225,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 4,
                 "project": 6,
                 "tricount": "6856,3108,1240,720"
             }
@@ -16892,6 +17257,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 4,
                 "project": 6,
                 "tricount": "17116,8480,4162,1212"
             }
@@ -16923,6 +17289,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 3,
                 "project": 6,
                 "tricount": "28120,13956,6892,2536"
             }
@@ -16954,6 +17321,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 2,
                 "project": 6,
                 "tricount": "18756,8740,4068,3065"
             }
@@ -16985,6 +17353,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 2,
                 "project": 6,
                 "tricount": "13008,6282,2896,1928"
             }
@@ -17016,6 +17385,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 2,
                 "project": 6,
                 "tricount": "18710,9284,4568,650"
             }
@@ -17047,6 +17417,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 3,
                 "project": 6,
                 "tricount": "28774,14098,6790,786"
             }
@@ -17078,6 +17449,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 2,
                 "project": 6,
                 "tricount": "13222,6466,3085,912"
             }
@@ -17109,6 +17481,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 3,
                 "project": 6,
                 "tricount": "7970,3880,1834,534"
             }
@@ -17140,6 +17513,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 4,
                 "project": 6,
                 "tricount": "7002,2708,1854"
             }
@@ -17171,6 +17545,7 @@
             "effect_ja": "",
             "rarity": "SR",
             "extradata": {
+                "bt": 4,
                 "project": 6,
                 "tricount": "4824,2336,1092,618"
             }
@@ -18246,7 +18621,7 @@
             "type": "SPELL",
             "chuangyi": "",
             "short_effects": "",
-            "effect_zh": "1A:选择场上一只等级4以下的混沌族怪兽,从卡组·手牌额外召唤最多两张同名卡",
+            "effect_zh": "1A:选择场上一只等级4以下的恶魔族怪兽,从卡组·手牌额外召唤最多两张同名卡",
             "effect_en": "",
             "effect_zh_tr": "",
             "effect_ja": "",
@@ -20136,7 +20511,7 @@
             "type": "SPELL",
             "chuangyi": "",
             "short_effects": "",
-            "effect_zh": "1A:以自己场上1只怪兽为对象,赋予磐石之躯——该怪兽{DEF}+1000,且不再受到战斗伤害。",
+            "effect_zh": "1A:以自己场上1只怪兽为对象,赋予磐石之躯——该怪兽{DEF}+1000",
             "effect_en": "",
             "effect_zh_tr": "",
             "effect_ja": "",

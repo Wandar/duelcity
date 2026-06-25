@@ -5,7 +5,6 @@ from annos import *
 """
 CardName:Luminous Wing
 卡名:萤光舞翼
-效果:1T:<召唤时>:发现1张攻击力1500以下的昆虫族怪兽卡并特殊召唤。
 """
 
 class GiantBeetle(Card):
@@ -13,31 +12,38 @@ class GiantBeetle(Card):
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
-        self.initEffect(GiantBeetle_e1)
+        self.initEffect(GiantBeetle_HarvestCrush)
 
 
-class GiantBeetle_e1(Effect):
-    # 1T:<召唤时>:发现1张攻击力1500以下的昆虫族怪兽卡并特殊召唤。
+"""
+1T:<战斗效果>:此卡战斗破坏对方怪兽后,抽取1张牌
+"""
+class GiantBeetle_HarvestCrush(Effect):
     effType = EFF_TYPE.trigger
-    observeSignals = (LOCATION.monsterZone, [Signal.Summon])
-    AI_HINT = [AI_HINT.summoner]
-    EFF_POWER = 4
 
-    def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.Summon, self.owner):
+    observeSignals = (LOCATION.monsterZone, [Signal.BattleFinish])
+
+    AI_HINT = [AI_HINT.drawCard]
+    EFF_POWER = 2
+
+    def y_cost(self, justCheck: bool, signal: Signal.BattleFinish):
+        if not isSignal(signal, Signal.BattleFinish):
             return False
-        if self.freeMonsterSpace() == 0:
+        if signal.attackerCard != self.owner:
             return False
+        if signal.receiverCard is None:
+            return False
+        # 接收方已被战斗破坏（已离场）
+        if signal.receiverCard.isMonsterOnField():
+            return False
+
         if justCheck:
             return True
         return True
 
-    def y_activate(self, justCheck, signal):
+    def y_activate(self, justCheck: bool, signal):
         if justCheck:
             return True
-        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.INSECT,
-                                           cardType=CARD_TYPE.monster, maxAtk=1500,
-                                           count=3, canCancel=True)
-        if picked and self.freeMonsterSpace() > 0:
-            yield self.y_specialSummon(picked)
+
+        yield self.y_drawCard(self.getSide(), 1)
         return True

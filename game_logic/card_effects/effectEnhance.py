@@ -253,39 +253,27 @@ class EffectFree(Effect):
                     self.owner.addBuffAtkHP(1, 1)
 
 
-
 """
-1P:我方机械族怪兽{ATK}+1,{DEF}+1
+1P:我方机械族怪兽{ATK}+100,{DEF}+100
 """
-class EffectOtherAdd(Effect):
-    effType = EFF_TYPE.permanent
-
-    observeSignals = (LOCATION.monsterZone,[Signal.CardRaceChanged, Signal.AttachMonsterZone, Signal.DetachMonsterZone])
-
+class EffectOtherAdd(AuraEffect):
     AI_HINT = [AI_HINT.eraser]
     EFF_POWER = 1
-    def y_signal(self,signal):
-        if isSignal(signal, Signal.DetachMonsterZone):
-            if signal.card==self.owner:
-                cards=self.searchCards(LOCATION.mask_onField)
-                yield self.y_removeBuffEffectSource(cards,self.effUniID)
-            else:
-                yield self.y_removeBuffEffectSource(signal.card,self.effUniID)
 
-        def f(card):
-            return card.race==RACE.MACHINE
+    def onInit(self):
+        self.observeSignals[1].append(Signal.CardRaceChanged)
 
-        if isSignal(signal,Signal.CardRaceChanged) and not f(signal.card):
-            yield self.y_removeBuffEffectSource(signal.card,self.effUniID)
+    def affectFilter(self, card):
+        return card.side == self.getSide() and card.race == RACE.MACHINE
 
-        if self.owner.isMonsterOnField():
-            cards=self.searchCards(LOCATION.monsterZone,self.getSide(),CARD_TYPE.monster,None,f)
-            yield self.y_addCardData(cards, 1, 1, effDuration=EFF_DURATION.fromSource, uniqueSourceID=self.effUniID)
+    def y_grant(self, cards):
+        yield self.y_addCardData(cards, 100, 100,
+                                 effDuration=EFF_DURATION.fromSource, uniqueSourceID=self.effUniID)
 
 
 
 """
-1P:我方场上存在机械族怪兽时,此卡{ATK}+2,{DEF}+2
+1P:我方场上存在机械族怪兽时,此卡{ATK}+200,{DEF}+200
 """
 class EffectAdd2(Effect):
     effType = EFF_TYPE.permanent
@@ -297,7 +285,7 @@ class EffectAdd2(Effect):
             return card.race==RACE.MACHINE
         machineList=self.searchCards(LOCATION.monsterZone,self.getSide(),CARD_TYPE.monster,None,f)
         if len(machineList):
-            yield self.y_addCardData(self.owner, 2, 2, effDuration=EFF_DURATION.fromSource,
+            yield self.y_addCardData(self.owner, 200, 200, effDuration=EFF_DURATION.fromSource,
                                      uniqueSourceID=self.effUniID)
         else:
             yield self.y_removeBuffEffectSource(self.owner,self.effUniID)
