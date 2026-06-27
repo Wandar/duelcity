@@ -508,6 +508,9 @@ class Card(CardData):
 
 
     def canBeDamage(self):
+        # immune to y_damageCard damage (effect damage + ranged attack); see DamageImmunity
+        if self.immunityMask & IMMUNITY_MASK.damage:
+            return False
         if self.location& LOCATION.mask_onField:
             return True
         return False
@@ -934,8 +937,19 @@ class Card(CardData):
         for buff in fromSourceList:
             buff.onBuff(self)
 
+        # buffs above apply without per-step clamping (so a big reduction followed by an
+        # addition reaches the true sum instead of being lost at 0); clamp the final stats once
+        self._clampBuffedStats()
+
         self._mergeListToBuffs()
         self._reconcileGrantedShortEffects()
+
+    def _clampBuffedStats(self):
+        self.atk = limit(int(self.atk), 0, 2147483647)
+        self.defence = limit(int(self.defence), 0, 2147483647)
+        if self.rangeAtk != ATK.none:
+            self.rangeAtk = limit(int(self.rangeAtk), 0, 60000)
+        self.level = limit(int(self.level), 0, 127)
 
     def _reconcileGrantedShortEffects(self):
         """
@@ -1224,28 +1238,31 @@ class Card(CardData):
         pass
 
     def hasLife(self):
-        if self.defence==0:
+        if self.atk == ATK.none or self.defence==ATK.none or self.defence==0:
             return False
         if self.atk>self.defence:
             return True
         return False
 
 
-    def y_becomeHalfLife(self,appendSignals=None):
+    def y_becomeHalfLife(self, appendSignals=None):
         if not self.hasLife():
             return
-        #atk Changed
-        b=CardBuff.attackChange(EFF_DURATION.onceForever)
-        b.number=self.defence
+        delta = self.defence - self.atk
+        if delta == 0:
+            return
+        b = CardBuff.attackAdd(EFF_DURATION.onceForever)
+        b.number = delta
         self._addBuff(b)
         self._recalBuffs()
-        if appendSignals:
-            self.game.appendSignalsByBuffID(appendSignals, b.BUFF_ID, self)
-        else:
-            appendSignals=[]
+        if appendSignals is None:
+            appendSignals = []
             self.game.appendSignalsByBuffID(appendSignals, b.BUFF_ID, self)
             for sig in appendSignals:
                 yield self.game.y_sendSignal(sig)
+        else:
+            self.game.appendSignalsByBuffID(appendSignals, b.BUFF_ID, self)
+
 
     #return should die
     def checkShouldDieTakeDamage(self,num)->bool:

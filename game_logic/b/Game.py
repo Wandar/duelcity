@@ -18,7 +18,6 @@ import traceback
 the state of duel and game logic of duel
 """
 
-
 class Game(Reload, GameFunc):
     def __init__(self, mduel):
         Reload.__init__(self, True, True)
@@ -240,11 +239,13 @@ class Game(Reload, GameFunc):
 
 
     def y_testScene(self):
-        ME_START_HAND = ["47lightning","Dragonrace","StoneBeast","48fly"]
-        ME_START_FIELD = ["StoneBeast"]
+        ME_START_HAND = ["MountainDragon"]
+        ME_START_MONSTER = ["FireDragonRed", "Dragonide", "Wyvern", "Griffin"]
+        ME_START_SPELL = []
         ME_START_GRAVE = []
-        EN_START_HAND = ["StoneBeast","Dragonrace","Beast_1"]
-        EN_START_FIELD =["StoneBeast","Dragonrace","StoneBeast"]
+        EN_START_HAND = []
+        EN_START_MONSTER = ["StoneBeast"]
+        EN_START_SPELL = []
         EN_START_GRAVE = []
 
         playerSide = self.duel.getNotBotAvatar(1).c_side
@@ -277,14 +278,24 @@ class Game(Reload, GameFunc):
             sigs=yield self._y_changeCardLocation(card, LOCATION.grave)
             signals.extend(sigs)
 
-        for cardKey in ME_START_FIELD:
+        for cardKey in ME_START_MONSTER:
             card = self.createCard(cardKey, playerSide)
             sigs=yield self._y_changeCardLocation(card, LOCATION.monsterZone)
             signals.extend(sigs)
 
-        for cardKey in EN_START_FIELD:
+        for cardKey in EN_START_MONSTER:
             card = self.createCard(cardKey, oppoSide)
             sigs=yield self._y_changeCardLocation(card, LOCATION.monsterZone)
+            signals.extend(sigs)
+
+        for cardKey in ME_START_SPELL:
+            card = self.createCard(cardKey, playerSide)
+            sigs=yield self._y_changeCardLocation(card, LOCATION.spellTrapZone,FORM.set)
+            signals.extend(sigs)
+
+        for cardKey in EN_START_SPELL:
+            card = self.createCard(cardKey, oppoSide)
+            sigs=yield self._y_changeCardLocation(card, LOCATION.spellTrapZone,FORM.set)
             signals.extend(sigs)
 
         for sig in signals:

@@ -1775,6 +1775,10 @@ class GameFunc:
         must transform into a same-zone-compatible card (monster<->monster, spell/trap zone
         keeps spell/trap); off-field cards may become any type.
 
+        For a monster-zone card the swap then fires DetachMonsterZone followed by
+        AttachMonsterZone (all sent after the swap), so field auras (race buffs etc.)
+        re-evaluate it and drop/grant buffs that no longer / now apply.
+
         fx : FX_ID played on each transformed card (pass the transform flash in as a param).
 
         Returns the number of cards actually transformed.
@@ -1810,17 +1814,32 @@ class GameFunc:
                 continue
 
             oldKey = card.cardKey
+            onMonsterZone = card.isInMonsterZone()
+            preHP = card.defence            # captured before the swap
+
+            # swap identity in place
             card._transformInPlace(newKey)
             successNum += 1
+            card.onDataChangedFx(fx)        # transform fx + push new data to client
 
-            # play the transform fx and push the new card data to the client
-            card.onDataChangedFx(fx)
+            # queue detach(old) + attach(new) so field auras re-evaluate this card;
+            # all signals are sent together after every card has been transformed
+            if onMonsterZone and card.isInMonsterZone():
+                detachSig = Signal.DetachMonsterZone(card)
+                detachSig.side = card.side
+                detachSig.preHP = preHP
+                signals.append(detachSig)
 
-            sig = Signal.CardTransformed(card)
-            sig.card = card
-            sig.oldCardKey = oldKey
-            sig.newCardKey = newKey
-            signals.append(sig)
+                attachSig = Signal.AttachMonsterZone(card)
+                attachSig.side = card.side
+                attachSig.preLocation = LOCATION.monsterZone
+                signals.append(attachSig)
+
+            transSig = Signal.CardTransformed(card)
+            transSig.card = card
+            transSig.oldCardKey = oldKey
+            transSig.newCardKey = newKey
+            signals.append(transSig)
 
         for signal in signals:
             game.makeSignalReason(signal)

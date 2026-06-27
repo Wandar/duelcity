@@ -186,6 +186,14 @@ class Duel(Reload):
             self.syncDuel(avatar)
         self.callBotFunc("onDuelStart", self)
 
+        # bot AI 异步初始化(向玩家 base 请求本局赢/输并等待结果)
+        for side, avatar in self.avatars.items():
+            ai = avatar.getDuelAI()
+            if ai:
+                initFunc = getattr(ai, "y_initDuelAI", None)
+                if initFunc:
+                    yield initFunc()
+
 
         #-----------------------------init timer
         self.avatarTimes.clear()
@@ -1164,6 +1172,8 @@ class Duel(Reload):
                 else:
                     func(*args)
 
+
+
     def y_sendSignalToAvatars(self, signal):
         for avatar in tuple(self.avatars.values()):
             ai: DuelAIBase = avatar.getDuelAI()
@@ -1486,6 +1496,9 @@ class Duel(Reload):
 
     def gameOverDealWinnerAndLoser(self):
         if len(self._losers):
+            # 通知 bot AI 终局, 用于更新全局赢局/输局池
+            self.callBotFunc("onDuelEnd", self)
+
             isDraw = False
 
             if len(self._losers) == 1:
