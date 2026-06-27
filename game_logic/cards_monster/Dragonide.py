@@ -6,7 +6,7 @@ from annos import *
 CardName:Hammer Lizard
 卡名:铁锤蜥蜴
 effect:
-效果:1T:<战斗破坏对方怪兽时>:破坏对方场上1张魔法·陷阱卡。
+效果:1T:<战斗破坏对方怪兽时>:对对方造成700点伤害。
 """
 
 class Dragonide(Card):
@@ -18,11 +18,11 @@ class Dragonide(Card):
 
 
 class Dragonide_e1(Effect):
-    # 1T:<战斗破坏对方怪兽时>:破坏对方场上1张魔法·陷阱卡。
+    # 1T:<战斗破坏对方怪兽时>:对对方造成700点伤害。
     effType = EFF_TYPE.trigger
     observeSignals = (LOCATION.monsterZone, [Signal.BattleFinish])
-    AI_HINT = [AI_HINT.eraser]
-    EFF_POWER = 3
+    AI_HINT = [AI_HINT.damager]
+    EFF_POWER = 2
 
     def y_cost(self, justCheck, signal):
         if not isSignal(signal, Signal.BattleFinish):
@@ -32,24 +32,12 @@ class Dragonide_e1(Effect):
         rc = signal.receiverCard
         if rc is None or rc.isMonsterOnField():
             return False
-        targets = self.searchCards(LOCATION.spellTrapZone, self.getEnemySideTuple(),
-                                   CARD_TYPE.all, self)
-        if not targets:
-            return False
         if justCheck:
             return True
-
-        chosen = yield self.y_select1Card(targets, TITLE.destroy, canCancel=False)
-        if not chosen:
-            return False
-        self.saveTarget1(chosen)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        target = self.getLegalTarget1()
-        if not target:
-            return False
-        yield self.y_destroyCard(target)
+        yield self.y_damagePlayer(self.getEnemySideTuple(), 500)
         return True
