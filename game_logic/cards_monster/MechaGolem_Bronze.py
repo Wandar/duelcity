@@ -5,37 +5,67 @@ from annos import *
 """
 CardName:Acient Bronze Mech
 卡名:古代青铜机械
+效果:1A:[把1只其他怪兽解放]:发现一张等级4以下的机械族怪兽并特殊召唤。2T:<召唤时>:把对方场上攻击力最高的1只怪兽变为守备表示且无法变更表示形式。
 """
 
 class MechaGolem_Bronze(Card):
-    CARD_KEY="MechaGolem_Bronze"
-    AUTHOR="Unnamed"
+    CARD_KEY = "MechaGolem_Bronze"
+    AUTHOR = "Unnamed"
+
     def effectsInit(self):
         self.initEffect(MechaGolem_Bronze_e1)
+        self.initEffect(MechaGolem_Bronze_e2)
 
 
-"""
-1T:<除外区效果:自己的机械族怪兽被破坏时>:把此卡以守备表示特殊召唤。
-"""
 class MechaGolem_Bronze_e1(Effect):
-    effType = EFF_TYPE.trigger
-    observeSignals = (LOCATION.banish, [Signal.Destroyed])
-    AI_HINT = [AI_HINT.summoner]
-    EFF_POWER = 2
+    # 1A:[把1只其他怪兽解放]:发现一张等级4以下的机械族怪兽并特殊召唤。
+    effType = EFF_TYPE.active
+    activateLocation = LOCATION.monsterZone
+    AI_HINT = [AI_HINT.summoner, AI_HINT.costMonster]
+    EFF_POWER = 4
 
     def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.Destroyed):
+        def isOther(c):
+            return c != self.owner
+        fodder = self.searchCards(LOCATION.monsterZone, self.getSide(), CARD_TYPE.monster, self, isOther)
+        if not fodder:
             return False
-        if self.owner.location != LOCATION.banish:
+        if justCheck:
+            return True
+        cost = yield self.y_select1Card(fodder, TITLE.tribute, canCancel=True)
+        if not cost:
             return False
-        card = signal.card
-        if card is None or card == self.owner:
+        successNum = yield self.y_tributeCard(cost)
+        if not successNum:
             return False
-        if card.side != self.getSide():
-            return False
-        if card.race != RACE.MACHINE:
-            return False
+        return True
+
+    def y_activate(self, justCheck, signal):
+        if justCheck:
+            return True
         if self.freeMonsterSpace() == 0:
+            return False
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.MACHINE,
+                                           cardType=CARD_TYPE.monster, maxLevel=4, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked)
+        return True
+
+
+class MechaGolem_Bronze_e2(Effect):
+    # 2T:<召唤时>:把对方场上攻击力最高的1只怪兽变为守备表示且无法变更表示形式。
+    effType = EFF_TYPE.trigger
+    observeSignals = (LOCATION.monsterZone, [Signal.Summon])
+    AI_HINT = [AI_HINT.debuff]
+    EFF_POWER = 3
+
+    def y_cost(self, justCheck, signal):
+        if not isSignal(signal, Signal.Summon, self.owner):
+            return False
+        def isAtk(c):
+            return c.isFaceUp() and c.form == FORM.attack
+        enemies = self.searchCards(LOCATION.monsterZone, self.getEnemySideTuple(), CARD_TYPE.monster, self, isAtk)
+        if not enemies:
             return False
         if justCheck:
             return True
@@ -44,5 +74,13 @@ class MechaGolem_Bronze_e1(Effect):
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        yield self.y_specialSummon(self.owner, form=FORM.defence)
+        def isAtk(c):
+            return c.isFaceUp() and c.form == FORM.attack
+        enemies = self.searchCards(LOCATION.monsterZone, self.getEnemySideTuple(), CARD_TYPE.monster, self, isAtk)
+        if not enemies:
+            return False
+        maxAtk = max(c.atk for c in enemies)
+        target = next(c for c in enemies if c.atk == maxAtk)
+        # y_changeForm 改守备并自动锁定本回合无法变更表示形式
+        yield self.y_changeForm(target, FORM.defence)
         return True

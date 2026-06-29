@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Gloomywood Guardian, Griffin of the Thicket
 卡名:幽暗森林 守林狮鹫
-效果:1T:<召唤时>:可破坏对方场上1张盖卡。
+效果:1T:<对方怪兽召唤时>:发现一张等级3以下的鸟兽族怪兽并守备召唤。
 """
 
 class Griffin_skin(Card):
@@ -17,34 +17,31 @@ class Griffin_skin(Card):
 
 
 class Griffin_skin_e1(Effect):
-    # 1T:<召唤时>:可破坏对方场上1张盖卡。
-    effType = EFF_TYPE.optionalTrigger
+    # 1T:<对方怪兽召唤时>:发现一张等级3以下的鸟兽族怪兽并守备召唤。
+    effType = EFF_TYPE.trigger
     observeSignals = (LOCATION.monsterZone, [Signal.Summon])
-    AI_HINT = [AI_HINT.spellDestroyer]
-    EFF_POWER = 3
+    AI_HINT = [AI_HINT.summoner]
+    EFF_POWER = 4
 
     def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.Summon, self.owner):
+        if not isSignal(signal, Signal.Summon):
             return False
-        def isSet(c):
-            return c.form & FORM.set != 0
-        sets = self.searchCards(LOCATION.spellTrapZone, self.getEnemySideTuple(), CARD_TYPE.all, self, isSet)
-        if not sets:
+        scard = getattr(signal, "card", None)
+        if scard is None or scard == self.owner or self.checkAlly(scard):
+            return False
+        if not self.owner.isMonsterOnField():
+            return False
+        if self.freeMonsterSpace() == 0:
             return False
         if justCheck:
             return True
-        t = yield self.y_select1Card(sets, TITLE.destroy, canCancel=True)
-        if not t:
-            return False
-        self.saveTarget1(t)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        t = self.getLegalTarget1()
-        if not t:
-            return False
-        yield self.y_destroyCard(t)
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.WINDBEAST,
+                                           cardType=CARD_TYPE.monster, maxLevel=3, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked, form=FORM.defence)
         return True
-

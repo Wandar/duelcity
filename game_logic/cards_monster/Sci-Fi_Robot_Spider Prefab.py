@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Quantum Scout Spider
 卡名:量子侦察蛛
-效果:1T:<召唤时>:确认对方卡组顶2张,把1张送入弃牌区,自己抽1张卡。
+效果:1T:<召唤时>:把对方场上攻击力最高的1只怪兽变为守备表示且无法变更表示形式。
 """
 
 class Sci_Fi_Robot_Spider_Prefab(Card):
@@ -17,17 +17,19 @@ class Sci_Fi_Robot_Spider_Prefab(Card):
 
 
 class Sci_Fi_Robot_Spider_Prefab_e1(Effect):
-    # 1T:<召唤时>:确认对方卡组顶2张,把1张送入弃牌区,自己抽1张卡。
+    # 1T:<召唤时>:把对方场上攻击力最高的1只怪兽变为守备表示且无法变更表示形式。
     effType = EFF_TYPE.trigger
     observeSignals = (LOCATION.monsterZone, [Signal.Summon])
-    AI_HINT = [AI_HINT.eraser, AI_HINT.drawCard]
+    AI_HINT = [AI_HINT.debuff]
     EFF_POWER = 3
 
     def y_cost(self, justCheck, signal):
         if not isSignal(signal, Signal.Summon, self.owner):
             return False
-        enemy = self.getEnemySideTuple()[0]
-        if len(self.game.decks[enemy]) < 1:
+        def isAtk(c):
+            return c.isFaceUp() and c.form == FORM.attack
+        enemies = self.searchCards(LOCATION.monsterZone, self.getEnemySideTuple(), CARD_TYPE.monster, self, isAtk)
+        if not enemies:
             return False
         if justCheck:
             return True
@@ -36,15 +38,12 @@ class Sci_Fi_Robot_Spider_Prefab_e1(Effect):
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        enemy = self.getEnemySideTuple()[0]
-        deck = self.game.decks[enemy]
-        top = list(reversed(deck[-2:]))
-        if top:
-            chosen = yield self.y_select1Card(top, TITLE.sendToGrave, self.getSide(), canCancel=True)
-            if not chosen:
-                chosen = top[0]
-            yield self.y_sendCardToGrave(chosen)
-        if len(self.game.decks[self.getSide()]) > 0:
-            yield self.y_drawCard(self.getSide(), 1)
+        def isAtk(c):
+            return c.isFaceUp() and c.form == FORM.attack
+        enemies = self.searchCards(LOCATION.monsterZone, self.getEnemySideTuple(), CARD_TYPE.monster, self, isAtk)
+        if not enemies:
+            return False
+        maxAtk = max(c.atk for c in enemies)
+        target = next(c for c in enemies if c.atk == maxAtk)
+        yield self.y_changeForm(target, FORM.defence)
         return True
-

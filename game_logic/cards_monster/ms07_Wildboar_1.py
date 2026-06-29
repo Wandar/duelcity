@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Flower-Crowned Piglet
 卡名:花冠小猪
-效果:1T:<召唤时>:把自己卡组顶端1张卡送入弃牌区;是植物族怪兽的场合,将其特殊召唤。
+效果:1A:[支付800基本分]:发现一张等级2以下的兽族怪兽并沉默召唤。
 """
 
 class ms07_Wildboar_1(Card):
@@ -17,32 +17,31 @@ class ms07_Wildboar_1(Card):
 
 
 class ms07_Wildboar_1_e1(Effect):
-    # 1T:<召唤时>:把自己卡组顶端1张卡送入弃牌区;是植物族怪兽的场合,将其特殊召唤。
-    effType = EFF_TYPE.trigger
-    observeSignals = (LOCATION.monsterZone, [Signal.Summon])
-    AI_HINT = [AI_HINT.summoner]
-    EFF_POWER = 2
+    # 1A:[支付800基本分]:发现一张等级2以下的兽族怪兽并沉默召唤。
+    effType = EFF_TYPE.active
+    activateLocation = LOCATION.monsterZone
+    AI_HINT = [AI_HINT.summoner, AI_HINT.highCost]
+    EFF_POWER = 4
 
     def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.Summon, self.owner):
+        if self.game.LPs[self.getSide()] <= 800:
             return False
-        if len(self.game.decks[self.getSide()]) < 1:
+        if self.freeMonsterSpace() == 0:
             return False
         if justCheck:
             return True
+        yield self.y_damagePlayer(self.getSide(), 800)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        deck = self.game.decks[self.getSide()]
-        if not deck:
+        if self.freeMonsterSpace() == 0:
             return False
-        topCard = deck[-1]
-        isPlant = topCard.isMonster() and topCard.race == RACE.PLANT
-        if isPlant and self.freeMonsterSpace() > 0:
-            yield self.y_specialSummon(topCard)
-        else:
-            yield self.y_sendCardToGrave(topCard)
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.BEAST,
+                                           cardType=CARD_TYPE.monster, maxLevel=2, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked)
+            if picked.isMonsterOnField():
+                yield self.y_silenceCard(picked, effDuration=EFF_DURATION.onceForever)
         return True
-

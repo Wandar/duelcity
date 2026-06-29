@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Redfeather Falcon
 卡名:赤羽隼
-效果:1T:此卡直接攻击造成伤害时,破坏对方场上1张魔法·陷阱卡。
+效果:1A:[把1张手牌送入弃牌区]:发现一张等级3以下的鸟兽族怪兽并守备召唤。
 """
 
 class Eagle_Brown(Card):
@@ -17,36 +17,33 @@ class Eagle_Brown(Card):
 
 
 class Eagle_Brown_e1(Effect):
-    # 1T:此卡直接攻击造成伤害时,破坏对方场上1张魔法·陷阱卡。
-    effType = EFF_TYPE.trigger
-    observeSignals = (LOCATION.monsterZone, [Signal.BattleFinish])
-    AI_HINT = [AI_HINT.spellDestroyer]
-    EFF_POWER = 3
+    # 1A:[把1张手牌送入弃牌区]:发现一张等级3以下的鸟兽族怪兽并守备召唤。
+    effType = EFF_TYPE.active
+    activateLocation = LOCATION.monsterZone
+    AI_HINT = [AI_HINT.summoner, AI_HINT.costHand]
+    EFF_POWER = 4
 
     def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.BattleFinish):
+        hand = self.searchCards(LOCATION.hand, self.getSide(), CARD_TYPE.all, self)
+        if not hand:
             return False
-        if signal.attackerCard != self.owner:
-            return False
-        if signal.battleType != BATTLE_TYPE.directAttack:
-            return False
-        enemyST = self.searchCards(LOCATION.spellTrapZone, self.getEnemySideTuple(), CARD_TYPE.all, self)
-        if not enemyST:
+        if self.freeMonsterSpace() == 0:
             return False
         if justCheck:
             return True
-        t = yield self.y_select1Card(enemyST, TITLE.destroy, canCancel=True)
-        if not t:
+        cost = yield self.y_select1Card(hand, TITLE.discard, canCancel=True)
+        if not cost:
             return False
-        self.saveTarget1(t)
+        yield self.y_sendCardToGrave(cost)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        t = self.getLegalTarget1()
-        if not t:
+        if self.freeMonsterSpace() == 0:
             return False
-        yield self.y_destroyCard(t)
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.WINDBEAST,
+                                           cardType=CARD_TYPE.monster, maxLevel=3, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked, form=FORM.defence)
         return True
-

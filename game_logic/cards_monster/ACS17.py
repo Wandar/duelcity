@@ -4,8 +4,8 @@ from dutil import *
 from annos import *
 """
 CardName:ACS17
-卡名:ACS17
-效果:1A:[把1张手牌送入弃牌区]:从卡组把1只等级4以下的机械族怪兽加入手牌。
+卡名:机甲17
+效果:1A:[把1张手牌送入弃牌区]:从卡组检索1只等级4以下的机械族怪兽并覆盖。
 """
 
 class ACS17(Card):
@@ -17,10 +17,10 @@ class ACS17(Card):
 
 
 class ACS17_e1(Effect):
-    # 1A:[把1张手牌送入弃牌区]:从卡组把1只等级4以下的机械族怪兽加入手牌。
+    # 1A:[把1张手牌送入弃牌区]:从卡组检索1只等级4以下的机械族怪兽并覆盖(面朝下守备召唤)。
     effType = EFF_TYPE.active
     activateLocation = LOCATION.monsterZone
-    AI_HINT = [AI_HINT.searchMonster, AI_HINT.costHand]
+    AI_HINT = [AI_HINT.summoner, AI_HINT.costHand]
     EFF_POWER = 2
 
     def y_cost(self, justCheck, signal):
@@ -32,12 +32,14 @@ class ACS17_e1(Effect):
         targets = self.searchCards(LOCATION.deck, self.getSide(), CARD_TYPE.monster, self, isT)
         if not targets:
             return False
+        if self.freeMonsterSpace() == 0:
+            return False
         if justCheck:
             return True
         cost = yield self.y_select1Card(hand, TITLE.sendToGrave, canCancel=True)
         if not cost:
             return False
-        chosen = yield self.y_select1Card(targets, TITLE.addToHand, canCancel=True)
+        chosen = yield self.y_select1Card(targets, TITLE.specialSummon, canCancel=True)
         if not chosen:
             return False
         yield self.y_sendCardToGrave(cost)
@@ -47,9 +49,9 @@ class ACS17_e1(Effect):
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        t = self.getLegalTarget1()
-        if not t:
+        t = self.getLegalTarget1(checkLocationChange=False)
+        if not t or self.freeMonsterSpace() == 0:
             return False
-        yield self.y_returnCardToHand(t)
+        # 覆盖:面朝下以守备表示放置
+        yield self.y_specialSummon(t, form=FORM.defenceSet)
         return True
-

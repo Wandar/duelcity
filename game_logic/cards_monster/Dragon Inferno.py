@@ -5,11 +5,11 @@ from annos import *
 """
 CardName:Inferno Imp
 卡名:爆炎小恶龙
-效果:1T:此卡攻击的伤害计算前,可以破坏此卡,改为对攻击对象造成1000点伤害。
+效果:1T:<我方准备阶段>:发现一张等级3以下的龙族怪兽并守备召唤。
 """
 
 class Dragon_Inferno(Card):
-    CARD_KEY = 'Dragon Inferno'
+    CARD_KEY = "Dragon Inferno"
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
@@ -17,35 +17,31 @@ class Dragon_Inferno(Card):
 
 
 class Dragon_Inferno_e1(Effect):
-    # 1T:此卡攻击的伤害计算前,可以破坏此卡,改为对攻击对象造成1000点伤害。
-    # NOTE: 取消原战斗的钩子未暴露,这里实现为破坏自身并对攻击对象造成1000伤害。
-    effType = EFF_TYPE.optionalInstant
-    observeSignals = (LOCATION.monsterZone, [Signal.InBattle])
-    AI_HINT = [AI_HINT.damager]
-    EFF_POWER = 3
+    # 1T:<我方准备阶段>:发现一张等级3以下的龙族怪兽并守备召唤。
+    effType = EFF_TYPE.trigger
+    observeSignals = (LOCATION.monsterZone, [Signal.StandbyPhase])
+    AI_HINT = [AI_HINT.summoner]
+    EFF_POWER = 4
+    countLimit = COUNT_LIMIT.unlimited
 
     def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.InBattle):
+        if not isSignal(signal, Signal.StandbyPhase):
             return False
-        if signal.attackerCard != self.owner:
+        if self.game.whoseTurn != self.getSide():
             return False
         if not self.owner.isMonsterOnField():
             return False
+        if self.freeMonsterSpace() == 0:
+            return False
         if justCheck:
             return True
-        target = signal.receiverCard
-        successNum = yield self.y_destroyCard(self.owner)
-        if not successNum:
-            return False
-        self.saveTarget1(target)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        t = self.getLegalTarget1(checkLocationChange=False)
-        if not t or not t.isMonsterOnField():
-            return False
-        yield self.y_damageCard(t, 1000)
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.DRAGON,
+                                           cardType=CARD_TYPE.monster, maxLevel=3, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked, form=FORM.defence)
         return True
-

@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Stump Monster
 卡名:树桩怪
-效果:1T:<被破坏后>:从卡组把1只等级1的植物族怪兽特殊召唤。
+效果:1A:[把此卡解放]:发现一张等级2以下的植物族怪兽并守备召唤。
 """
 
 class ms02_Stump_1(Card):
@@ -17,36 +17,29 @@ class ms02_Stump_1(Card):
 
 
 class ms02_Stump_1_e1(Effect):
-    # 1T:<被破坏后>:从卡组把1只等级1的植物族怪兽特殊召唤。
-    effType = EFF_TYPE.trigger
-    observeSignals = (LOCATION.grave, [Signal.Destroyed])
-    AI_HINT = [AI_HINT.summoner]
-    EFF_POWER = 3
+    # 1A:[把此卡解放]:发现一张等级2以下的植物族怪兽并守备召唤。
+    effType = EFF_TYPE.active
+    activateLocation = LOCATION.monsterZone
+    AI_HINT = [AI_HINT.summoner, AI_HINT.costMonster]
+    EFF_POWER = 4
 
     def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.Destroyed, self.owner):
-            return False
-        def isTarget(c):
-            return c.race == RACE.PLANT and c.level == 1
-        targets = self.searchCards(LOCATION.deck, self.getSide(), CARD_TYPE.monster, self, isTarget)
-        if not targets:
-            return False
-        if self.freeMonsterSpace() == 0:
+        if not self.owner.isMonsterOnField():
             return False
         if justCheck:
             return True
-        chosen = yield self.y_select1Card(targets, TITLE.specialSummon, canCancel=True)
-        if not chosen:
+        successNum = yield self.y_tributeCard(self.owner)
+        if not successNum:
             return False
-        self.saveTarget1(chosen)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        t = self.getLegalTarget1(checkLocationChange=False)
-        if not t:
+        if self.freeMonsterSpace() == 0:
             return False
-        yield self.y_specialSummon(t)
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.PLANT,
+                                           cardType=CARD_TYPE.monster, maxLevel=2, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked, form=FORM.defence)
         return True
-

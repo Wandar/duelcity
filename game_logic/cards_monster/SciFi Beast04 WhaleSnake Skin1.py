@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Mechabeast Whale
 卡名:百兽机 黑鲸
-效果:1A:[把1只"百兽机"怪兽解放]:自己抽2张卡。
+效果:1A:[把此卡解放]:发现一张等级3以下的机械族怪兽并守备召唤。
 """
 
 class SciFi_Beast04_WhaleSnake_Skin1(Card):
@@ -17,28 +17,18 @@ class SciFi_Beast04_WhaleSnake_Skin1(Card):
 
 
 class SciFi_Beast04_WhaleSnake_Skin1_e1(Effect):
-    # 1A:[把1只"百兽机"怪兽解放]:自己抽2张卡。
+    # 1A:[把此卡解放]:发现一张等级3以下的机械族怪兽并守备召唤。
     effType = EFF_TYPE.active
     activateLocation = LOCATION.monsterZone
-    AI_HINT = [AI_HINT.drawCard, AI_HINT.costMonster]
-    EFF_POWER = 3
-    FAMILY = ("SciFi Beast03 Skin1", "SciFi Beast04 WhaleSnake Skin1", "SciFi Beast05_Skin1",
-              "SciFi Beast06 Bull Skin2", "Sci-Fi Dragon Skin4")
+    AI_HINT = [AI_HINT.summoner, AI_HINT.costMonster]
+    EFF_POWER = 4
 
     def y_cost(self, justCheck, signal):
-        def isFamily(c):
-            return c.cardKey in self.FAMILY
-        fodder = self.searchCards(LOCATION.monsterZone, self.getSide(), CARD_TYPE.monster, self, isFamily)
-        if not fodder:
-            return False
-        if len(self.game.decks[self.getSide()]) < 1:
+        if not self.owner.isMonsterOnField():
             return False
         if justCheck:
             return True
-        cost = yield self.y_select1Card(fodder, TITLE.tribute, canCancel=True)
-        if not cost:
-            return False
-        successNum = yield self.y_tributeCard(cost)
+        successNum = yield self.y_tributeCard(self.owner)
         if not successNum:
             return False
         return True
@@ -46,8 +36,10 @@ class SciFi_Beast04_WhaleSnake_Skin1_e1(Effect):
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        n = min(2, len(self.game.decks[self.getSide()]))
-        if n > 0:
-            yield self.y_drawCard(self.getSide(), n)
+        if self.freeMonsterSpace() == 0:
+            return False
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.MACHINE,
+                                           cardType=CARD_TYPE.monster, maxLevel=3, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked, form=FORM.defence)
         return True
-

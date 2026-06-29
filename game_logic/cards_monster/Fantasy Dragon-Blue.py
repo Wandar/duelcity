@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Storm Wyvern
 卡名:风暴亚龙
-效果:1A:[把此卡解放]:把对方场上1只怪兽返回持有者手牌。
+效果:1A:[丢弃1张手牌]:发现一张等级3以下的龙族怪兽并守备召唤。
 """
 
 class Fantasy_Dragon_Blue(Card):
@@ -17,33 +17,33 @@ class Fantasy_Dragon_Blue(Card):
 
 
 class Fantasy_Dragon_Blue_e1(Effect):
-    # 1A:[把此卡解放]:把对方场上1只怪兽返回持有者手牌。
+    # 1A:[丢弃1张手牌]:发现一张等级3以下的龙族怪兽并守备召唤。
     effType = EFF_TYPE.active
     activateLocation = LOCATION.monsterZone
-    AI_HINT = [AI_HINT.eraser]
-    EFF_POWER = 3
+    AI_HINT = [AI_HINT.summoner, AI_HINT.costHand]
+    EFF_POWER = 4
 
     def y_cost(self, justCheck, signal):
-        enemies = self.searchCards(LOCATION.monsterZone, self.getEnemySideTuple(), CARD_TYPE.monster, self)
-        if not enemies:
+        hand = self.searchCards(LOCATION.hand, self.getSide(), CARD_TYPE.all, self)
+        if not hand:
+            return False
+        if self.freeMonsterSpace() == 0:
             return False
         if justCheck:
             return True
-        t = yield self.y_select1Card(enemies, TITLE.returnToHand, canCancel=True)
-        if not t:
+        cost = yield self.y_select1Card(hand, TITLE.discard, canCancel=True)
+        if not cost:
             return False
-        successNum = yield self.y_tributeCard(self.owner)
-        if not successNum:
-            return False
-        self.saveTarget1(t)
+        yield self.y_sendCardToGrave(cost)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        t = self.getLegalTarget1()
-        if not t:
+        if self.freeMonsterSpace() == 0:
             return False
-        yield self.y_returnCardToHand(t)
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.DRAGON,
+                                           cardType=CARD_TYPE.monster, maxLevel=3, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked, form=FORM.defence)
         return True
-

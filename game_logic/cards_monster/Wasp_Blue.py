@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Kingspike Wasp
 卡名:毒刺蜂王
-效果:1A:[把自己场上1只其他昆虫族怪兽送入弃牌区]:对对手造成600点伤害。
+效果:1T:<被破坏后>:发现一张等级3以下的昆虫族怪兽并守备召唤。
 """
 
 class Wasp_Blue(Card):
@@ -17,29 +17,26 @@ class Wasp_Blue(Card):
 
 
 class Wasp_Blue_e1(Effect):
-    # 1A:[把自己场上1只其他昆虫族怪兽送入弃牌区]:对对手造成600点伤害。
-    effType = EFF_TYPE.active
-    activateLocation = LOCATION.monsterZone
-    AI_HINT = [AI_HINT.damager, AI_HINT.costMonster]
-    EFF_POWER = 3
+    # 1T:<被破坏后>:发现一张等级3以下的昆虫族怪兽并守备召唤。
+    effType = EFF_TYPE.trigger
+    observeSignals = (LOCATION.grave, [Signal.Destroyed])
+    AI_HINT = [AI_HINT.summoner]
+    EFF_POWER = 4
 
     def y_cost(self, justCheck, signal):
-        def isFodder(c):
-            return c != self.owner and c.race == RACE.INSECT
-        fodder = self.searchCards(LOCATION.monsterZone, self.getSide(), CARD_TYPE.monster, self, isFodder)
-        if not fodder:
+        if not isSignal(signal, Signal.Destroyed, self.owner):
+            return False
+        if self.freeMonsterSpace() == 0:
             return False
         if justCheck:
             return True
-        cost = yield self.y_select1Card(fodder, TITLE.sendToGrave, canCancel=True)
-        if not cost:
-            return False
-        yield self.y_sendCardToGrave(cost)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        yield self.y_damagePlayer(self.getEnemySideTuple(), 600)
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.INSECT,
+                                           cardType=CARD_TYPE.monster, maxLevel=3, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked, form=FORM.defence)
         return True
-

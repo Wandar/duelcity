@@ -5,42 +5,29 @@ from annos import *
 """
 CardName:Spikewheel Warbot
 卡名:刺轮战机
-效果:1P:此卡攻击过的回合结束时,对对方场上所有怪兽各造成200点伤害。
+效果:1T:<召唤时>:发现一张等级4以下的机械族怪兽并特殊召唤。2T:<我方准备阶段>:此卡攻击力·守备力上升400。
 """
 
 class Razor_Robot(Card):
-    CARD_KEY = 'Razor Robot'
+    CARD_KEY = "Razor Robot"
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
         self.initEffect(Razor_Robot_e1)
+        self.initEffect(Razor_Robot_e2)
 
 
 class Razor_Robot_e1(Effect):
-    # 1P:此卡攻击过的回合结束时,对对方场上所有怪兽各造成200点伤害。
+    # 1T:<召唤时>:发现一张等级4以下的机械族怪兽并特殊召唤。
     effType = EFF_TYPE.trigger
-    observeSignals = (LOCATION.monsterZone, [Signal.BattleFinish, Signal.TurnEnds])
-    AI_HINT = [AI_HINT.damager]
-    EFF_POWER = 2
-    _attacked = 0
-
-    def onTurnStart(self):
-        Effect.onTurnStart(self)
-        self._attacked = 0
+    observeSignals = (LOCATION.monsterZone, [Signal.Summon])
+    AI_HINT = [AI_HINT.summoner]
+    EFF_POWER = 4
 
     def y_cost(self, justCheck, signal):
-        if isSignal(signal, Signal.BattleFinish):
-            if signal.attackerCard == self.owner:
-                self._attacked = 1
+        if not isSignal(signal, Signal.Summon, self.owner):
             return False
-        if not isSignal(signal, Signal.TurnEnds):
-            return False
-        if not self._attacked:
-            return False
-        if not self.owner.isMonsterOnField():
-            return False
-        enemies = self.searchCards(LOCATION.monsterZone, self.getEnemySideTuple(), CARD_TYPE.monster, self)
-        if not enemies:
+        if self.freeMonsterSpace() == 0:
             return False
         if justCheck:
             return True
@@ -49,9 +36,34 @@ class Razor_Robot_e1(Effect):
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        enemies = self.searchCards(LOCATION.monsterZone, self.getEnemySideTuple(), CARD_TYPE.monster, self)
-        if enemies:
-            yield self.y_damageCard(enemies, 200)
-        self._attacked = 0
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.MACHINE,
+                                           cardType=CARD_TYPE.monster, maxLevel=4, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked)
         return True
 
+
+class Razor_Robot_e2(Effect):
+    # 2T:<我方准备阶段>:此卡攻击力·守备力上升400。
+    effType = EFF_TYPE.trigger
+    observeSignals = (LOCATION.monsterZone, [Signal.StandbyPhase])
+    AI_HINT = [AI_HINT.enhance]
+    EFF_POWER = 2
+    countLimit = COUNT_LIMIT.unlimited
+
+    def y_cost(self, justCheck, signal):
+        if not isSignal(signal, Signal.StandbyPhase):
+            return False
+        if self.game.whoseTurn != self.getSide():
+            return False
+        if not self.owner.isMonsterOnField():
+            return False
+        if justCheck:
+            return True
+        return True
+
+    def y_activate(self, justCheck, signal):
+        if justCheck:
+            return True
+        yield self.y_addCardData(self.owner, attackAdd=400, defenceAdd=400, effDuration=EFF_DURATION.onceForever)
+        return True

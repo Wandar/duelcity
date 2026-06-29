@@ -5,48 +5,39 @@ from annos import *
 """
 CardName:Rolling Hedgehog
 卡名:滚滚刺猬
+效果:1T:<召唤时>:发现一张等级4以下的兽族怪兽并特殊召唤。2P:对方怪兽的攻击力不会上升。
+注:2P「对方怪兽攻击力不会上升」无对应引擎原语,此处仅实现 1T。
 """
 
 class toon_Hedgehog(Card):
-    CARD_KEY="toon_Hedgehog"
-    AUTHOR="Unnamed"
+    CARD_KEY = "toon_Hedgehog"
+    AUTHOR = "Unnamed"
+
     def effectsInit(self):
         self.initEffect(toon_Hedgehog_e1)
 
 
-"""
-1A:[丢弃1张手牌]:对对方场上1只怪兽造成700点伤害。
-"""
 class toon_Hedgehog_e1(Effect):
-    effType = EFF_TYPE.active
-    activateLocation = LOCATION.monsterZone
-    AI_HINT = [AI_HINT.damager]
-    EFF_POWER = 3
+    # 1T:<召唤时>:发现一张等级4以下的兽族怪兽并特殊召唤。
+    effType = EFF_TYPE.trigger
+    observeSignals = (LOCATION.monsterZone, [Signal.Summon])
+    AI_HINT = [AI_HINT.summoner]
+    EFF_POWER = 4
 
     def y_cost(self, justCheck, signal):
-        hand = self.searchCards(LOCATION.hand, self.getSide(), CARD_TYPE.all, self)
-        if not hand:
+        if not isSignal(signal, Signal.Summon, self.owner):
             return False
-        enemies = self.searchCards(LOCATION.monsterZone, self.getEnemySideTuple(), CARD_TYPE.monster, self)
-        if not enemies:
+        if self.freeMonsterSpace() == 0:
             return False
         if justCheck:
             return True
-        discardCard = yield self.y_select1Card(hand, TITLE.discard, canCancel=True)
-        if not discardCard:
-            return False
-        target = yield self.y_select1Card(enemies, TITLE.damage, canCancel=True)
-        if not target:
-            return False
-        yield self.y_locationChange(discardCard, LOCATION.grave)
-        self.saveTarget1(target)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        target = self.getLegalTarget1(checkLocationChange=False)
-        if not target:
-            return False
-        yield self.y_damageCard(target, 700)
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.BEAST,
+                                           cardType=CARD_TYPE.monster, maxLevel=4, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked)
         return True

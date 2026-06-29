@@ -5,11 +5,11 @@ from annos import *
 """
 CardName:Little Totoro
 卡名:小龙猫
-效果:1A:<手牌效果:自己场上没有怪兽时>:把此卡特殊召唤。
+效果:1A:[把1只我方怪兽返回手牌]:发现一张等级2以下的兽族怪兽并沉默召唤。
 """
 
 class Dino_Cat_04(Card):
-    CARD_KEY = 'Dino_Cat_04'
+    CARD_KEY = "Dino_Cat_04"
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
@@ -17,27 +17,33 @@ class Dino_Cat_04(Card):
 
 
 class Dino_Cat_04_e1(Effect):
-    # 1A:<手牌效果:自己场上没有怪兽时>:把此卡特殊召唤。
+    # 1A:[把1只我方怪兽返回手牌]:发现一张等级2以下的兽族怪兽并沉默召唤(召唤后无效其效果)。
     effType = EFF_TYPE.active
-    activateLocation = LOCATION.hand
-    AI_HINT = [AI_HINT.summoner]
-    EFF_POWER = 2
+    activateLocation = LOCATION.monsterZone
+    AI_HINT = [AI_HINT.summoner, AI_HINT.costMonster]
+    EFF_POWER = 3
 
     def y_cost(self, justCheck, signal):
-        if self.owner.location != LOCATION.hand:
-            return False
-        mine = self.searchCards(LOCATION.monsterZone, self.getSide(), CARD_TYPE.monster, None)
-        if mine:
-            return False
-        if self.freeMonsterSpace() == 0:
+        mine = self.searchCards(LOCATION.monsterZone, self.getSide(), CARD_TYPE.monster, self)
+        if not mine:
             return False
         if justCheck:
             return True
+        cost = yield self.y_select1Card(mine, TITLE.returnToHand, canCancel=True)
+        if not cost:
+            return False
+        yield self.y_returnCardToHand(cost)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        yield self.y_specialSummon(self.owner)
+        if self.freeMonsterSpace() == 0:
+            return False
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.BEAST,
+                                           cardType=CARD_TYPE.monster, maxLevel=2, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked)
+            if picked.isMonsterOnField():
+                yield self.y_silenceCard(picked, effDuration=EFF_DURATION.onceForever)
         return True
-

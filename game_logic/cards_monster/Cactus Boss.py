@@ -5,11 +5,11 @@ from annos import *
 """
 CardName:Giant Mouth Thorn King
 卡名:巨嘴刺王
-效果:1P:此卡被攻击的伤害计算后,攻击怪兽的控制者受到400点伤害。
+效果:1T:<召唤时>:发现一张等级3以下的植物族怪兽并沉默召唤。
 """
 
 class Cactus_Boss(Card):
-    CARD_KEY = 'Cactus Boss'
+    CARD_KEY = "Cactus Boss"
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
@@ -17,30 +17,28 @@ class Cactus_Boss(Card):
 
 
 class Cactus_Boss_e1(Effect):
-    # 1P:此卡被攻击的伤害计算后,攻击怪兽的控制者受到400点伤害。
+    # 1T:<召唤时>:发现一张等级3以下的植物族怪兽并沉默召唤(召唤后无效其效果)。
     effType = EFF_TYPE.trigger
-    observeSignals = (LOCATION.monsterZone, [Signal.BattleFinish])
-    AI_HINT = [AI_HINT.damager]
-    EFF_POWER = 2
+    observeSignals = (LOCATION.monsterZone, [Signal.Summon])
+    AI_HINT = [AI_HINT.summoner]
+    EFF_POWER = 4
 
     def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.BattleFinish):
+        if not isSignal(signal, Signal.Summon, self.owner):
             return False
-        if signal.receiverCard != self.owner:
-            return False
-        if signal.attackerCard is None:
+        if self.freeMonsterSpace() == 0:
             return False
         if justCheck:
             return True
-        self.saveTarget1(signal.attackerCard)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        attacker = self.getLegalTarget1(checkLocationChange=False)
-        if not attacker:
-            return False
-        yield self.y_damagePlayer(attacker.side, 400)
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.PLANT,
+                                           cardType=CARD_TYPE.monster, maxLevel=3, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked)
+            if picked.isMonsterOnField():
+                yield self.y_silenceCard(picked, effDuration=EFF_DURATION.onceForever)
         return True
-

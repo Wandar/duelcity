@@ -5,11 +5,11 @@ from annos import *
 """
 CardName:Pumpkin Orb
 卡名:南瓜球
-效果:1A:[把自己场上1只其他植物族怪兽送入弃牌区]:自己抽2张卡。
+效果:1T:<被破坏后>:发现一张等级3以下的植物族怪兽并守备召唤。
 """
 
 class Plant_Chewer(Card):
-    CARD_KEY = 'Plant Chewer'
+    CARD_KEY = "Plant Chewer"
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
@@ -17,33 +17,26 @@ class Plant_Chewer(Card):
 
 
 class Plant_Chewer_e1(Effect):
-    # 1A:[把自己场上1只其他植物族怪兽送入弃牌区]:自己抽2张卡。
-    effType = EFF_TYPE.active
-    activateLocation = LOCATION.monsterZone
-    AI_HINT = [AI_HINT.drawCard, AI_HINT.costMonster]
-    EFF_POWER = 3
+    # 1T:<被破坏后>:发现一张等级3以下的植物族怪兽并守备召唤。
+    effType = EFF_TYPE.trigger
+    observeSignals = (LOCATION.grave, [Signal.Destroyed])
+    AI_HINT = [AI_HINT.summoner]
+    EFF_POWER = 4
 
     def y_cost(self, justCheck, signal):
-        def isFodder(c):
-            return c != self.owner and c.race == RACE.PLANT
-        fodder = self.searchCards(LOCATION.monsterZone, self.getSide(), CARD_TYPE.monster, self, isFodder)
-        if not fodder:
+        if not isSignal(signal, Signal.Destroyed, self.owner):
             return False
-        if len(self.game.decks[self.getSide()]) < 1:
+        if self.freeMonsterSpace() == 0:
             return False
         if justCheck:
             return True
-        cost = yield self.y_select1Card(fodder, TITLE.sendToGrave, canCancel=True)
-        if not cost:
-            return False
-        yield self.y_sendCardToGrave(cost)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        n = min(2, len(self.game.decks[self.getSide()]))
-        if n > 0:
-            yield self.y_drawCard(self.getSide(), n)
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.PLANT,
+                                           cardType=CARD_TYPE.monster, maxLevel=3, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked, form=FORM.defence)
         return True
-

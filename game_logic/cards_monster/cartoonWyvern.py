@@ -5,11 +5,11 @@ from annos import *
 """
 CardName:Tiny Red Dragon
 卡名:小红龙
-效果:1T:<召唤时>:对对方场上1只守备表示的怪兽造成500点伤害。
+效果:1A:[支付800基本分]:发现一张等级2以下的龙族怪兽并守备召唤。
 """
 
 class cartoonWyvern(Card):
-    CARD_KEY = 'cartoonWyvern'
+    CARD_KEY = "cartoonWyvern"
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
@@ -17,34 +17,29 @@ class cartoonWyvern(Card):
 
 
 class cartoonWyvern_e1(Effect):
-    # 1T:<召唤时>:对对方场上1只守备表示的怪兽造成500点伤害。
-    effType = EFF_TYPE.trigger
-    observeSignals = (LOCATION.monsterZone, [Signal.Summon])
-    AI_HINT = [AI_HINT.damager]
+    # 1A:[支付800基本分]:发现一张等级2以下的龙族怪兽并守备召唤。
+    effType = EFF_TYPE.active
+    activateLocation = LOCATION.monsterZone
+    AI_HINT = [AI_HINT.summoner, AI_HINT.highCost]
     EFF_POWER = 3
 
     def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.Summon, self.owner):
+        if self.game.LPs[self.getSide()] <= 800:
             return False
-        def isDef(c):
-            return c.form in (FORM.defence, FORM.defenceSet)
-        targets = self.searchCards(LOCATION.monsterZone, self.getEnemySideTuple(), CARD_TYPE.monster, self, isDef)
-        if not targets:
+        if self.freeMonsterSpace() == 0:
             return False
         if justCheck:
             return True
-        t = yield self.y_select1Card(targets, TITLE.damage, canCancel=True)
-        if not t:
-            return False
-        self.saveTarget1(t)
+        yield self.y_damagePlayer(self.getSide(), 800)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        t = self.getLegalTarget1()
-        if not t:
+        if self.freeMonsterSpace() == 0:
             return False
-        yield self.y_damageCard(t, 500)
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.DRAGON,
+                                           cardType=CARD_TYPE.monster, maxLevel=2, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked, form=FORM.defence)
         return True
-

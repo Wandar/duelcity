@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Gale Eagle
 卡名:疾风鹰
-效果:1P:此卡在召唤的回合可以直接攻击。
+效果:1T:<对方怪兽召唤时>:发现一张等级2以下的鸟兽族怪兽并沉默召唤。
 """
 
 class ma001_Eagle_2(Card):
@@ -17,14 +17,33 @@ class ma001_Eagle_2(Card):
 
 
 class ma001_Eagle_2_e1(Effect):
-    # 1P:此卡在召唤的回合可以直接攻击。
-    # NOTE: 引擎暂无"可直接攻击"的卡级钩子,登记为常驻标记效果,待战斗目标判定时查询。
-    effType = EFF_TYPE.permanent
-    observeSignals = (LOCATION.monsterZone, [Signal.AttachMonsterZone, Signal.DetachMonsterZone])
-    AI_HINT = [AI_HINT.permanent]
-    EFF_POWER = 2
+    # 1T:<对方怪兽召唤时>:发现一张等级2以下的鸟兽族怪兽并沉默召唤。
+    effType = EFF_TYPE.trigger
+    observeSignals = (LOCATION.monsterZone, [Signal.Summon])
+    AI_HINT = [AI_HINT.summoner]
+    EFF_POWER = 4
 
-    def y_signal(self, signal):
-        return
-        yield
+    def y_cost(self, justCheck, signal):
+        if not isSignal(signal, Signal.Summon):
+            return False
+        scard = getattr(signal, "card", None)
+        if scard is None or scard == self.owner or self.checkAlly(scard):
+            return False
+        if not self.owner.isMonsterOnField():
+            return False
+        if self.freeMonsterSpace() == 0:
+            return False
+        if justCheck:
+            return True
+        return True
 
+    def y_activate(self, justCheck, signal):
+        if justCheck:
+            return True
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.WINDBEAST,
+                                           cardType=CARD_TYPE.monster, maxLevel=2, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked)
+            if picked.isMonsterOnField():
+                yield self.y_silenceCard(picked, effDuration=EFF_DURATION.onceForever)
+        return True

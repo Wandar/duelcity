@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Armored Stone Golem
 卡名:重甲石傀儡
-效果:1T:<召唤时>:从卡组把1只等级2以下的岩石族·机械族以守备表示特殊召唤。
+效果:1A:[支付800基本分]:把对方场上1只怪兽变为守备表示且本回合无法变更表示形式。
 """
 
 class SKM_Iron_Golem(Card):
@@ -17,36 +17,34 @@ class SKM_Iron_Golem(Card):
 
 
 class SKM_Iron_Golem_e1(Effect):
-    # 1T:<召唤时>:从卡组把1只等级2以下的岩石族·机械族以守备表示特殊召唤。
-    effType = EFF_TYPE.trigger
-    observeSignals = (LOCATION.monsterZone, [Signal.Summon])
-    AI_HINT = [AI_HINT.summoner]
+    # 1A:[支付800基本分]:把对方场上1只怪兽变为守备表示且本回合无法变更表示形式。
+    effType = EFF_TYPE.active
+    activateLocation = LOCATION.monsterZone
+    AI_HINT = [AI_HINT.debuff]
     EFF_POWER = 3
 
     def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.Summon, self.owner):
+        if self.game.LPs[self.getSide()] <= 800:
             return False
-        def isTarget(c):
-            return c.level <= 2 and c.race in (RACE.ROCK, RACE.MACHINE)
-        targets = self.searchCards(LOCATION.deck, self.getSide(), CARD_TYPE.monster, self, isTarget)
-        if not targets:
-            return False
-        if self.freeMonsterSpace() == 0:
+        def isFace(c):
+            return c.isFaceUp()
+        enemies = self.searchCards(LOCATION.monsterZone, self.getEnemySideTuple(), CARD_TYPE.monster, self, isFace)
+        if not enemies:
             return False
         if justCheck:
             return True
-        chosen = yield self.y_select1Card(targets, TITLE.specialSummon, canCancel=True)
-        if not chosen:
+        target = yield self.y_select1Card(enemies, TITLE.changeForm, canCancel=True)
+        if not target:
             return False
-        self.saveTarget1(chosen)
+        yield self.y_damagePlayer(self.getSide(), 800)
+        self.saveTarget1(target)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        t = self.getLegalTarget1(checkLocationChange=False)
+        t = self.getLegalTarget1()
         if not t:
             return False
-        yield self.y_specialSummon(t, form=FORM.defence)
+        yield self.y_changeForm(t, FORM.defence)
         return True
-

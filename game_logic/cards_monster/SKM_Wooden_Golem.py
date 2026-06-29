@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Wildwood Golem
 卡名:荒野木傀儡
-效果:1T:<召唤时>:查看卡组顶2张,1张加入手牌,1张放回。
+效果:1A:[把1张手牌送入弃牌区]:把对方场上1只怪兽变为守备表示且本回合无法变更表示形式。
 """
 
 class SKM_Wooden_Golem(Card):
@@ -17,30 +17,38 @@ class SKM_Wooden_Golem(Card):
 
 
 class SKM_Wooden_Golem_e1(Effect):
-    # 1T:<召唤时>:查看卡组顶2张,1张加入手牌,1张放回。
-    effType = EFF_TYPE.trigger
-    observeSignals = (LOCATION.monsterZone, [Signal.Summon])
-    AI_HINT = [AI_HINT.earn]
-    EFF_POWER = 2
+    # 1A:[把1张手牌送入弃牌区]:把对方场上1只怪兽变为守备表示且本回合无法变更表示形式。
+    effType = EFF_TYPE.active
+    activateLocation = LOCATION.monsterZone
+    AI_HINT = [AI_HINT.debuff]
+    EFF_POWER = 3
 
     def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.Summon, self.owner):
+        hand = self.searchCards(LOCATION.hand, self.getSide(), CARD_TYPE.all, self)
+        if not hand:
             return False
-        if len(self.game.decks[self.getSide()]) < 1:
+        def isFace(c):
+            return c.isFaceUp()
+        enemies = self.searchCards(LOCATION.monsterZone, self.getEnemySideTuple(), CARD_TYPE.monster, self, isFace)
+        if not enemies:
             return False
         if justCheck:
             return True
+        target = yield self.y_select1Card(enemies, TITLE.changeForm, canCancel=True)
+        if not target:
+            return False
+        cost = yield self.y_select1Card(hand, TITLE.discard, canCancel=True)
+        if not cost:
+            return False
+        yield self.y_sendCardToGrave(cost)
+        self.saveTarget1(target)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        deck = self.game.decks[self.getSide()]
-        top = list(reversed(deck[-2:]))
-        if not top:
+        t = self.getLegalTarget1()
+        if not t:
             return False
-        chosen = yield self.y_select1Card(top, TITLE.addToHand, self.getSide(), canCancel=True)
-        if chosen:
-            yield self.y_returnCardToHand(chosen)
+        yield self.y_changeForm(t, FORM.defence)
         return True
-

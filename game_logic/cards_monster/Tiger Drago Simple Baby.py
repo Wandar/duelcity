@@ -5,7 +5,8 @@ from annos import *
 """
 CardName:Dark Dragonling
 卡名:黑龙宝宝
-效果:1T:<召唤·特殊召唤时>:破坏对方场上1只怪兽,此卡本回合不能攻击。
+效果:1T:<我方准备阶段>:发现一张等级5以下的龙族怪兽并特殊召唤。2P:对方怪兽的攻击力不会上升。
+注:2P「对方怪兽攻击力不会上升」需由 buff/数值系统在提升攻击力时读取该限制;本引擎暂无对应原语,此处仅实现 1P。
 """
 
 class Tiger_Drago_Simple_Baby(Card):
@@ -17,34 +18,31 @@ class Tiger_Drago_Simple_Baby(Card):
 
 
 class Tiger_Drago_Simple_Baby_e1(Effect):
-    # 1T:<召唤·特殊召唤时>:破坏对方场上1只怪兽,此卡本回合不能攻击。
+    # 1T:<我方准备阶段>:发现一张等级5以下的龙族怪兽并特殊召唤。
     effType = EFF_TYPE.trigger
-    observeSignals = (LOCATION.monsterZone, [Signal.Summon])
-    AI_HINT = [AI_HINT.eraser]
+    observeSignals = (LOCATION.monsterZone, [Signal.StandbyPhase])
+    AI_HINT = [AI_HINT.summoner]
     EFF_POWER = 4
+    countLimit = COUNT_LIMIT.unlimited
 
     def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.Summon, self.owner):
+        if not isSignal(signal, Signal.StandbyPhase):
             return False
-        enemies = self.searchCards(LOCATION.monsterZone, self.getEnemySideTuple(), CARD_TYPE.monster, self)
-        if not enemies:
+        if self.game.whoseTurn != self.getSide():
+            return False
+        if not self.owner.isMonsterOnField():
+            return False
+        if self.freeMonsterSpace() == 0:
             return False
         if justCheck:
             return True
-        t = yield self.y_select1Card(enemies, TITLE.destroy, canCancel=True)
-        if not t:
-            return False
-        self.saveTarget1(t)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        t = self.getLegalTarget1()
-        if not t:
-            return False
-        yield self.y_destroyCard(t)
-        if self.owner.isMonsterOnField():
-            yield self.y_changeCardData(self.owner, newAttackTimes=0, effDuration=EFF_DURATION.utilTurnEnds)
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.DRAGON,
+                                           cardType=CARD_TYPE.monster, maxLevel=5, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked)
         return True
-

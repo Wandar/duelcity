@@ -5,11 +5,11 @@ from annos import *
 """
 CardName:Tiny Green Dragon
 卡名:小绿龙
-效果:1T:<被破坏后>:自己回复800基本分。
+效果:1A:[丢弃1张手牌]:发现一张等级2以下的龙族怪兽并守备召唤。
 """
 
 class cartoonLeviathan(Card):
-    CARD_KEY = 'cartoonLeviathan'
+    CARD_KEY = "cartoonLeviathan"
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
@@ -17,22 +17,33 @@ class cartoonLeviathan(Card):
 
 
 class cartoonLeviathan_e1(Effect):
-    # 1T:<被破坏后>:自己回复800基本分。
-    effType = EFF_TYPE.trigger
-    observeSignals = (LOCATION.grave, [Signal.Destroyed])
-    AI_HINT = [AI_HINT.recoverLP]
-    EFF_POWER = 2
+    # 1A:[丢弃1张手牌]:发现一张等级2以下的龙族怪兽并守备召唤。
+    effType = EFF_TYPE.active
+    activateLocation = LOCATION.monsterZone
+    AI_HINT = [AI_HINT.summoner, AI_HINT.costHand]
+    EFF_POWER = 3
 
     def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.Destroyed, self.owner):
+        hand = self.searchCards(LOCATION.hand, self.getSide(), CARD_TYPE.all, self)
+        if not hand:
+            return False
+        if self.freeMonsterSpace() == 0:
             return False
         if justCheck:
             return True
+        cost = yield self.y_select1Card(hand, TITLE.discard, canCancel=True)
+        if not cost:
+            return False
+        yield self.y_sendCardToGrave(cost)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        yield self.y_healPlayer(self.getSide(), 800)
+        if self.freeMonsterSpace() == 0:
+            return False
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.DRAGON,
+                                           cardType=CARD_TYPE.monster, maxLevel=2, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked, form=FORM.defence)
         return True
-

@@ -5,11 +5,12 @@ from annos import *
 """
 CardName:Spirit Trunk Elephant
 卡名:灵鼻象
-效果:1T:<召唤时>:宣言1种卡的种类,确认对方卡组顶端1张卡:种类一致的场合将其送入弃牌区。
+效果:1T:<对方怪兽召唤时>:发现一张等级4以下的兽族怪兽并特殊召唤。2P:对方怪兽的攻击力不会上升。
+注:2P「对方怪兽攻击力不会上升」无对应引擎原语,此处仅实现 1T。
 """
 
 class Elephant_LOD0(Card):
-    CARD_KEY = 'Elephant_LOD0'
+    CARD_KEY = "Elephant_LOD0"
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
@@ -17,17 +18,21 @@ class Elephant_LOD0(Card):
 
 
 class Elephant_LOD0_e1(Effect):
-    # 1T:<召唤时>:宣言1种卡的种类,确认对方卡组顶端1张卡:种类一致的场合将其送入弃牌区。
+    # 1T:<对方怪兽召唤时>:发现一张等级4以下的兽族怪兽并特殊召唤。
     effType = EFF_TYPE.trigger
     observeSignals = (LOCATION.monsterZone, [Signal.Summon])
-    AI_HINT = [AI_HINT.eraser]
-    EFF_POWER = 2
+    AI_HINT = [AI_HINT.summoner]
+    EFF_POWER = 4
 
     def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.Summon, self.owner):
+        if not isSignal(signal, Signal.Summon):
             return False
-        enemy = self.getEnemySideTuple()[0]
-        if len(self.game.decks[enemy]) < 1:
+        scard = getattr(signal, "card", None)
+        if scard is None or scard == self.owner or self.checkAlly(scard):
+            return False
+        if not self.owner.isMonsterOnField():
+            return False
+        if self.freeMonsterSpace() == 0:
             return False
         if justCheck:
             return True
@@ -36,15 +41,8 @@ class Elephant_LOD0_e1(Effect):
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        enemy = self.getEnemySideTuple()[0]
-        deck = self.game.decks[enemy]
-        if not deck:
-            return False
-        option = yield self.y_showOptionsPopUp("title_target", "title_target", self.getSide(),
-                                               ["MONSTER", "SPELL", "TRAP"], 0)
-        wantType = (CARD_TYPE.monster, CARD_TYPE.spell, CARD_TYPE.trap)[option]
-        topCard = deck[-1]
-        if topCard.type == wantType:
-            yield self.y_sendCardToGrave(topCard)
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.BEAST,
+                                           cardType=CARD_TYPE.monster, maxLevel=4, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked)
         return True
-

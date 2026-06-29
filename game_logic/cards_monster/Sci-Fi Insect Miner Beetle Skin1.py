@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Gyro Gear Grub
 卡名:旋轮机虫
-效果:1A:[把此卡解放]:抽1张卡;抽到机械族则再抽1张。
+效果:1A:[支付800基本分]:发现一张等级3以下的机械族怪兽并守备召唤。
 """
 
 class Sci_Fi_Insect_Miner_Beetle_Skin1(Card):
@@ -17,29 +17,29 @@ class Sci_Fi_Insect_Miner_Beetle_Skin1(Card):
 
 
 class Sci_Fi_Insect_Miner_Beetle_Skin1_e1(Effect):
-    # 1A:[把此卡解放]:抽1张卡;抽到机械族则再抽1张。
+    # 1A:[支付800基本分]:发现一张等级3以下的机械族怪兽并守备召唤。
     effType = EFF_TYPE.active
     activateLocation = LOCATION.monsterZone
-    AI_HINT = [AI_HINT.drawCard]
-    EFF_POWER = 3
+    AI_HINT = [AI_HINT.summoner, AI_HINT.highCost]
+    EFF_POWER = 4
 
     def y_cost(self, justCheck, signal):
-        if len(self.game.decks[self.getSide()]) < 1:
+        if self.game.LPs[self.getSide()] <= 800:
+            return False
+        if self.freeMonsterSpace() == 0:
             return False
         if justCheck:
             return True
-        successNum = yield self.y_tributeCard(self.owner)
-        if not successNum:
-            return False
+        yield self.y_damagePlayer(self.getSide(), 800)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        if len(self.game.decks[self.getSide()]) < 1:
+        if self.freeMonsterSpace() == 0:
             return False
-        drawn = yield self.y_drawCard(self.getSide(), 1)
-        if drawn and drawn[0].race == RACE.MACHINE and len(self.game.decks[self.getSide()]) > 0:
-            yield self.y_drawCard(self.getSide(), 1)
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.MACHINE,
+                                           cardType=CARD_TYPE.monster, maxLevel=3, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked, form=FORM.defence)
         return True
-

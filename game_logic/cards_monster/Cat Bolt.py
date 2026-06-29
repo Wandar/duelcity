@@ -5,11 +5,11 @@ from annos import *
 """
 CardName:Red Lightning Cat
 卡名:红闪电猫
-效果:1T:<召唤时>:从卡组把1只「黄闪电猫」加入手牌。
+效果:1T:<对方怪兽召唤时>:发现一张等级2以下的兽族怪兽并守备召唤。
 """
 
 class Cat_Bolt(Card):
-    CARD_KEY = 'Cat Bolt'
+    CARD_KEY = "Cat Bolt"
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
@@ -17,31 +17,31 @@ class Cat_Bolt(Card):
 
 
 class Cat_Bolt_e1(Effect):
-    # 1T:<召唤时>:从卡组把1只「黄闪电猫」加入手牌。
+    # 1T:<对方怪兽召唤时>:发现一张等级2以下的兽族怪兽并守备召唤。
     effType = EFF_TYPE.trigger
     observeSignals = (LOCATION.monsterZone, [Signal.Summon])
-    AI_HINT = [AI_HINT.searchMonster]
-    EFF_POWER = 3
+    AI_HINT = [AI_HINT.summoner]
+    EFF_POWER = 4
 
     def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.Summon, self.owner):
+        if not isSignal(signal, Signal.Summon):
             return False
-        def isTarget(c):
-            return c.cardKey == "Cat Lightning"
-        targets = self.searchCards(LOCATION.deck, self.getSide(), CARD_TYPE.monster, self, isTarget)
-        if not targets:
+        scard = getattr(signal, "card", None)
+        if scard is None or scard == self.owner or self.checkAlly(scard):
+            return False
+        if not self.owner.isMonsterOnField():
+            return False
+        if self.freeMonsterSpace() == 0:
             return False
         if justCheck:
             return True
-        self.saveTarget1(targets[0])
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        t = self.getLegalTarget1()
-        if not t:
-            return False
-        yield self.y_returnCardToHand(t)
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.BEAST,
+                                           cardType=CARD_TYPE.monster, maxLevel=2, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked, form=FORM.defence)
         return True
-

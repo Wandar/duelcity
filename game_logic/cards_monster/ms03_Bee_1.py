@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Tiny Bee
 卡名:小蜜蜂
-效果:1T:<被破坏后>:发现1张LV4以下的昆虫族怪兽卡。
+效果:1A:[丢弃1张手牌]:发现一张等级2以下的昆虫族怪兽并守备召唤。
 """
 
 class ms03_Bee_1(Card):
@@ -17,23 +17,33 @@ class ms03_Bee_1(Card):
 
 
 class ms03_Bee_1_e1(Effect):
-    # 1T:<被破坏后>:发现1张LV4以下的昆虫族怪兽卡。
-    effType = EFF_TYPE.trigger
-    observeSignals = (LOCATION.grave, [Signal.Destroyed])
-    AI_HINT = [AI_HINT.searchMonster]
-    EFF_POWER = 2
+    # 1A:[丢弃1张手牌]:发现一张等级2以下的昆虫族怪兽并守备召唤。
+    effType = EFF_TYPE.active
+    activateLocation = LOCATION.monsterZone
+    AI_HINT = [AI_HINT.summoner, AI_HINT.costHand]
+    EFF_POWER = 4
 
     def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.Destroyed, self.owner):
+        hand = self.searchCards(LOCATION.hand, self.getSide(), CARD_TYPE.all, self)
+        if not hand:
+            return False
+        if self.freeMonsterSpace() == 0:
             return False
         if justCheck:
             return True
+        cost = yield self.y_select1Card(hand, TITLE.discard, canCancel=True)
+        if not cost:
+            return False
+        yield self.y_sendCardToGrave(cost)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        yield self.y_discoverCard(side=self.getSide(), race=RACE.INSECT,
-                                  cardType=CARD_TYPE.monster, maxLevel=4, count=3, canCancel=True)
+        if self.freeMonsterSpace() == 0:
+            return False
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.INSECT,
+                                           cardType=CARD_TYPE.monster, maxLevel=2, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked, form=FORM.defence)
         return True
-

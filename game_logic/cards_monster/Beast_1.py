@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Thornshell
 卡名:刺壳巨兽
-效果:1A:[把此卡解放]:破坏对方场上1张魔法·陷阱卡,自己抽1张卡。
+效果:1T:<此卡被特殊召唤时>:发现一张等级3以下的昆虫族怪兽并守备召唤。
 """
 
 class Beast_1(Card):
@@ -17,34 +17,26 @@ class Beast_1(Card):
 
 
 class Beast_1_e1(Effect):
-    # 1A:[把此卡解放]:破坏对方场上1张魔法·陷阱卡,自己抽1张卡。
-    effType = EFF_TYPE.active
-    activateLocation = LOCATION.monsterZone
-    AI_HINT = [AI_HINT.spellDestroyer, AI_HINT.drawCard]
-    EFF_POWER = 3
+    # 1T:<此卡被特殊召唤时>:发现一张等级3以下的昆虫族怪兽并守备召唤。
+    effType = EFF_TYPE.trigger
+    observeSignals = (LOCATION.monsterZone, [Signal.SpecialSummon])
+    AI_HINT = [AI_HINT.summoner]
+    EFF_POWER = 4
 
     def y_cost(self, justCheck, signal):
-        enemyST = self.searchCards(LOCATION.spellTrapZone, self.getEnemySideTuple(), CARD_TYPE.all, self)
-        if not enemyST:
+        if not isSignal(signal, Signal.SpecialSummon, self.owner):
+            return False
+        if self.freeMonsterSpace() == 0:
             return False
         if justCheck:
             return True
-        t = yield self.y_select1Card(enemyST, TITLE.destroy, canCancel=True)
-        if not t:
-            return False
-        successNum = yield self.y_tributeCard(self.owner)
-        if not successNum:
-            return False
-        self.saveTarget1(t)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        t = self.getLegalTarget1()
-        if t:
-            yield self.y_destroyCard(t)
-        if len(self.game.decks[self.getSide()]) > 0:
-            yield self.y_drawCard(self.getSide(), 1)
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.INSECT,
+                                           cardType=CARD_TYPE.monster, maxLevel=3, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked, form=FORM.defence)
         return True
-

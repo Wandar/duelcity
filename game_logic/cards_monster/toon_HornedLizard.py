@@ -5,38 +5,45 @@ from annos import *
 """
 CardName:Pointy Horned Lizard
 卡名:尖尖角蜥
+效果:1A:[丢弃1张手牌]:发现一张等级3以下的爬虫类族怪兽并守备召唤。
 """
 
 class toon_HornedLizard(Card):
-    CARD_KEY="toon_HornedLizard"
-    AUTHOR="Unnamed"
+    CARD_KEY = "toon_HornedLizard"
+    AUTHOR = "Unnamed"
+
     def effectsInit(self):
         self.initEffect(toon_HornedLizard_e1)
 
 
-"""
-1T:<召唤时>:对对方场上所有守备表示的怪兽各造成300点伤害。
-"""
 class toon_HornedLizard_e1(Effect):
-    effType = EFF_TYPE.trigger
-    observeSignals = (LOCATION.monsterZone, [Signal.Summon])
-    AI_HINT = [AI_HINT.damager]
+    # 1A:[丢弃1张手牌]:发现一张等级3以下的爬虫类族怪兽并守备召唤。
+    effType = EFF_TYPE.active
+    activateLocation = LOCATION.monsterZone
+    AI_HINT = [AI_HINT.summoner, AI_HINT.costHand]
     EFF_POWER = 3
 
     def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.Summon, self.owner):
+        hand = self.searchCards(LOCATION.hand, self.getSide(), CARD_TYPE.all, self)
+        if not hand:
             return False
+        if self.freeMonsterSpace() == 0:
+            return False
+        if justCheck:
+            return True
+        cost = yield self.y_select1Card(hand, TITLE.discard, canCancel=True)
+        if not cost:
+            return False
+        yield self.y_sendCardToGrave(cost)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-
-        def isDef(c):
-            return c.isDefence()
-
-        targets = self.searchCards(LOCATION.monsterZone, self.getEnemySideTuple(),
-                                   CARD_TYPE.monster, self, isDef)
-        if targets:
-            yield self.y_damageCard(targets, 300)
+        if self.freeMonsterSpace() == 0:
+            return False
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.REPTILE,
+                                           cardType=CARD_TYPE.monster, maxLevel=3, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked, form=FORM.defence)
         return True

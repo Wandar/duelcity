@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Ironback Dragon Turtle
 卡名:重壳巨龙龟
-效果:1T:<被战斗·效果破坏时>:从卡组把1只等级3以下的龙族怪兽以守备表示特殊召唤。
+效果:1T:<被破坏后>:把对方场上1只怪兽变为守备表示且本回合无法变更表示形式。
 """
 
 class Big_Draco_Ground_04(Card):
@@ -17,25 +17,23 @@ class Big_Draco_Ground_04(Card):
 
 
 class Big_Draco_Ground_04_e1(Effect):
-    # 1T:<被战斗·效果破坏时>:从卡组把1只等级3以下的龙族怪兽以守备表示特殊召唤。
+    # 1T:<被破坏后>:把对方场上1只怪兽变为守备表示且本回合无法变更表示形式。
     effType = EFF_TYPE.trigger
     observeSignals = (LOCATION.grave, [Signal.Destroyed])
-    AI_HINT = [AI_HINT.summoner]
+    AI_HINT = [AI_HINT.debuff]
     EFF_POWER = 3
 
     def y_cost(self, justCheck, signal):
         if not isSignal(signal, Signal.Destroyed, self.owner):
             return False
-        def isTarget(c):
-            return c.race == RACE.DRAGON and c.level <= 3
-        targets = self.searchCards(LOCATION.deck, self.getSide(), CARD_TYPE.monster, self, isTarget)
-        if not targets:
-            return False
-        if self.freeMonsterSpace() == 0:
+        def isAtk(c):
+            return c.isFaceUp() and c.form == FORM.attack
+        enemies = self.searchCards(LOCATION.monsterZone, self.getEnemySideTuple(), CARD_TYPE.monster, self, isAtk)
+        if not enemies:
             return False
         if justCheck:
             return True
-        chosen = yield self.y_select1Card(targets, TITLE.specialSummon, canCancel=True)
+        chosen = yield self.y_select1Card(enemies, TITLE.changeForm, canCancel=False)
         if not chosen:
             return False
         self.saveTarget1(chosen)
@@ -44,8 +42,8 @@ class Big_Draco_Ground_04_e1(Effect):
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        t = self.getLegalTarget1(checkLocationChange=False)
-        if not t:
+        target = self.getLegalTarget1()
+        if not target:
             return False
-        yield self.y_specialSummon(t, form=FORM.defence)
+        yield self.y_changeForm(target, FORM.defence)
         return True

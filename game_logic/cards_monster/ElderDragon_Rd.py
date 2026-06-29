@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Lava Dragon King
 卡名:熔岩圣龙
-效果:1A:[把自己场上1只"熔岩"怪兽解放]:从手牌·卡组把1只"金焰熔岩龙"特殊召唤。
+效果:1T:<对方怪兽召唤时>:发现一张等级4以下的龙族怪兽并特殊召唤。2T:<我方准备阶段>:此卡攻击力·守备力上升600。
 """
 
 class ElderDragon_Rd(Card):
@@ -14,47 +14,61 @@ class ElderDragon_Rd(Card):
 
     def effectsInit(self):
         self.initEffect(ElderDragon_Rd_e1)
+        self.initEffect(ElderDragon_Rd_e2)
 
 
 class ElderDragon_Rd_e1(Effect):
-    # 1A:[把自己场上1只"熔岩"怪兽解放]:从手牌·卡组把1只"金焰熔岩龙"特殊召唤。
-    effType = EFF_TYPE.active
-    activateLocation = LOCATION.monsterZone
-    AI_HINT = [AI_HINT.summoner, AI_HINT.costMonster]
+    # 1T:<对方怪兽召唤时>:发现一张等级4以下的龙族怪兽并特殊召唤。
+    effType = EFF_TYPE.trigger
+    observeSignals = (LOCATION.monsterZone, [Signal.Summon])
+    AI_HINT = [AI_HINT.summoner]
     EFF_POWER = 4
 
     def y_cost(self, justCheck, signal):
-        lava = ("smallDragonWhelp_Rd", "Dragon_Rd", "ElderDragon_Rd", "Mdl_Monster000_0000")
-        def isLava(c):
-            return c.cardKey in lava
-        fodder = self.searchCards(LOCATION.monsterZone, self.getSide(), CARD_TYPE.monster, self, isLava)
-        if not fodder:
+        if not isSignal(signal, Signal.Summon):
             return False
-        def isTarget(c):
-            return c.cardKey == "Mdl_Monster000_0000"
-        targets = self.searchCards(LOCATION.hand | LOCATION.deck, self.getSide(), CARD_TYPE.monster, self, isTarget)
-        if not targets:
+        scard = getattr(signal, "card", None)
+        if scard is None or scard == self.owner or self.checkAlly(scard):
+            return False
+        if not self.owner.isMonsterOnField():
+            return False
+        if self.freeMonsterSpace() == 0:
             return False
         if justCheck:
             return True
-        cost = yield self.y_select1Card(fodder, TITLE.tribute, canCancel=True)
-        if not cost:
-            return False
-        chosen = yield self.y_select1Card(targets, TITLE.specialSummon, canCancel=True)
-        if not chosen:
-            return False
-        successNum = yield self.y_tributeCard(cost)
-        if not successNum:
-            return False
-        self.saveTarget1(chosen)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        t = self.getLegalTarget1(checkLocationChange=False)
-        if not t or self.freeMonsterSpace() == 0:
-            return False
-        yield self.y_specialSummon(t)
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.DRAGON,
+                                           cardType=CARD_TYPE.monster, maxLevel=4, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked)
         return True
 
+
+class ElderDragon_Rd_e2(Effect):
+    # 2T:<我方准备阶段>:此卡攻击力·守备力上升600。
+    effType = EFF_TYPE.trigger
+    observeSignals = (LOCATION.monsterZone, [Signal.StandbyPhase])
+    AI_HINT = [AI_HINT.enhance]
+    EFF_POWER = 2
+    countLimit = COUNT_LIMIT.unlimited
+
+    def y_cost(self, justCheck, signal):
+        if not isSignal(signal, Signal.StandbyPhase):
+            return False
+        if self.game.whoseTurn != self.getSide():
+            return False
+        if not self.owner.isMonsterOnField():
+            return False
+        if justCheck:
+            return True
+        return True
+
+    def y_activate(self, justCheck, signal):
+        if justCheck:
+            return True
+        yield self.y_addCardData(self.owner, attackAdd=600, defenceAdd=600, effDuration=EFF_DURATION.onceForever)
+        return True

@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Green Shade Murmurer
 卡名:绿影咕哝者
-效果:1A:[把此卡解放]:让对方随机丢弃1张手牌。
+效果:1A:[把此卡解放]:对对方造成1000点伤害。
 """
 
 class SM_EnemyGoblin(Card):
@@ -17,16 +17,14 @@ class SM_EnemyGoblin(Card):
 
 
 class SM_EnemyGoblin_e1(Effect):
-    # 1A:[把此卡解放]:让对方随机丢弃1张手牌。
+    # 1A:[把此卡解放]:对对方造成1000点伤害。
     effType = EFF_TYPE.active
     activateLocation = LOCATION.monsterZone
-    AI_HINT = [AI_HINT.botDontUse]
-    EFF_POWER = 2
+    AI_HINT = [AI_HINT.damager, AI_HINT.costMonster]
+    EFF_POWER = 3
 
     def y_cost(self, justCheck, signal):
-        enemy = self.getEnemySideTuple()[0]
-        oppHand = self.searchCards(LOCATION.hand, (enemy,), CARD_TYPE.all, None)
-        if not oppHand:
+        if not self.owner.isMonsterOnField():
             return False
         if justCheck:
             return True
@@ -38,12 +36,5 @@ class SM_EnemyGoblin_e1(Effect):
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        import random
-        enemy = self.getEnemySideTuple()[0]
-        oppHand = self.searchCards(LOCATION.hand, (enemy,), CARD_TYPE.all, None)
-        if not oppHand:
-            return False
-        card = random.choice(oppHand)
-        yield self.y_sendCardToGrave(card)
+        yield self.y_damagePlayer(self.getEnemySideTuple(), 1000)
         return True
-

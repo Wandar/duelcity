@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Meadow Camo Chameleon Green
 卡名:树影伪装者·绿
-效果:1T:<被攻击时>:伤害计算前,此卡的守备力变为与攻击怪兽的攻击力相同{UTIL}。
+效果:1T:<此卡被特殊召唤时>:发现一张等级2以下的爬虫类族怪兽并守备召唤。
 """
 
 class ChameleonA(Card):
@@ -17,31 +17,26 @@ class ChameleonA(Card):
 
 
 class ChameleonA_e1(Effect):
-    # 1T:<被攻击时>:伤害计算前,此卡的守备力变为与攻击怪兽的攻击力相同{UTIL}。
+    # 1T:<此卡被特殊召唤时>:发现一张等级2以下的爬虫类族怪兽并守备召唤。
     effType = EFF_TYPE.trigger
-    observeSignals = (LOCATION.monsterZone, [Signal.RequestBattle])
-    AI_HINT = [AI_HINT.battleBenefit]
-    EFF_POWER = 2
+    observeSignals = (LOCATION.monsterZone, [Signal.SpecialSummon])
+    AI_HINT = [AI_HINT.summoner]
+    EFF_POWER = 4
 
     def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.RequestBattle):
+        if not isSignal(signal, Signal.SpecialSummon, self.owner):
             return False
-        if signal.receiverCard != self.owner:
-            return False
-        if signal.attackerCard is None:
+        if self.freeMonsterSpace() == 0:
             return False
         if justCheck:
             return True
-        self.saveTarget1(signal.attackerCard)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        attacker = self.getLegalTarget1(checkLocationChange=False)
-        if not attacker:
-            return False
-        yield self.y_changeForm(self.owner, FORM.defence)
-        yield self.y_changeCardData(self.owner, newDefence=attacker.atk, effDuration=EFF_DURATION.utilTurnEnds)
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.REPTILE,
+                                           cardType=CARD_TYPE.monster, maxLevel=2, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked, form=FORM.defence)
         return True
-
