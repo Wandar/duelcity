@@ -331,6 +331,8 @@ class Card(CardData):
 
 
     def shortEffectsInit(self):
+        # Format in data: "EffectName" / "EffectName:3" (NEED_NUM) / "EffectName:somedata"
+        # All arguments use colon separation; bare suffix numbers are no longer supported.
         arr = self.shortEffectsStr_0.split(',')
         order = 0
         for s in arr:
@@ -347,24 +349,29 @@ class Card(CardData):
                 if len(temparr) != 2:
                     ERROR_MSG("short effect parse error ", s, self.getName())
                     continue
-                shortEffstr = temparr[0]
-                data = temparr[1]
-                hasData = True
+                shortEffstr = temparr[0].strip()
+                value = temparr[1].strip()
+                # Numeric value -> NEED_NUM path; otherwise string data path
+                if value.lstrip('-').isdigit():
+                    hasNum = True
+                    num = int(value)
+                else:
+                    hasData = True
+                    data = value
             else:
-                hasNum, shortEffstr, num = split_string_with_number_suffix(s)
+                shortEffstr = s
 
-            shortEffstr = shortEffstr.strip()
             if shortEffstr not in g_shortEffects:
                 ERROR_MSG("%s not recognize shortEffect %s" % (self.getName(), shortEffstr))
                 continue
             ShortEffClass = g_shortEffects[shortEffstr]
             shortEffNeedNum = getattr(ShortEffClass, "NEED_NUM", False)
             if shortEffNeedNum and not hasNum:
-                ERROR_MSG(f"{self.getName()} shortEffect {shortEffstr} need a number")
+                ERROR_MSG(f"{self.getName()} shortEffect {shortEffstr} needs a number, e.g. '{shortEffstr}:1'")
                 hasNum = True
                 num = 1
             elif not shortEffNeedNum and hasNum:
-                ERROR_MSG(f"{self.getName()} shortEffect {shortEffstr} doesnt need a number")
+                ERROR_MSG(f"{self.getName()} shortEffect {shortEffstr} does not need a number")
                 hasNum = False
                 num = 0
 
