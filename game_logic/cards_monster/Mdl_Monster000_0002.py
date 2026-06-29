@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Rainbow Featherstorm Dragon
 卡名:虹羽风暴龙
-效果:1P:此卡1回合可对对方场上每只怪兽各攻击1次;被此卡战斗破坏的怪兽其效果在墓地也无效。
+效果:1A:[把1只我方怪兽返回手牌]:发现一张等级6以下的龙族怪兽并特殊召唤。2T:<我方准备阶段>:此卡攻击力·守备力上升600。
 """
 
 class Mdl_Monster000_0002(Card):
@@ -14,22 +14,61 @@ class Mdl_Monster000_0002(Card):
 
     def effectsInit(self):
         self.initEffect(Mdl_Monster000_0002_e1)
+        self.initEffect(Mdl_Monster000_0002_e2)
 
 
 class Mdl_Monster000_0002_e1(Effect):
-    # 1P:此卡1回合可对对方场上每只怪兽各攻击1次;被此卡战斗破坏的怪兽其效果在墓地也无效。
-    # NOTE: 多重攻击以提高攻击次数近似(上限5);"墓地效果无效"暂无钩子。
-    effType = EFF_TYPE.permanent
-    observeSignals = (LOCATION.monsterZone, [Signal.AttachMonsterZone, Signal.DetachMonsterZone])
-    AI_HINT = [AI_HINT.permanent, AI_HINT.battleBenefit]
-    EFF_POWER = 5
+    # 1A:[把1只我方怪兽返回手牌]:发现一张等级6以下的龙族怪兽并特殊召唤。
+    effType = EFF_TYPE.active
+    activateLocation = LOCATION.monsterZone
+    AI_HINT = [AI_HINT.summoner, AI_HINT.costMonster]
+    EFF_POWER = 4
 
-    def y_signal(self, signal):
-        if isSignal(signal, Signal.DetachMonsterZone, self.owner):
-            yield self.y_removeBuffEffectSource(self.owner, self.effUniID)
-            return
+    def y_cost(self, justCheck, signal):
+        mine = self.searchCards(LOCATION.monsterZone, self.getSide(), CARD_TYPE.monster, self)
+        if not mine:
+            return False
+        if justCheck:
+            return True
+        cost = yield self.y_select1Card(mine, TITLE.returnToHand, canCancel=True)
+        if not cost:
+            return False
+        yield self.y_returnCardToHand(cost)
+        return True
+
+    def y_activate(self, justCheck, signal):
+        if justCheck:
+            return True
+        if self.freeMonsterSpace() == 0:
+            return False
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.DRAGON,
+                                           cardType=CARD_TYPE.monster, maxLevel=6, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked)
+        return True
+
+
+class Mdl_Monster000_0002_e2(Effect):
+    # 2T:<我方准备阶段>:此卡攻击力·守备力上升600。
+    effType = EFF_TYPE.trigger
+    observeSignals = (LOCATION.monsterZone, [Signal.StandbyPhase])
+    AI_HINT = [AI_HINT.enhance]
+    EFF_POWER = 2
+    countLimit = COUNT_LIMIT.unlimited
+
+    def y_cost(self, justCheck, signal):
+        if not isSignal(signal, Signal.StandbyPhase):
+            return False
+        if self.game.whoseTurn != self.getSide():
+            return False
         if not self.owner.isMonsterOnField():
-            return
-        yield self.y_changeCardData(self.owner, newAttackTimes=5,
-                                    effDuration=EFF_DURATION.fromSource, uniqueSourceID=self.effUniID)
+            return False
+        if justCheck:
+            return True
+        return True
 
+    def y_activate(self, justCheck, signal):
+        if justCheck:
+            return True
+        yield self.y_addCardData(self.owner, attackAdd=600, defenceAdd=600, effDuration=EFF_DURATION.onceForever)
+        return True

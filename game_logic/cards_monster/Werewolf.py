@@ -5,11 +5,11 @@ from annos import *
 """
 CardName:Cold Blue Werewolf
 卡名:寒蓝恶狼
-效果:1I:<手牌效果:对方怪兽攻击宣言时>[丢弃此卡]:该攻击怪兽变为守备表示。
+效果:1T:<此卡被特殊召唤时>:发现一张等级3以下的兽族怪兽并守备召唤。
 """
 
 class Werewolf(Card):
-    CARD_KEY = 'Werewolf'
+    CARD_KEY = "Werewolf"
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
@@ -17,32 +17,26 @@ class Werewolf(Card):
 
 
 class Werewolf_e1(Effect):
-    # 1I:<手牌效果:对方怪兽攻击宣言时>[丢弃此卡]:该攻击怪兽变为守备表示。
-    effType = EFF_TYPE.instant
-    observeSignals = (LOCATION.hand, [Signal.RequestBattle])
-    AI_HINT = [AI_HINT.debuff]
-    EFF_POWER = 3
+    # 1T:<此卡被特殊召唤时>:发现一张等级3以下的兽族怪兽并守备召唤。
+    effType = EFF_TYPE.trigger
+    observeSignals = (LOCATION.monsterZone, [Signal.SpecialSummon])
+    AI_HINT = [AI_HINT.summoner]
+    EFF_POWER = 4
 
     def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.RequestBattle):
+        if not isSignal(signal, Signal.SpecialSummon, self.owner):
             return False
-        if self.owner.location != LOCATION.hand:
-            return False
-        attacker = signal.attackerCard
-        if attacker is None or self.checkAlly(attacker):
+        if self.freeMonsterSpace() == 0:
             return False
         if justCheck:
             return True
-        yield self.y_sendCardToGrave(self.owner)
-        self.saveTarget1(attacker)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        t = self.getLegalTarget1(checkLocationChange=False)
-        if not t or not t.isMonsterOnField():
-            return False
-        yield self.y_changeForm(t, FORM.defence)
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.BEAST,
+                                           cardType=CARD_TYPE.monster, maxLevel=3, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked, form=FORM.defence)
         return True
-

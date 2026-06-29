@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Mechabeast ChenLoong
 卡名:百兽机 辰龙
-效果:1T:<召唤时>:从卡组把1只"百兽机"特殊召唤,之后可破坏对方场上1张卡。
+效果:1T:<召唤时>:发现一张等级5以下的机械族怪兽并特殊召唤。2T:<召唤时>:把对方场上攻击力最高的1只怪兽变为守备表示且无法变更表示形式。
 """
 
 class Sci_Fi_Dragon_Skin4(Card):
@@ -14,46 +14,63 @@ class Sci_Fi_Dragon_Skin4(Card):
 
     def effectsInit(self):
         self.initEffect(Sci_Fi_Dragon_Skin4_e1)
+        self.initEffect(Sci_Fi_Dragon_Skin4_e2)
 
 
 class Sci_Fi_Dragon_Skin4_e1(Effect):
-    # 1T:<召唤时>:从卡组把1只"百兽机"特殊召唤,之后可破坏对方场上1张卡。
+    # 1T:<召唤时>:发现一张等级5以下的机械族怪兽并特殊召唤。
     effType = EFF_TYPE.trigger
     observeSignals = (LOCATION.monsterZone, [Signal.Summon])
-    AI_HINT = [AI_HINT.summoner, AI_HINT.eraser]
-    EFF_POWER = 5
-    FAMILY = ("SciFi Beast03 Skin1", "SciFi Beast04 WhaleSnake Skin1", "SciFi Beast05_Skin1",
-              "SciFi Beast06 Bull Skin2", "Sci-Fi Dragon Skin4")
+    AI_HINT = [AI_HINT.summoner]
+    EFF_POWER = 4
 
     def y_cost(self, justCheck, signal):
         if not isSignal(signal, Signal.Summon, self.owner):
-            return False
-        def isFamily(c):
-            return c != self.owner and c.cardKey in self.FAMILY
-        targets = self.searchCards(LOCATION.deck, self.getSide(), CARD_TYPE.monster, self, isFamily)
-        if not targets:
             return False
         if self.freeMonsterSpace() == 0:
             return False
         if justCheck:
             return True
-        chosen = yield self.y_select1Card(targets, TITLE.specialSummon, canCancel=True)
-        if not chosen:
-            return False
-        self.saveTarget1(chosen)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        t = self.getLegalTarget1(checkLocationChange=False)
-        if not t:
-            return False
-        yield self.y_specialSummon(t)
-        enemies = self.searchCards(LOCATION.mask_onField, self.getEnemySideTuple(), CARD_TYPE.all, self)
-        if enemies:
-            chosen = yield self.y_select1Card(enemies, TITLE.destroy, self.getSide(), canCancel=True)
-            if chosen:
-                yield self.y_destroyCard(chosen)
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.MACHINE,
+                                           cardType=CARD_TYPE.monster, maxLevel=5, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked)
         return True
 
+
+class Sci_Fi_Dragon_Skin4_e2(Effect):
+    # 2T:<召唤时>:把对方场上攻击力最高的1只怪兽变为守备表示且无法变更表示形式。
+    effType = EFF_TYPE.trigger
+    observeSignals = (LOCATION.monsterZone, [Signal.Summon])
+    AI_HINT = [AI_HINT.debuff]
+    EFF_POWER = 3
+
+    def y_cost(self, justCheck, signal):
+        if not isSignal(signal, Signal.Summon, self.owner):
+            return False
+        def isAtk(c):
+            return c.isFaceUp() and c.form == FORM.attack
+        enemies = self.searchCards(LOCATION.monsterZone, self.getEnemySideTuple(), CARD_TYPE.monster, self, isAtk)
+        if not enemies:
+            return False
+        if justCheck:
+            return True
+        return True
+
+    def y_activate(self, justCheck, signal):
+        if justCheck:
+            return True
+        def isAtk(c):
+            return c.isFaceUp() and c.form == FORM.attack
+        enemies = self.searchCards(LOCATION.monsterZone, self.getEnemySideTuple(), CARD_TYPE.monster, self, isAtk)
+        if not enemies:
+            return False
+        maxAtk = max(c.atk for c in enemies)
+        target = next(c for c in enemies if c.atk == maxAtk)
+        yield self.y_changeForm(target, FORM.defence)
+        return True

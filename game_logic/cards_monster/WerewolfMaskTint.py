@@ -3,9 +3,9 @@ from __future__ import annotations
 from dutil import *
 from annos import *
 """
-CardName:Werewolf Mask
-卡名:狼人面具
-效果:1P:自己其他兽战士族怪兽攻击力+200。
+CardName:Fierce Fang Warrior
+卡名:獠牙勇士
+效果:1P:自己其他兽战士族怪兽{ATK}{DEF}+200。
 """
 
 class WerewolfMaskTint(Card):
@@ -17,7 +17,7 @@ class WerewolfMaskTint(Card):
 
 
 class WerewolfMaskTint_e1(Effect):
-    # 1P:自己其他兽战士族怪兽攻击力+200。
+    # 1P:自己其他兽战士族怪兽{ATK}{DEF}+200。
     effType = EFF_TYPE.permanent
     observeSignals = (LOCATION.monsterZone, [Signal.AttachMonsterZone, Signal.DetachMonsterZone, Signal.CardRaceChanged])
     AI_HINT = [AI_HINT.permanent, AI_HINT.addAtk]
@@ -37,6 +37,6 @@ class WerewolfMaskTint_e1(Effect):
             return c != self.owner and c.race == RACE.BEASTWARRIOR
         targets = self.searchCards(LOCATION.monsterZone, self.getSide(), CARD_TYPE.monster, None, isOther)
         if targets:
-            yield self.y_addCardData(targets, attackAdd=200,
+            yield self.y_addCardData(targets, attackAdd=200, defenceAdd=200,
                                      effDuration=EFF_DURATION.fromSource, uniqueSourceID=self.effUniID)
 

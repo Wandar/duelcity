@@ -5,11 +5,11 @@ from annos import *
 """
 CardName:Toucan
 卡名:巨嘴鸟
-效果:1T:<召唤时>:把1张手牌放回卡组底部,自己抽1张卡。
+效果:1A:[丢弃1只鸟兽族怪兽]:发现一张等级2以下的鸟兽族怪兽并守备召唤。
 """
 
 class Toucan_LOD0(Card):
-    CARD_KEY = 'Toucan_LOD0'
+    CARD_KEY = "Toucan_LOD0"
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
@@ -17,34 +17,35 @@ class Toucan_LOD0(Card):
 
 
 class Toucan_LOD0_e1(Effect):
-    # 1T:<召唤时>:把1张手牌放回卡组底部,自己抽1张卡。
-    effType = EFF_TYPE.trigger
-    observeSignals = (LOCATION.monsterZone, [Signal.Summon])
-    AI_HINT = [AI_HINT.drawCard]
-    EFF_POWER = 1
+    # 1A:[丢弃1只鸟兽族怪兽]:发现一张等级2以下的鸟兽族怪兽并守备召唤。
+    effType = EFF_TYPE.active
+    activateLocation = LOCATION.monsterZone
+    AI_HINT = [AI_HINT.summoner, AI_HINT.costHand]
+    EFF_POWER = 3
 
     def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.Summon, self.owner):
+        def isWindbeast(c):
+            return c.race == RACE.WINDBEAST
+        fodder = self.searchCards(LOCATION.hand, self.getSide(), CARD_TYPE.monster, self, isWindbeast)
+        if not fodder:
             return False
-        hand = self.searchCards(LOCATION.hand, self.getSide(), CARD_TYPE.all, self)
-        if not hand:
+        if self.freeMonsterSpace() == 0:
             return False
         if justCheck:
             return True
-        chosen = yield self.y_select1Card(hand, TITLE.returnToDeck, canCancel=True)
-        if not chosen:
+        cost = yield self.y_select1Card(fodder, TITLE.discard, canCancel=True)
+        if not cost:
             return False
-        self.saveTarget1(chosen)
+        yield self.y_sendCardToGrave(cost)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        t = self.getLegalTarget1()
-        if not t:
+        if self.freeMonsterSpace() == 0:
             return False
-        yield self.y_returnCardToDeck(t, self.getSide(), RETURN_TO_DECK.bottom)
-        if len(self.game.decks[self.getSide()]) > 0:
-            yield self.y_drawCard(self.getSide(), 1)
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.WINDBEAST,
+                                           cardType=CARD_TYPE.monster, maxLevel=2, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked, form=FORM.defence)
         return True
-

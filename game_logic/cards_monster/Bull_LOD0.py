@@ -5,11 +5,11 @@ from annos import *
 """
 CardName:Rampaging Bul
 卡名:暴蹄奔牛
-效果:1T:此卡战斗破坏对方怪兽后,把对方场上1只其他怪兽变为守备表示。
+效果:1T:<我方准备阶段>:发现一张等级3以下的兽族怪兽并守备召唤。
 """
 
 class Bull_LOD0(Card):
-    CARD_KEY = 'Bull_LOD0'
+    CARD_KEY = "Bull_LOD0"
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
@@ -17,40 +17,31 @@ class Bull_LOD0(Card):
 
 
 class Bull_LOD0_e1(Effect):
-    # 1T:此卡战斗破坏对方怪兽后,把对方场上1只其他怪兽变为守备表示。
+    # 1T:<我方准备阶段>:发现一张等级3以下的兽族怪兽并守备召唤。
     effType = EFF_TYPE.trigger
-    observeSignals = (LOCATION.monsterZone, [Signal.BattleFinish])
-    AI_HINT = [AI_HINT.debuff]
-    EFF_POWER = 3
+    observeSignals = (LOCATION.monsterZone, [Signal.StandbyPhase])
+    AI_HINT = [AI_HINT.summoner]
+    EFF_POWER = 4
+    countLimit = COUNT_LIMIT.unlimited
 
     def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.BattleFinish):
+        if not isSignal(signal, Signal.StandbyPhase):
             return False
-        if signal.attackerCard != self.owner:
-            return False
-        if signal.receiverCard is None or signal.receiverCard.isMonsterOnField():
+        if self.game.whoseTurn != self.getSide():
             return False
         if not self.owner.isMonsterOnField():
             return False
-        def isAtkOther(c):
-            return c.isFaceUp() and c.form == FORM.attack
-        targets = self.searchCards(LOCATION.monsterZone, self.getEnemySideTuple(), CARD_TYPE.monster, self, isAtkOther)
-        if not targets:
+        if self.freeMonsterSpace() == 0:
             return False
         if justCheck:
             return True
-        t = yield self.y_select1Card(targets, TITLE.changeForm, canCancel=True)
-        if not t:
-            return False
-        self.saveTarget1(t)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        t = self.getLegalTarget1()
-        if not t:
-            return False
-        yield self.y_changeForm(t, FORM.defence)
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.BEAST,
+                                           cardType=CARD_TYPE.monster, maxLevel=3, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked, form=FORM.defence)
         return True
-

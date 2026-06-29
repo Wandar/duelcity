@@ -5,11 +5,12 @@ from annos import *
 """
 CardName:Nimble Drakonoid
 卡名:灵巧机龙
-效果:1T:此卡进行战斗的伤害计算后,可以把此卡变为守备表示,并自己抽1张卡。
+效果:1A:[把1张手牌送入弃牌区]:发现一张等级4以下的机械族怪兽并特殊召唤。2P:对方怪兽的攻击力不会上升。
+注:2P「对方怪兽攻击力不会上升」无对应引擎原语,此处仅实现 1A。
 """
 
 class Dragon_Bot(Card):
-    CARD_KEY = 'Dragon Bot'
+    CARD_KEY = "Dragon Bot"
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
@@ -17,27 +18,33 @@ class Dragon_Bot(Card):
 
 
 class Dragon_Bot_e1(Effect):
-    # 1T:此卡进行战斗的伤害计算后,可以把此卡变为守备表示,并自己抽1张卡。
-    effType = EFF_TYPE.optionalTrigger
-    observeSignals = (LOCATION.monsterZone, [Signal.BattleFinish])
-    AI_HINT = [AI_HINT.drawCard]
-    EFF_POWER = 3
+    # 1A:[把1张手牌送入弃牌区]:发现一张等级4以下的机械族怪兽并特殊召唤。
+    effType = EFF_TYPE.active
+    activateLocation = LOCATION.monsterZone
+    AI_HINT = [AI_HINT.summoner, AI_HINT.costHand]
+    EFF_POWER = 4
 
     def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.BattleFinish):
+        hand = self.searchCards(LOCATION.hand, self.getSide(), CARD_TYPE.all, self)
+        if not hand:
             return False
-        if signal.attackerCard != self.owner and signal.receiverCard != self.owner:
-            return False
-        if not self.owner.isMonsterOnField():
+        if self.freeMonsterSpace() == 0:
             return False
         if justCheck:
             return True
+        cost = yield self.y_select1Card(hand, TITLE.discard, canCancel=True)
+        if not cost:
+            return False
+        yield self.y_sendCardToGrave(cost)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        yield self.y_changeForm(self.owner, FORM.defence)
-        yield self.y_drawCard(self.getSide(), 1)
+        if self.freeMonsterSpace() == 0:
+            return False
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.MACHINE,
+                                           cardType=CARD_TYPE.monster, maxLevel=4, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked)
         return True
-

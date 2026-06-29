@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Slime King
 卡名:史莱姆国王
-效果:1A:[把此卡解放]:从卡组把2只等级3以下的怪兽特殊召唤。
+效果:1A:[把1只我方怪兽返回手牌]:把对方场上1只怪兽变为守备表示且本回合无法变更表示形式。
 """
 
 class KingSlime_1(Card):
@@ -17,38 +17,38 @@ class KingSlime_1(Card):
 
 
 class KingSlime_1_e1(Effect):
-    # 1A:[把此卡解放]:从卡组把2只等级3以下的怪兽特殊召唤。
+    # 1A:[把1只我方怪兽返回手牌]:把对方场上1只怪兽变为守备表示且本回合无法变更表示形式。
     effType = EFF_TYPE.active
     activateLocation = LOCATION.monsterZone
-    AI_HINT = [AI_HINT.summoner]
-    EFF_POWER = 4
+    AI_HINT = [AI_HINT.debuff]
+    EFF_POWER = 3
 
     def y_cost(self, justCheck, signal):
-        def isTarget(c):
-            return c.level <= 3
-        targets = self.searchCards(LOCATION.deck, self.getSide(), CARD_TYPE.monster, self, isTarget)
-        if not targets:
+        mine = self.searchCards(LOCATION.monsterZone, self.getSide(), CARD_TYPE.monster, self)
+        if not mine:
+            return False
+        def isFace(c):
+            return c.isFaceUp()
+        enemies = self.searchCards(LOCATION.monsterZone, self.getEnemySideTuple(), CARD_TYPE.monster, self, isFace)
+        if not enemies:
             return False
         if justCheck:
             return True
-        maxn = min(2, len(targets))
-        chosen = yield self.y_selectCards(targets, TITLE.specialSummon, self.getSide(), 1, maxn, None, True)
-        if not chosen:
+        target = yield self.y_select1Card(enemies, TITLE.changeForm, canCancel=True)
+        if not target:
             return False
-        successNum = yield self.y_tributeCard(self.owner)
-        if not successNum:
+        rc = yield self.y_select1Card(mine, TITLE.returnToHand, canCancel=True)
+        if not rc:
             return False
-        self.saveTarget1(chosen)
+        yield self.y_returnCardToHand(rc)
+        self.saveTarget1(target)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        targets = self.getLegalTarget1(checkLocationChange=False)
-        if not targets:
+        t = self.getLegalTarget1()
+        if not t:
             return False
-        if type(targets) != list:
-            targets = [targets]
-        yield self.y_specialSummon(targets)
+        yield self.y_changeForm(t, FORM.defence)
         return True
-

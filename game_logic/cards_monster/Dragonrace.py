@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Giantclaw Drakebeast
 卡名:巨爪龙兽
-效果:1A:[把此卡解放]:破坏对方场上所有守备表示的怪兽。
+效果:1T:<对方怪兽召唤时>:发现一张等级4以下的机械族怪兽并特殊召唤。2A:[丢弃1张手牌]:从卡组检索1只机械族怪兽并覆盖。
 """
 
 class Dragonrace(Card):
@@ -14,35 +14,75 @@ class Dragonrace(Card):
 
     def effectsInit(self):
         self.initEffect(Dragonrace_e1)
+        self.initEffect(Dragonrace_e2)
 
 
 class Dragonrace_e1(Effect):
-    # 1A:[把此卡解放]:破坏对方场上所有守备表示的怪兽。
-    effType = EFF_TYPE.active
-    activateLocation = LOCATION.monsterZone
-    AI_HINT = [AI_HINT.eraser]
+    # 1T:<对方怪兽召唤时>:发现一张等级4以下的机械族怪兽并特殊召唤。
+    effType = EFF_TYPE.trigger
+    observeSignals = (LOCATION.monsterZone, [Signal.Summon])
+    AI_HINT = [AI_HINT.summoner]
     EFF_POWER = 4
 
     def y_cost(self, justCheck, signal):
-        def isDef(c):
-            return c.form in (FORM.defence, FORM.defenceSet)
-        targets = self.searchCards(LOCATION.monsterZone, self.getEnemySideTuple(), CARD_TYPE.monster, self, isDef)
-        if not targets:
+        if not isSignal(signal, Signal.Summon):
+            return False
+        scard = getattr(signal, "card", None)
+        if scard is None or scard == self.owner or self.checkAlly(scard):
+            return False
+        if not self.owner.isMonsterOnField():
+            return False
+        if self.freeMonsterSpace() == 0:
             return False
         if justCheck:
             return True
-        successNum = yield self.y_tributeCard(self.owner)
-        if not successNum:
-            return False
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        def isDef(c):
-            return c.form in (FORM.defence, FORM.defenceSet)
-        targets = self.searchCards(LOCATION.monsterZone, self.getEnemySideTuple(), CARD_TYPE.monster, self, isDef)
-        if targets:
-            yield self.y_destroyCard(targets)
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.MACHINE,
+                                           cardType=CARD_TYPE.monster, maxLevel=4, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked)
         return True
 
+
+class Dragonrace_e2(Effect):
+    # 2A:[丢弃1张手牌]:从卡组检索1只机械族怪兽并覆盖。
+    effType = EFF_TYPE.active
+    activateLocation = LOCATION.monsterZone
+    AI_HINT = [AI_HINT.summoner, AI_HINT.costHand]
+    EFF_POWER = 3
+
+    def y_cost(self, justCheck, signal):
+        hand = self.searchCards(LOCATION.hand, self.getSide(), CARD_TYPE.all, self)
+        if not hand:
+            return False
+        def isR(c):
+            return c.race == RACE.MACHINE
+        targets = self.searchCards(LOCATION.deck, self.getSide(), CARD_TYPE.monster, self, isR)
+        if not targets:
+            return False
+        if self.freeMonsterSpace() == 0:
+            return False
+        if justCheck:
+            return True
+        cost = yield self.y_select1Card(hand, TITLE.discard, canCancel=True)
+        if not cost:
+            return False
+        chosen = yield self.y_select1Card(targets, TITLE.specialSummon, canCancel=True)
+        if not chosen:
+            return False
+        yield self.y_sendCardToGrave(cost)
+        self.saveTarget1(chosen)
+        return True
+
+    def y_activate(self, justCheck, signal):
+        if justCheck:
+            return True
+        t = self.getLegalTarget1(checkLocationChange=False)
+        if not t or self.freeMonsterSpace() == 0:
+            return False
+        yield self.y_specialSummon(t, form=FORM.defenceSet)
+        return True

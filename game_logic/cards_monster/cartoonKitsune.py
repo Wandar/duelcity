@@ -5,26 +5,29 @@ from annos import *
 """
 CardName:Fluffbell
 卡名:绒绒金铃
-效果:1T:<召唤时>:确认双方卡组顶端各3张卡,并各自以任意顺序放回。
+效果:1T:<此卡被特殊召唤时>:发现一张等级5以下的天使族怪兽并特殊召唤。2T:<我方准备阶段>:此卡攻击力·守备力上升500。
 """
 
 class cartoonKitsune(Card):
-    CARD_KEY = 'cartoonKitsune'
+    CARD_KEY = "cartoonKitsune"
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
         self.initEffect(cartoonKitsune_e1)
+        self.initEffect(cartoonKitsune_e2)
 
 
 class cartoonKitsune_e1(Effect):
-    # 1T:<召唤时>:确认双方卡组顶端各3张卡,并各自以任意顺序放回。
+    # 1T:<此卡被特殊召唤时>:发现一张等级5以下的天使族怪兽并特殊召唤。
     effType = EFF_TYPE.trigger
-    observeSignals = (LOCATION.monsterZone, [Signal.Summon])
-    AI_HINT = [AI_HINT.search]
-    EFF_POWER = 3
+    observeSignals = (LOCATION.monsterZone, [Signal.SpecialSummon])
+    AI_HINT = [AI_HINT.summoner]
+    EFF_POWER = 4
 
     def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.Summon, self.owner):
+        if not isSignal(signal, Signal.SpecialSummon, self.owner):
+            return False
+        if self.freeMonsterSpace() == 0:
             return False
         if justCheck:
             return True
@@ -33,16 +36,34 @@ class cartoonKitsune_e1(Effect):
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        for side in (self.getSide(),) + tuple(self.getEnemySideTuple()):
-            deck = self.game.decks[side]
-            if len(deck) < 1:
-                continue
-            top = list(reversed(deck[-3:]))  # top-first
-            ordered = yield self.y_selectCards(top, TITLE.target, self.getSide(),
-                                               len(top), len(top), None, False, hasOrder=True)
-            if ordered:
-                # 把选定顺序写回卡组顶端(列表尾部为顶端)
-                rest = deck[:-len(top)]
-                self.game.decks[side] = rest + list(reversed(ordered))
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.FAIRY,
+                                           cardType=CARD_TYPE.monster, maxLevel=5, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked)
         return True
 
+
+class cartoonKitsune_e2(Effect):
+    # 2T:<我方准备阶段>:此卡攻击力·守备力上升500。
+    effType = EFF_TYPE.trigger
+    observeSignals = (LOCATION.monsterZone, [Signal.StandbyPhase])
+    AI_HINT = [AI_HINT.enhance]
+    EFF_POWER = 2
+    countLimit = COUNT_LIMIT.unlimited
+
+    def y_cost(self, justCheck, signal):
+        if not isSignal(signal, Signal.StandbyPhase):
+            return False
+        if self.game.whoseTurn != self.getSide():
+            return False
+        if not self.owner.isMonsterOnField():
+            return False
+        if justCheck:
+            return True
+        return True
+
+    def y_activate(self, justCheck, signal):
+        if justCheck:
+            return True
+        yield self.y_addCardData(self.owner, attackAdd=500, defenceAdd=500, effDuration=EFF_DURATION.onceForever)
+        return True

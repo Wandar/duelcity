@@ -5,58 +5,41 @@ from annos import *
 """
 CardName:Little Log
 卡名:小木桩
-效果:1P:此卡不能攻击。2T:守备表示的此卡被攻击时,自己抽1张卡。
+效果:1A:[支付800基本分]:发现一张等级2以下的植物族怪兽并守备召唤。
 """
 
 class StumpEnt_Autumn(Card):
-    CARD_KEY = 'StumpEnt_Autumn'
+    CARD_KEY = "StumpEnt_Autumn"
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
         self.initEffect(StumpEnt_Autumn_e1)
-        self.initEffect(StumpEnt_Autumn_e2)
 
 
 class StumpEnt_Autumn_e1(Effect):
-    # 1P:此卡不能攻击。(以攻击次数置0近似实现)
-    effType = EFF_TYPE.permanent
-    observeSignals = (LOCATION.monsterZone, [Signal.AttachMonsterZone, Signal.DetachMonsterZone])
-    AI_HINT = [AI_HINT.permanent]
-    EFF_POWER = 0
-
-    def y_signal(self, signal):
-        if isSignal(signal, Signal.DetachMonsterZone, self.owner):
-            yield self.y_removeBuffEffectSource(self.owner, self.effUniID)
-            return
-        if not self.owner.isMonsterOnField():
-            return
-        yield self.y_changeCardData(self.owner, newAttackTimes=0,
-                                    effDuration=EFF_DURATION.fromSource, uniqueSourceID=self.effUniID)
-
-
-class StumpEnt_Autumn_e2(Effect):
-    # 2T:守备表示的此卡被攻击时,自己抽1张卡。
-    effType = EFF_TYPE.trigger
-    observeSignals = (LOCATION.monsterZone, [Signal.RequestBattle])
-    AI_HINT = [AI_HINT.drawCard]
-    EFF_POWER = 2
+    # 1A:[支付800基本分]:发现一张等级2以下的植物族怪兽并守备召唤。
+    effType = EFF_TYPE.active
+    activateLocation = LOCATION.monsterZone
+    AI_HINT = [AI_HINT.summoner, AI_HINT.highCost]
+    EFF_POWER = 3
 
     def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.RequestBattle):
+        if self.game.LPs[self.getSide()] <= 800:
             return False
-        if signal.receiverCard != self.owner:
-            return False
-        if self.owner.form not in (FORM.defence, FORM.defenceSet):
-            return False
-        if len(self.game.decks[self.getSide()]) < 1:
+        if self.freeMonsterSpace() == 0:
             return False
         if justCheck:
             return True
+        yield self.y_damagePlayer(self.getSide(), 800)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        yield self.y_drawCard(self.getSide(), 1)
+        if self.freeMonsterSpace() == 0:
+            return False
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.PLANT,
+                                           cardType=CARD_TYPE.monster, maxLevel=2, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked, form=FORM.defence)
         return True
-

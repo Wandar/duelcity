@@ -5,11 +5,11 @@ from annos import *
 """
 CardName:Blastfire Whelp Hound
 卡名:爆火狂犬仔
-效果:1T:<被战斗破坏后>:从手牌·卡组把1只「爆火狂犬」特殊召唤。
+效果:1A:[把此卡解放]:发现一张等级3以下的兽族怪兽并守备召唤。
 """
 
 class Dog_Bark(Card):
-    CARD_KEY = 'Dog Bark'
+    CARD_KEY = "Dog Bark"
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
@@ -17,36 +17,29 @@ class Dog_Bark(Card):
 
 
 class Dog_Bark_e1(Effect):
-    # 1T:<被战斗破坏后>:从手牌·卡组把1只「爆火狂犬」特殊召唤。
-    effType = EFF_TYPE.trigger
-    observeSignals = (LOCATION.grave, [Signal.DestroyedByBattle])
-    AI_HINT = [AI_HINT.summoner]
+    # 1A:[把此卡解放]:发现一张等级3以下的兽族怪兽并守备召唤。
+    effType = EFF_TYPE.active
+    activateLocation = LOCATION.monsterZone
+    AI_HINT = [AI_HINT.summoner, AI_HINT.costMonster]
     EFF_POWER = 3
 
     def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.DestroyedByBattle, self.owner):
-            return False
-        def isTarget(c):
-            return c.cardKey == "Dog Bowwow"
-        targets = self.searchCards(LOCATION.hand | LOCATION.deck, self.getSide(), CARD_TYPE.monster, self, isTarget)
-        if not targets:
-            return False
-        if self.freeMonsterSpace() == 0:
+        if not self.owner.isMonsterOnField():
             return False
         if justCheck:
             return True
-        chosen = yield self.y_select1Card(targets, TITLE.specialSummon, canCancel=True)
-        if not chosen:
+        successNum = yield self.y_tributeCard(self.owner)
+        if not successNum:
             return False
-        self.saveTarget1(chosen)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        t = self.getLegalTarget1(checkLocationChange=False)
-        if not t:
+        if self.freeMonsterSpace() == 0:
             return False
-        yield self.y_specialSummon(t)
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.BEAST,
+                                           cardType=CARD_TYPE.monster, maxLevel=3, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked, form=FORM.defence)
         return True
-

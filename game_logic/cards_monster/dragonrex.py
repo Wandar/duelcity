@@ -3,9 +3,10 @@ from __future__ import annotations
 from dutil import *
 from annos import *
 """
-CardName:Tyrant Dragon Rex
-卡名:暴君龙王
-效果:1P:对方回合开始时,对方场上攻击力最低的1只怪兽返回持有者手牌。
+CardName:Dragonrex
+卡名:恐暴龙
+效果:1T:<召唤时>:破坏自己场上此卡以外所有怪兽。2P:此卡每回合必须攻击。
+注:2P「每回合必须攻击」由战斗系统读取怪兽的 mustAttack 标记执行;此处负责设置该标记。
 """
 
 class dragonrex(Card):
@@ -14,24 +15,23 @@ class dragonrex(Card):
 
     def effectsInit(self):
         self.initEffect(dragonrex_e1)
+        self.initEffect(dragonrex_e2)
 
 
 class dragonrex_e1(Effect):
-    # 1P:对方回合开始时,对方场上攻击力最低的1只怪兽返回持有者手牌。
+    # 1T:<召唤时>:破坏自己场上此卡以外所有怪兽。
     effType = EFF_TYPE.trigger
-    observeSignals = (LOCATION.monsterZone, [Signal.StandbyPhase])
-    AI_HINT = [AI_HINT.eraser]
-    EFF_POWER = 3
+    observeSignals = (LOCATION.monsterZone, [Signal.Summon])
+    AI_HINT = [AI_HINT.eraser, AI_HINT.costMonster]
+    EFF_POWER = 2
 
     def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.StandbyPhase):
+        if not isSignal(signal, Signal.Summon, self.owner):
             return False
-        if self.game.whoseTurn == self.getSide():
-            return False
-        if not self.owner.isMonsterOnField():
-            return False
-        enemies = self.searchCards(LOCATION.monsterZone, self.getEnemySideTuple(), CARD_TYPE.monster, self)
-        if not enemies:
+        def isOther(c):
+            return c != self.owner
+        targets = self.searchCards(LOCATION.monsterZone, self.getSide(), CARD_TYPE.monster, self, isOther)
+        if not targets:
             return False
         if justCheck:
             return True
@@ -40,10 +40,26 @@ class dragonrex_e1(Effect):
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        enemies = self.searchCards(LOCATION.monsterZone, self.getEnemySideTuple(), CARD_TYPE.monster, self)
-        if not enemies:
-            return False
-        weakest = min(enemies, key=lambda c: c.atk)
-        yield self.y_returnCardToHand(weakest)
+        def isOther(c):
+            return c != self.owner
+        targets = self.searchCards(LOCATION.monsterZone, self.getSide(), CARD_TYPE.monster, self, isOther)
+        if targets:
+            yield self.y_destroyCard(list(targets))
         return True
 
+
+class dragonrex_e2(Effect):
+    # 2P:此卡每回合必须攻击。在此卡上设置 mustAttack 标记,供战斗系统判定。
+    effType = EFF_TYPE.permanent
+    observeSignals = (LOCATION.monsterZone, [Signal.AttachMonsterZone, Signal.DetachMonsterZone])
+    AI_HINT = [AI_HINT.permanent]
+    EFF_POWER = 1
+
+    def y_signal(self, signal):
+        if isSignal(signal, Signal.DetachMonsterZone, self.owner):
+            self.owner.delData("mustAttack")
+            return
+        if self.owner.isMonsterOnField():
+            self.owner.setData("mustAttack", "1")
+        return
+        yield

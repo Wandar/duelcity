@@ -5,11 +5,11 @@ from annos import *
 """
 CardName:Sunlit Winged Sunflower Pixie
 卡名:向阳翼花小妖
-效果:1T:<被破坏后>:从卡组把1只「向阳翼花妖」特殊召唤。
+效果:1T:<我方准备阶段>:发现一张等级2以下的植物族怪兽并守备召唤。
 """
 
 class Sun_Blossom(Card):
-    CARD_KEY = 'Sun Blossom'
+    CARD_KEY = "Sun Blossom"
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
@@ -17,33 +17,31 @@ class Sun_Blossom(Card):
 
 
 class Sun_Blossom_e1(Effect):
-    # 1T:<被破坏后>:从卡组把1只「向阳翼花妖」特殊召唤。
+    # 1T:<我方准备阶段>:发现一张等级2以下的植物族怪兽并守备召唤。
     effType = EFF_TYPE.trigger
-    observeSignals = (LOCATION.grave, [Signal.Destroyed])
+    observeSignals = (LOCATION.monsterZone, [Signal.StandbyPhase])
     AI_HINT = [AI_HINT.summoner]
-    EFF_POWER = 3
+    EFF_POWER = 4
+    countLimit = COUNT_LIMIT.unlimited
 
     def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.Destroyed, self.owner):
+        if not isSignal(signal, Signal.StandbyPhase):
             return False
-        def isTarget(c):
-            return c.cardKey == "Sunflower Fairy"
-        targets = self.searchCards(LOCATION.deck, self.getSide(), CARD_TYPE.monster, self, isTarget)
-        if not targets:
+        if self.game.whoseTurn != self.getSide():
+            return False
+        if not self.owner.isMonsterOnField():
             return False
         if self.freeMonsterSpace() == 0:
             return False
         if justCheck:
             return True
-        self.saveTarget1(targets[0])
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        t = self.getLegalTarget1(checkLocationChange=False)
-        if not t:
-            return False
-        yield self.y_specialSummon(t)
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.PLANT,
+                                           cardType=CARD_TYPE.monster, maxLevel=2, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked, form=FORM.defence)
         return True
-

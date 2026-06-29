@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Waterside PlatypusA
 卡名:水缘鸭嘴兽
-效果:1P:此卡同时当作兽族·水族·鸟兽族使用。
+效果:1T:<我方准备阶段>:发现一张等级2以下的兽族怪兽并守备召唤。
 """
 
 class PlatypusA(Card):
@@ -17,14 +17,31 @@ class PlatypusA(Card):
 
 
 class PlatypusA_e1(Effect):
-    # 1P:此卡同时当作兽族·水族·鸟兽族使用。
-    # NOTE: 引擎种族字段为单值,暂不支持多种族并存,登记为常驻标记效果,待引擎支持种族掩码。
-    effType = EFF_TYPE.permanent
-    observeSignals = (LOCATION.monsterZone, [Signal.AttachMonsterZone, Signal.DetachMonsterZone])
-    AI_HINT = [AI_HINT.permanent]
-    EFF_POWER = 1
+    # 1T:<我方准备阶段>:发现一张等级2以下的兽族怪兽并守备召唤。
+    effType = EFF_TYPE.trigger
+    observeSignals = (LOCATION.monsterZone, [Signal.StandbyPhase])
+    AI_HINT = [AI_HINT.summoner]
+    EFF_POWER = 4
+    countLimit = COUNT_LIMIT.unlimited
 
-    def y_signal(self, signal):
-        return
-        yield
+    def y_cost(self, justCheck, signal):
+        if not isSignal(signal, Signal.StandbyPhase):
+            return False
+        if self.game.whoseTurn != self.getSide():
+            return False
+        if not self.owner.isMonsterOnField():
+            return False
+        if self.freeMonsterSpace() == 0:
+            return False
+        if justCheck:
+            return True
+        return True
 
+    def y_activate(self, justCheck, signal):
+        if justCheck:
+            return True
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.BEAST,
+                                           cardType=CARD_TYPE.monster, maxLevel=2, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked, form=FORM.defence)
+        return True

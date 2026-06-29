@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Mecha Blood Mosquito
 卡名:机械吸血蚊
-效果:1T:<战斗破坏对方怪兽时>:自己抽1张卡。
+效果:1A:[把1张手牌送入弃牌区]:发现一张等级2以下的机械族怪兽并守备召唤。
 """
 
 class Sci_Fi_Insect_Mosquito_Skin2(Card):
@@ -17,29 +17,33 @@ class Sci_Fi_Insect_Mosquito_Skin2(Card):
 
 
 class Sci_Fi_Insect_Mosquito_Skin2_e1(Effect):
-    # 1T:<战斗破坏对方怪兽时>:自己抽1张卡。
-    effType = EFF_TYPE.trigger
-    observeSignals = (LOCATION.monsterZone, [Signal.BattleFinish])
-    AI_HINT = [AI_HINT.drawCard]
-    EFF_POWER = 3
+    # 1A:[把1张手牌送入弃牌区]:发现一张等级2以下的机械族怪兽并守备召唤。
+    effType = EFF_TYPE.active
+    activateLocation = LOCATION.monsterZone
+    AI_HINT = [AI_HINT.summoner, AI_HINT.costHand]
+    EFF_POWER = 4
 
     def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.BattleFinish):
+        hand = self.searchCards(LOCATION.hand, self.getSide(), CARD_TYPE.all, self)
+        if not hand:
             return False
-        if signal.attackerCard != self.owner:
-            return False
-        rc = signal.receiverCard
-        if rc is None or rc.isMonsterOnField():
-            return False
-        if len(self.game.decks[self.getSide()]) < 1:
+        if self.freeMonsterSpace() == 0:
             return False
         if justCheck:
             return True
+        cost = yield self.y_select1Card(hand, TITLE.discard, canCancel=True)
+        if not cost:
+            return False
+        yield self.y_sendCardToGrave(cost)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        yield self.y_drawCard(self.getSide(), 1)
+        if self.freeMonsterSpace() == 0:
+            return False
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.MACHINE,
+                                           cardType=CARD_TYPE.monster, maxLevel=2, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked, form=FORM.defence)
         return True
-

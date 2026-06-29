@@ -6,7 +6,7 @@ from annos import *
 CardName:Hammer Lizard
 卡名:铁锤蜥蜴
 effect:
-效果:1T:<战斗破坏对方怪兽时>:对对方造成700点伤害。
+效果:1T:<战斗破坏对方怪兽时>:对对方造成500点伤害。
 """
 
 class Dragonide(Card):
@@ -18,7 +18,7 @@ class Dragonide(Card):
 
 
 class Dragonide_e1(Effect):
-    # 1T:<战斗破坏对方怪兽时>:对对方造成700点伤害。
+    # 1T:<战斗破坏对方怪兽时>:对对方造成500点伤害。
     effType = EFF_TYPE.trigger
     observeSignals = (LOCATION.monsterZone, [Signal.BattleFinish])
     AI_HINT = [AI_HINT.damager]

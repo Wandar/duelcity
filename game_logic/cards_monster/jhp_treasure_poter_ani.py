@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Treasure Seeker Squirrel
 卡名:宝藏搜寻者
-效果:1T:<召唤时>:查看卡组顶3张,把1张加入手牌,其余放回原位。
+效果:1T:<召唤时>:发现一张等级3以下的兽族怪兽并沉默召唤。
 """
 
 class jhp_treasure_poter_ani(Card):
@@ -17,16 +17,16 @@ class jhp_treasure_poter_ani(Card):
 
 
 class jhp_treasure_poter_ani_e1(Effect):
-    # 1T:<召唤时>:查看卡组顶3张,把1张加入手牌,其余放回原位。
+    # 1T:<召唤时>:发现一张等级3以下的兽族怪兽并沉默召唤。
     effType = EFF_TYPE.trigger
     observeSignals = (LOCATION.monsterZone, [Signal.Summon])
-    AI_HINT = [AI_HINT.earn]
-    EFF_POWER = 3
+    AI_HINT = [AI_HINT.summoner]
+    EFF_POWER = 4
 
     def y_cost(self, justCheck, signal):
         if not isSignal(signal, Signal.Summon, self.owner):
             return False
-        if len(self.game.decks[self.getSide()]) < 1:
+        if self.freeMonsterSpace() == 0:
             return False
         if justCheck:
             return True
@@ -35,12 +35,10 @@ class jhp_treasure_poter_ani_e1(Effect):
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        deck = self.game.decks[self.getSide()]
-        top = list(reversed(deck[-3:]))
-        if not top:
-            return False
-        chosen = yield self.y_select1Card(top, TITLE.addToHand, self.getSide(), canCancel=True)
-        if chosen:
-            yield self.y_returnCardToHand(chosen)
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.BEAST,
+                                           cardType=CARD_TYPE.monster, maxLevel=3, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked)
+            if picked.isMonsterOnField():
+                yield self.y_silenceCard(picked, effDuration=EFF_DURATION.onceForever)
         return True
-

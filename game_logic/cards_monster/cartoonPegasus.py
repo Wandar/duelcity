@@ -5,11 +5,11 @@ from annos import *
 """
 CardName:Gleaming Steed Pegasus
 卡名:光辉小马
-效果:1T:<召唤时>:从自己弃牌区把1张魔法卡加入手牌。
+效果:1A:[把1只其他怪兽解放]:发现一张等级2以下的兽族怪兽并守备召唤。
 """
 
 class cartoonPegasus(Card):
-    CARD_KEY = 'cartoonPegasus'
+    CARD_KEY = "cartoonPegasus"
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
@@ -17,34 +17,35 @@ class cartoonPegasus(Card):
 
 
 class cartoonPegasus_e1(Effect):
-    # 1T:<召唤时>:从自己弃牌区把1张魔法卡加入手牌。
-    effType = EFF_TYPE.trigger
-    observeSignals = (LOCATION.monsterZone, [Signal.Summon])
-    AI_HINT = [AI_HINT.earn]
+    # 1A:[把1只其他怪兽解放]:发现一张等级2以下的兽族怪兽并守备召唤。
+    effType = EFF_TYPE.active
+    activateLocation = LOCATION.monsterZone
+    AI_HINT = [AI_HINT.summoner, AI_HINT.costMonster]
     EFF_POWER = 3
 
     def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.Summon, self.owner):
-            return False
-        spells = self.searchCards(LOCATION.grave, self.getSide(), CARD_TYPE.spell, self)
-        if not spells:
-            return False
-        if self.game.freeSpellSpace(self.getSide()) == 0 and False:
+        def isOther(c):
+            return c != self.owner
+        fodder = self.searchCards(LOCATION.monsterZone, self.getSide(), CARD_TYPE.monster, self, isOther)
+        if not fodder:
             return False
         if justCheck:
             return True
-        chosen = yield self.y_select1Card(spells, TITLE.addToHand, canCancel=True)
-        if not chosen:
+        cost = yield self.y_select1Card(fodder, TITLE.tribute, canCancel=True)
+        if not cost:
             return False
-        self.saveTarget1(chosen)
+        successNum = yield self.y_tributeCard(cost)
+        if not successNum:
+            return False
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        t = self.getLegalTarget1()
-        if not t:
+        if self.freeMonsterSpace() == 0:
             return False
-        yield self.y_returnCardToHand(t)
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.BEAST,
+                                           cardType=CARD_TYPE.monster, maxLevel=2, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked, form=FORM.defence)
         return True
-

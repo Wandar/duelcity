@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Breeze Sprite
 卡名:微风精灵
-效果:1T:<被破坏后>:从卡组把1只等级1的「微风」怪兽以守备表示特殊召唤。
+效果:1T:<召唤时>:发现一张等级2以下的天使族怪兽并守备召唤。
 """
 
 class tinyWind(Card):
@@ -17,37 +17,26 @@ class tinyWind(Card):
 
 
 class tinyWind_e1(Effect):
-    # 1T:<被破坏后>:从卡组把1只等级1的「微风」怪兽以守备表示特殊召唤。
+    # 1T:<召唤时>:发现一张等级2以下的天使族怪兽并守备召唤。
     effType = EFF_TYPE.trigger
-    observeSignals = (LOCATION.grave, [Signal.Destroyed])
+    observeSignals = (LOCATION.monsterZone, [Signal.Summon])
     AI_HINT = [AI_HINT.summoner]
-    EFF_POWER = 2
-    FAMILY = ("Whirlwind", "tinyWind", "Wind Mage")
+    EFF_POWER = 3
 
     def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.Destroyed, self.owner):
-            return False
-        def isT(c):
-            return c.cardKey in self.FAMILY and c.level == 1
-        targets = self.searchCards(LOCATION.deck, self.getSide(), CARD_TYPE.monster, self, isT)
-        if not targets:
+        if not isSignal(signal, Signal.Summon, self.owner):
             return False
         if self.freeMonsterSpace() == 0:
             return False
         if justCheck:
             return True
-        chosen = yield self.y_select1Card(targets, TITLE.specialSummon, canCancel=True)
-        if not chosen:
-            return False
-        self.saveTarget1(chosen)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        t = self.getLegalTarget1(checkLocationChange=False)
-        if not t:
-            return False
-        yield self.y_specialSummon(t, form=FORM.defence)
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.FAIRY,
+                                           cardType=CARD_TYPE.monster, maxLevel=2, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked, form=FORM.defence)
         return True
-

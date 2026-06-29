@@ -5,11 +5,11 @@ from annos import *
 """
 CardName:Polar Pup Walrus
 卡名:极地小海象
-效果:1A:把自己弃牌区1只水属性怪兽放回自己卡组顶端。
+效果:1A:[把1只其他怪兽解放]:发现一张等级3以下的水族怪兽并守备召唤。
 """
 
 class Walrus_LOD0(Card):
-    CARD_KEY = 'Walrus_LOD0'
+    CARD_KEY = "Walrus_LOD0"
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
@@ -17,32 +17,35 @@ class Walrus_LOD0(Card):
 
 
 class Walrus_LOD0_e1(Effect):
-    # 1A:把自己弃牌区1只水属性怪兽放回自己卡组顶端。
+    # 1A:[把1只其他怪兽解放]:发现一张等级3以下的水族怪兽并守备召唤。
     effType = EFF_TYPE.active
     activateLocation = LOCATION.monsterZone
-    AI_HINT = [AI_HINT.earn]
-    EFF_POWER = 2
+    AI_HINT = [AI_HINT.summoner, AI_HINT.costMonster]
+    EFF_POWER = 3
 
     def y_cost(self, justCheck, signal):
-        def isWater(c):
-            return c.attr == ATTR.WATER
-        targets = self.searchCards(LOCATION.grave, self.getSide(), CARD_TYPE.monster, self, isWater)
-        if not targets:
+        def isOther(c):
+            return c != self.owner
+        fodder = self.searchCards(LOCATION.monsterZone, self.getSide(), CARD_TYPE.monster, self, isOther)
+        if not fodder:
             return False
         if justCheck:
             return True
-        t = yield self.y_select1Card(targets, TITLE.returnToDeck, canCancel=True)
-        if not t:
+        cost = yield self.y_select1Card(fodder, TITLE.tribute, canCancel=True)
+        if not cost:
             return False
-        self.saveTarget1(t)
+        successNum = yield self.y_tributeCard(cost)
+        if not successNum:
+            return False
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        t = self.getLegalTarget1()
-        if not t:
+        if self.freeMonsterSpace() == 0:
             return False
-        yield self.y_returnCardToDeck(t, self.getSide(), RETURN_TO_DECK.top)
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.AQUA,
+                                           cardType=CARD_TYPE.monster, maxLevel=3, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked, form=FORM.defence)
         return True
-

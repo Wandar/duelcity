@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Ironwall Vanguard
 卡名:铁壁推进者
-效果:1A:[把此卡解放]:从卡组把1只机械族怪兽以守备表示特殊召唤。
+效果:1A:[丢弃1只机械族怪兽]:发现一张等级2以下的机械族怪兽并守备召唤。
 """
 
 class Assault_Mech_Skin1(Card):
@@ -17,35 +17,35 @@ class Assault_Mech_Skin1(Card):
 
 
 class Assault_Mech_Skin1_e1(Effect):
-    # 1A:[把此卡解放]:从卡组把1只机械族怪兽以守备表示特殊召唤。
+    # 1A:[丢弃1只机械族怪兽]:发现一张等级2以下的机械族怪兽并守备召唤。
     effType = EFF_TYPE.active
     activateLocation = LOCATION.monsterZone
-    AI_HINT = [AI_HINT.summoner]
-    EFF_POWER = 3
+    AI_HINT = [AI_HINT.summoner, AI_HINT.costHand]
+    EFF_POWER = 4
 
     def y_cost(self, justCheck, signal):
-        def isTarget(c):
+        def isR(c):
             return c.race == RACE.MACHINE
-        targets = self.searchCards(LOCATION.deck, self.getSide(), CARD_TYPE.monster, self, isTarget)
-        if not targets:
+        fodder = self.searchCards(LOCATION.hand, self.getSide(), CARD_TYPE.monster, self, isR)
+        if not fodder:
+            return False
+        if self.freeMonsterSpace() == 0:
             return False
         if justCheck:
             return True
-        chosen = yield self.y_select1Card(targets, TITLE.specialSummon, canCancel=True)
-        if not chosen:
+        cost = yield self.y_select1Card(fodder, TITLE.discard, canCancel=True)
+        if not cost:
             return False
-        successNum = yield self.y_tributeCard(self.owner)
-        if not successNum:
-            return False
-        self.saveTarget1(chosen)
+        yield self.y_sendCardToGrave(cost)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        t = self.getLegalTarget1(checkLocationChange=False)
-        if not t or self.freeMonsterSpace() == 0:
+        if self.freeMonsterSpace() == 0:
             return False
-        yield self.y_specialSummon(t, form=FORM.defence)
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.MACHINE,
+                                           cardType=CARD_TYPE.monster, maxLevel=2, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked, form=FORM.defence)
         return True
-

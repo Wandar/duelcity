@@ -2311,7 +2311,11 @@
             "type": "MONSTER",
             "chuangyi": "恐龙联动效果",
             "short_effects": "",
+<<<<<<< .mine
+            "effect_zh": "1T:<守备表示的此卡被怪兽攻击的伤害计算后>:破坏该攻击怪兽(尾刺反击)。",
+=======
             "effect_zh": "1T:<每个回合的结束阶段>:对方场上所有怪兽攻击力下降200。",
+>>>>>>> .theirs
             "effect_en": "",
             "effect_zh_tr": "",
             "effect_ja": "",

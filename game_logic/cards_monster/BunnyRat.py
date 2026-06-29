@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Bunny Rat
 卡名:雪兔
-效果:1T:自己回合结束时,此卡在场上的场合,从卡组把1只「雪兔」特殊召唤。
+效果:1P:我方场上其他兽族怪兽攻击力·守备力上升200。
 """
 
 class BunnyRat(Card):
@@ -17,37 +17,25 @@ class BunnyRat(Card):
 
 
 class BunnyRat_e1(Effect):
-    # 1T:自己回合结束时,此卡在场上的场合,从卡组把1只「雪兔」特殊召唤。
-    effType = EFF_TYPE.trigger
-    observeSignals = (LOCATION.monsterZone, [Signal.TurnEnds])
-    AI_HINT = [AI_HINT.summoner]
+    # 1P:我方场上其他兽族怪兽攻击力·守备力上升200。
+    effType = EFF_TYPE.permanent
+    observeSignals = (LOCATION.monsterZone, [Signal.AttachMonsterZone, Signal.DetachMonsterZone, Signal.CardRaceChanged])
+    AI_HINT = [AI_HINT.permanent, AI_HINT.enhance]
     EFF_POWER = 3
 
-    def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.TurnEnds):
-            return False
-        if self.game.whoseTurn != self.getSide():
-            return False
+    def y_signal(self, signal):
+        if isSignal(signal, Signal.DetachMonsterZone, self.owner):
+            allCards = self.searchCards(LOCATION.mask_all, -1, CARD_TYPE.all, None)
+            yield self.y_removeBuffEffectSource(allCards, self.effUniID)
+            return
+        if isSignal(signal, Signal.DetachMonsterZone):
+            yield self.y_removeBuffEffectSource(signal.card, self.effUniID)
+            return
         if not self.owner.isMonsterOnField():
-            return False
-        def isTarget(c):
-            return c.cardKey == "BunnyRat"
-        targets = self.searchCards(LOCATION.deck, self.getSide(), CARD_TYPE.monster, self, isTarget)
-        if not targets:
-            return False
-        if self.freeMonsterSpace() == 0:
-            return False
-        if justCheck:
-            return True
-        self.saveTarget1(targets[0])
-        return True
-
-    def y_activate(self, justCheck, signal):
-        if justCheck:
-            return True
-        t = self.getLegalTarget1(checkLocationChange=False)
-        if not t:
-            return False
-        yield self.y_specialSummon(t)
-        return True
-
+            return
+        def isOtherBeast(c):
+            return c != self.owner and c.race == RACE.BEAST
+        targets = self.searchCards(LOCATION.monsterZone, self.getSide(), CARD_TYPE.monster, None, isOtherBeast)
+        if targets:
+            yield self.y_addCardData(targets, attackAdd=200, defenceAdd=200,
+                                     effDuration=EFF_DURATION.fromSource, uniqueSourceID=self.effUniID)

@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Nightwood Stalker
 卡名:夜林潜行喵
-效果:1P:此卡可直接攻击;以此造成战斗伤害时自己抽1张卡。
+效果:1A:[支付800基本分]:从手牌把1只等级2以下的兽族怪兽守备召唤。
 """
 
 class CombatCat01(Card):
@@ -14,44 +14,39 @@ class CombatCat01(Card):
 
     def effectsInit(self):
         self.initEffect(CombatCat01_e1)
-        self.initEffect(CombatCat01_e2)
 
 
 class CombatCat01_e1(Effect):
-    # 1P:此卡可直接攻击。(可直接攻击的能力暂无钩子,登记为常驻标记效果)
-    effType = EFF_TYPE.permanent
-    observeSignals = (LOCATION.monsterZone, [Signal.AttachMonsterZone, Signal.DetachMonsterZone])
-    AI_HINT = [AI_HINT.permanent]
+    # 1A:[支付800基本分]:从手牌把1只等级2以下的兽族怪兽守备召唤。
+    effType = EFF_TYPE.active
+    activateLocation = LOCATION.monsterZone
+    AI_HINT = [AI_HINT.summoner, AI_HINT.costMonster]
     EFF_POWER = 3
 
-    def y_signal(self, signal):
-        return
-        yield
-
-
-class CombatCat01_e2(Effect):
-    # 1P(续):以此造成战斗伤害时自己抽1张卡。
-    effType = EFF_TYPE.trigger
-    observeSignals = (LOCATION.monsterZone, [Signal.BattleFinish])
-    AI_HINT = [AI_HINT.drawCard]
-    EFF_POWER = 2
-
     def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.BattleFinish):
+        def isT(c):
+            return c.race == RACE.BEAST and c.level <= 2
+        targets = self.searchCards(LOCATION.hand, self.getSide(), CARD_TYPE.monster, self, isT)
+        if not targets:
             return False
-        if signal.attackerCard != self.owner:
+        if self.game.LPs[self.getSide()] <= 800:
             return False
-        if signal.battleType != BATTLE_TYPE.directAttack:
-            return False
-        if len(self.game.decks[self.getSide()]) < 1:
+        if self.freeMonsterSpace() == 0:
             return False
         if justCheck:
             return True
+        chosen = yield self.y_select1Card(targets, TITLE.specialSummon, canCancel=True)
+        if not chosen:
+            return False
+        yield self.y_damagePlayer(self.getSide(), 800)
+        self.saveTarget1(chosen)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        yield self.y_drawCard(self.getSide(), 1)
+        t = self.getLegalTarget1(checkLocationChange=False)
+        if not t or self.freeMonsterSpace() == 0:
+            return False
+        yield self.y_specialSummon(t, form=FORM.defence)
         return True
-

@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Marsh Mud Giant
 卡名:沼泽泥巨人
-效果:1T:<被战斗破坏时>:从卡组把1只等级3以下的怪兽以守备表示特殊召唤。
+效果:1A:[丢弃1张手牌]:把对方场上1只怪兽变为守备表示且本回合无法变更表示形式。
 """
 
 class FireGolem_03(Card):
@@ -17,36 +17,38 @@ class FireGolem_03(Card):
 
 
 class FireGolem_03_e1(Effect):
-    # 1T:<被战斗破坏时>:从卡组把1只等级3以下的怪兽以守备表示特殊召唤。
-    effType = EFF_TYPE.trigger
-    observeSignals = (LOCATION.grave, [Signal.DestroyedByBattle])
-    AI_HINT = [AI_HINT.summoner]
+    # 1A:[丢弃1张手牌]:把对方场上1只怪兽变为守备表示且本回合无法变更表示形式。
+    effType = EFF_TYPE.active
+    activateLocation = LOCATION.monsterZone
+    AI_HINT = [AI_HINT.debuff]
     EFF_POWER = 3
 
     def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.DestroyedByBattle, self.owner):
+        hand = self.searchCards(LOCATION.hand, self.getSide(), CARD_TYPE.all, self)
+        if not hand:
             return False
-        def isTarget(c):
-            return c.level <= 3
-        targets = self.searchCards(LOCATION.deck, self.getSide(), CARD_TYPE.monster, self, isTarget)
-        if not targets:
-            return False
-        if self.freeMonsterSpace() == 0:
+        def isFace(c):
+            return c.isFaceUp()
+        enemies = self.searchCards(LOCATION.monsterZone, self.getEnemySideTuple(), CARD_TYPE.monster, self, isFace)
+        if not enemies:
             return False
         if justCheck:
             return True
-        chosen = yield self.y_select1Card(targets, TITLE.specialSummon, canCancel=True)
-        if not chosen:
+        target = yield self.y_select1Card(enemies, TITLE.changeForm, canCancel=True)
+        if not target:
             return False
-        self.saveTarget1(chosen)
+        cost = yield self.y_select1Card(hand, TITLE.discard, canCancel=True)
+        if not cost:
+            return False
+        yield self.y_sendCardToGrave(cost)
+        self.saveTarget1(target)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        t = self.getLegalTarget1(checkLocationChange=False)
+        t = self.getLegalTarget1()
         if not t:
             return False
-        yield self.y_specialSummon(t, form=FORM.defence)
+        yield self.y_changeForm(t, FORM.defence)
         return True
-

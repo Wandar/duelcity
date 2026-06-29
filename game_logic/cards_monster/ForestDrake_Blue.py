@@ -5,11 +5,11 @@ from annos import *
 """
 CardName:Woodland Wyrm
 卡名:森林妖龙
-效果:1T:<墓地效果:自己的植物族怪兽被破坏时>:把此卡特殊召唤。
+效果:1A:[把此卡解放]:发现一张等级3以下的龙族怪兽并守备召唤。
 """
 
 class ForestDrake_Blue(Card):
-    CARD_KEY = 'ForestDrake_Blue'
+    CARD_KEY = "ForestDrake_Blue"
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
@@ -17,31 +17,29 @@ class ForestDrake_Blue(Card):
 
 
 class ForestDrake_Blue_e1(Effect):
-    # 1T:<墓地效果:自己的植物族怪兽被破坏时>:把此卡特殊召唤。
-    effType = EFF_TYPE.optionalTrigger
-    observeSignals = (LOCATION.grave, [Signal.Destroyed])
-    AI_HINT = [AI_HINT.summoner]
+    # 1A:[把此卡解放]:发现一张等级3以下的龙族怪兽并守备召唤。
+    effType = EFF_TYPE.active
+    activateLocation = LOCATION.monsterZone
+    AI_HINT = [AI_HINT.summoner, AI_HINT.costMonster]
     EFF_POWER = 3
 
     def y_cost(self, justCheck, signal):
-        if not isSignal(signal, Signal.Destroyed):
-            return False
-        if self.owner.location != LOCATION.grave:
-            return False
-        card = signal.card
-        if card is None or card == self.owner:
-            return False
-        if card.side != self.getSide() or card.race != RACE.PLANT:
-            return False
-        if self.freeMonsterSpace() == 0:
+        if not self.owner.isMonsterOnField():
             return False
         if justCheck:
             return True
+        successNum = yield self.y_tributeCard(self.owner)
+        if not successNum:
+            return False
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        yield self.y_specialSummon(self.owner)
+        if self.freeMonsterSpace() == 0:
+            return False
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.DRAGON,
+                                           cardType=CARD_TYPE.monster, maxLevel=3, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked, form=FORM.defence)
         return True
-

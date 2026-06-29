@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Golden Flame Magma Dragon
 卡名:金焰熔岩龙
-效果:1T:<召唤·特殊召唤时>:对对方场上每只怪兽造成500点伤害,本回合它们不能改变表示形式。
+效果:1T:<召唤时>:发现一张等级6以下的龙族怪兽并特殊召唤。2A:[支付800基本分]:对对方造成1000点伤害。
 """
 
 class Mdl_Monster000_0000(Card):
@@ -14,21 +14,20 @@ class Mdl_Monster000_0000(Card):
 
     def effectsInit(self):
         self.initEffect(Mdl_Monster000_0000_e1)
+        self.initEffect(Mdl_Monster000_0000_e2)
 
 
 class Mdl_Monster000_0000_e1(Effect):
-    # 1T:<召唤·特殊召唤时>:对对方场上每只怪兽造成500点伤害,本回合它们不能改变表示形式。
-    # NOTE: "本回合不能改变表示形式" 暂无钩子,已实现全体500伤害部分。
+    # 1T:<召唤时>:发现一张等级6以下的龙族怪兽并特殊召唤。
     effType = EFF_TYPE.trigger
     observeSignals = (LOCATION.monsterZone, [Signal.Summon])
-    AI_HINT = [AI_HINT.damager]
-    EFF_POWER = 5
+    AI_HINT = [AI_HINT.summoner]
+    EFF_POWER = 4
 
     def y_cost(self, justCheck, signal):
         if not isSignal(signal, Signal.Summon, self.owner):
             return False
-        enemies = self.searchCards(LOCATION.monsterZone, self.getEnemySideTuple(), CARD_TYPE.monster, self)
-        if not enemies:
+        if self.freeMonsterSpace() == 0:
             return False
         if justCheck:
             return True
@@ -37,8 +36,30 @@ class Mdl_Monster000_0000_e1(Effect):
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        enemies = self.searchCards(LOCATION.monsterZone, self.getEnemySideTuple(), CARD_TYPE.monster, self)
-        if enemies:
-            yield self.y_damageCard(enemies, 500)
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.DRAGON,
+                                           cardType=CARD_TYPE.monster, maxLevel=6, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked)
         return True
 
+
+class Mdl_Monster000_0000_e2(Effect):
+    # 2A:[支付800基本分]:对对方造成1000点伤害。
+    effType = EFF_TYPE.active
+    activateLocation = LOCATION.monsterZone
+    AI_HINT = [AI_HINT.damager, AI_HINT.highCost]
+    EFF_POWER = 3
+
+    def y_cost(self, justCheck, signal):
+        if self.game.LPs[self.getSide()] <= 800:
+            return False
+        if justCheck:
+            return True
+        yield self.y_damagePlayer(self.getSide(), 800)
+        return True
+
+    def y_activate(self, justCheck, signal):
+        if justCheck:
+            return True
+        yield self.y_damagePlayer(self.getEnemySideTuple(), 1000)
+        return True

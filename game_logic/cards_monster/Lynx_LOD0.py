@@ -5,11 +5,11 @@ from annos import *
 """
 CardName:Spotted Lynx
 卡名:斑斑猞猁
-效果:1A:确认对方场上1张覆盖的魔法·陷阱卡。
+效果:1A:[把1只我方怪兽返回手牌]:发现一张等级3以下的兽族怪兽并守备召唤。
 """
 
 class Lynx_LOD0(Card):
-    CARD_KEY = 'Lynx_LOD0'
+    CARD_KEY = "Lynx_LOD0"
     AUTHOR = "Unnamed"
 
     def effectsInit(self):
@@ -17,31 +17,31 @@ class Lynx_LOD0(Card):
 
 
 class Lynx_LOD0_e1(Effect):
-    # 1A:确认对方场上1张覆盖的魔法·陷阱卡。
+    # 1A:[把1只我方怪兽返回手牌]:发现一张等级3以下的兽族怪兽并守备召唤。
     effType = EFF_TYPE.active
     activateLocation = LOCATION.monsterZone
-    AI_HINT = [AI_HINT.search]
-    EFF_POWER = 1
+    AI_HINT = [AI_HINT.summoner, AI_HINT.costMonster]
+    EFF_POWER = 3
 
     def y_cost(self, justCheck, signal):
-        def isSet(c):
-            return c.form & FORM.set != 0
-        sets = self.searchCards(LOCATION.spellTrapZone, self.getEnemySideTuple(), CARD_TYPE.all, None, isSet)
-        if not sets:
+        mine = self.searchCards(LOCATION.monsterZone, self.getSide(), CARD_TYPE.monster, self)
+        if not mine:
             return False
         if justCheck:
             return True
+        cost = yield self.y_select1Card(mine, TITLE.returnToHand, canCancel=True)
+        if not cost:
+            return False
+        yield self.y_returnCardToHand(cost)
         return True
 
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        def isSet(c):
-            return c.form & FORM.set != 0
-        sets = self.searchCards(LOCATION.spellTrapZone, self.getEnemySideTuple(), CARD_TYPE.all, None, isSet)
-        if not sets:
+        if self.freeMonsterSpace() == 0:
             return False
-        # 选择=向控制者展示该盖卡(确认)
-        yield self.y_select1Card(sets, TITLE.target, self.getSide(), canCancel=True)
+        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.BEAST,
+                                           cardType=CARD_TYPE.monster, maxLevel=3, count=3, canCancel=True)
+        if picked and self.freeMonsterSpace() > 0:
+            yield self.y_specialSummon(picked, form=FORM.defence)
         return True
-
