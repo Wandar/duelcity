@@ -409,8 +409,34 @@ class GameFunc:
         return cards
 
 
-    def y_setCardFromDeck(self,sideOrTuple:Union[int,Tuple]=0, drawNum=1):
-        pass
+    def y_setCardFromDeck(self, sideOrTuple:Union[int,Tuple]=0, num:int=1, randomPick:bool=False, cardType:CARD_TYPE=CARD_TYPE.all)->int:
+        """
+        Take cards out of the deck and set them face-down into the Spell/Trap Zone (覆盖).
+
+        sideOrTuple : player side(s); 0 = this effect's owner
+        num         : how many cards to set
+        randomPick  : True = a random card from the deck; False = from the top of the deck (default)
+        cardType    : restrict to a card type (default any). e.g. CARD_TYPE.monster to only set monsters.
+        Returns the number of cards actually set.
+        """
+        sideOrTuple = self._parseSide(sideOrTuple)
+        total = 0
+        for side in sideOrTuple:
+            deck = self.game.decks[side]
+            if cardType == CARD_TYPE.all:
+                cands = list(deck)
+            else:
+                cands = [c for c in deck if c.cardType & cardType]
+            if not cands:
+                continue
+            if randomPick:
+                picks = random.sample(cands, min(num, len(cands)))
+            else:
+                picks = list(reversed(cands[-num:]))   # from the top of the deck
+            # gather first, then set them all to the Spell/Trap Zone in one call
+            n = yield self.y_setCardToSpellZone(picks, side)
+            total += n
+        return total
 
 
     def y_changeToBattlePhaseByEffect(self):

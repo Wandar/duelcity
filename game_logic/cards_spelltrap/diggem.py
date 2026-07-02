@@ -31,5 +31,5 @@ class tdiggem_effect1(Effect):
     def y_activate(self, justCheck:bool, signal):
         if justCheck:
             return True
-        yield self.y_set1CardFromDeck()
+        yield self.y_setCardFromDeck(self.getSide(), 1)
         return True

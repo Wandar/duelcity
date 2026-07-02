@@ -44,6 +44,6 @@ class t429sword_effect1(Effect):
             return True
         target = self.getLegalTarget1()
         if target:
-            yield self.y_addCardData(target, atkAdd=200, effDuration=EFF_DURATION.onceForever)
-        yield self.y_set1CardFromDeck()
+            yield self.y_addCardData(target, attackAdd=200, effDuration=EFF_DURATION.onceForever)
+        yield self.y_setCardFromDeck(self.getSide(), 1, randomPick=True)
         return True

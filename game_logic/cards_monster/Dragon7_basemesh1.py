@@ -34,7 +34,7 @@ class Dragon7_basemesh1_e1(Effect):
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        picked = yield self.y_discoverCard(side=self.getSide(), cardType=CARD_TYPE.all, count=3, canCancel=True)
+        picked = yield self.y_discoverCard(title=TITLE.specialSummon, side=self.getSide(), cardType=CARD_TYPE.all, count=3, canCancel=True)
         if not picked:
             return True
         if picked.isMonster():

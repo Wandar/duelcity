@@ -37,10 +37,8 @@ class tpaper_effect1(Effect):
     def y_activate(self, justCheck:bool, signal):
         if justCheck:
             return True
-        card = yield self.y_discover1MonsterFromDeck()
-        if card:
-            yield self.y_setCardToSpellZone(card)
+        yield self.y_setCardFromDeck(self.getSide(), 1, randomPick=True, cardType=CARD_TYPE.monster)
         target = self.getLegalTarget1()
         if target:
-            yield self.y_addCardData(target, atkAdd=200, effDuration=EFF_DURATION.utilTurnEnds)
+            yield self.y_addCardData(target, attackAdd=200, effDuration=EFF_DURATION.utilTurnEnds)
         return True

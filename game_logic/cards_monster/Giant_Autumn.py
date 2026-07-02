@@ -43,7 +43,7 @@ class Giant_Autumn_e1(Effect):
             return True
         if self.freeMonsterSpace() == 0:
             return False
-        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.FIEND,
+        picked = yield self.y_discoverCard(title=TITLE.specialSummon, side=self.getSide(), race=RACE.FIEND,
                                            cardType=CARD_TYPE.monster, maxLevel=4, count=3, canCancel=True)
         if picked and self.freeMonsterSpace() > 0:
             yield self.y_specialSummon(picked)

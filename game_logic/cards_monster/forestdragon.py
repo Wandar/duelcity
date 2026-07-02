@@ -40,7 +40,7 @@ class forestdragon_e1(Effect):
         for _ in range(2):
             if self.freeMonsterSpace() <= 0:
                 break
-            picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.PLANT,
+            picked = yield self.y_discoverCard(title=TITLE.specialSummon, side=self.getSide(), race=RACE.PLANT,
                                                cardType=CARD_TYPE.monster, maxLevel=3,
                                                count=3, canCancel=True)
             if not picked:

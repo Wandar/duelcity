@@ -38,6 +38,6 @@ class tgreen_effect1(Effect):
         target = self.getLegalTarget1()
         if target:
             target.setData("raceOverride", str(RACE.PLANT))
-            yield self.y_addCardData(target, atkAdd=300, defAdd=300,
+            yield self.y_addCardData(target, attackAdd=300, defenceAdd=300,
                                      effDuration=EFF_DURATION.utilTurnEnds)
         return True

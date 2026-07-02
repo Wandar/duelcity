@@ -42,7 +42,7 @@ class ms04_01_Minotaur_2_e1(Effect):
             return True
         if self.freeMonsterSpace() == 0:
             return False
-        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.BEASTWARRIOR,
+        picked = yield self.y_discoverCard(title=TITLE.specialSummon, side=self.getSide(), race=RACE.BEASTWARRIOR,
                                            cardType=CARD_TYPE.monster, maxLevel=2, count=3, canCancel=True)
         if picked and self.freeMonsterSpace() > 0:
             yield self.y_specialSummon(picked)

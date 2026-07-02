@@ -34,6 +34,5 @@ class tstairs_effect1(Effect):
     def y_activate(self, justCheck:bool, signal):
         if justCheck:
             return True
-        for _ in range(2):
-            yield self.y_set1CardFromDeck()
+        yield self.y_setCardFromDeck(self.getSide(), 2, randomPick=True, cardType=CARD_TYPE.monster)
         return True

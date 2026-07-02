@@ -36,7 +36,7 @@ class Goat_LOD0_e1(Effect):
         if justCheck:
             return True
         picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.BEAST,
-                                           cardType=CARD_TYPE.monster, maxLevel=2, count=3, canCancel=True)
+                                           cardType=CARD_TYPE.monster, maxLevel=2, count=3, title=TITLE.specialSummon, canCancel=True)
         if picked and self.freeMonsterSpace() > 0:
             yield self.y_specialSummon(picked, form=FORM.defence)
         return True

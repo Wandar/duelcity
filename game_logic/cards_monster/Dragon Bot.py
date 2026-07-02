@@ -5,8 +5,7 @@ from annos import *
 """
 CardName:Nimble Drakonoid
 卡名:灵巧机龙
-效果:1A:[把1张手牌送入弃牌区]:发现一张等级4以下的机械族怪兽并特殊召唤。2P:对方怪兽的攻击力不会上升。
-注:2P「对方怪兽攻击力不会上升」无对应引擎原语,此处仅实现 1A。
+效果:1A:[把1张手牌送入弃牌区]:发现一张等级4以下的机械族怪兽并特殊召唤。
 """
 
 class Dragon_Bot(Card):
@@ -43,7 +42,7 @@ class Dragon_Bot_e1(Effect):
             return True
         if self.freeMonsterSpace() == 0:
             return False
-        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.MACHINE,
+        picked = yield self.y_discoverCard(title=TITLE.specialSummon, side=self.getSide(), race=RACE.MACHINE,
                                            cardType=CARD_TYPE.monster, maxLevel=4, count=3, canCancel=True)
         if picked and self.freeMonsterSpace() > 0:
             yield self.y_specialSummon(picked)

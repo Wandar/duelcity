@@ -41,6 +41,6 @@ class t236fireball_effect1(Effect):
             return True
         target = self.getLegalTarget1()
         if target:
-            yield self.y_addCardData(target, atkAdd=-300, defAdd=-300,
+            yield self.y_addCardData(target, attackAdd=-300, defenceAdd=-300,
                                      effDuration=EFF_DURATION.utilTurnEnds)
         return True

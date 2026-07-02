@@ -42,7 +42,7 @@ class tghostdrink_effect1(Effect):
         if isSignal(signal, Signal.TurnEnds):
             target = self.getLegalTarget1()
             if target and target.isOnField():
-                yield self.y_addCardData(target, atkAdd=-1000, defAdd=-1000,
+                yield self.y_addCardData(target, attackAdd=-1000, defenceAdd=-1000,
                                          effDuration=EFF_DURATION.utilTurnEnds)
             return True
 
@@ -50,5 +50,5 @@ class tghostdrink_effect1(Effect):
             return True
         target = self.getLegalTarget1()
         if target:
-            yield self.y_addCardData(target, atkAdd=500, effDuration=EFF_DURATION.utilTurnEnds)
+            yield self.y_addCardData(target, attackAdd=500, effDuration=EFF_DURATION.utilTurnEnds)
         return True

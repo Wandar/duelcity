@@ -38,7 +38,7 @@ class tT_Card_Ico_fusion_eff(Effect):
         lv = self.fuseLevel
         self.fuseLevel = 0
         if lv <= 0 or not self.freeMonsterSpace(): return False
-        picked = yield self.y_discoverCard(side=self.getSide(), cardType=CARD_TYPE.monster,
+        picked = yield self.y_discoverCard(title=TITLE.specialSummon, side=self.getSide(), cardType=CARD_TYPE.monster,
                                            minLevel=lv, maxLevel=lv, count=3, canCancel=True)
         if picked and self.freeMonsterSpace():
             yield self.y_specialSummon(picked, self.getSide())

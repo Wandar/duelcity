@@ -35,5 +35,5 @@ class t50coin_effect1(Effect):
         if randPercent(0.5):
             yield self.y_drawCard()
         else:
-            yield self.y_setCardFromDeck()
+            yield self.y_setCardFromDeck(self.getSide(), 1)
         return True

@@ -41,7 +41,7 @@ class Mdl_Monster000_0002_e1(Effect):
             return True
         if self.freeMonsterSpace() == 0:
             return False
-        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.DRAGON,
+        picked = yield self.y_discoverCard(title=TITLE.specialSummon, side=self.getSide(), race=RACE.DRAGON,
                                            cardType=CARD_TYPE.monster, maxLevel=6, count=3, canCancel=True)
         if picked and self.freeMonsterSpace() > 0:
             yield self.y_specialSummon(picked)

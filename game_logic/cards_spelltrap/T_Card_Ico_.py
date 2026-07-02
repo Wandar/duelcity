@@ -41,10 +41,10 @@ class tT_Card_Ico__effect1(Effect):
             return True
         buffT = self.getLegalTarget1()
         if buffT:
-            yield self.y_addCardData(buffT, atkAdd=400, defAdd=400,
+            yield self.y_addCardData(buffT, attackAdd=400, defenceAdd=400,
                                      effDuration=EFF_DURATION.utilTurnEnds)
         dmgT = self.getLegalTarget2()
         if dmgT:
-            yield self.y_addCardData(dmgT, atkAdd=-400, defAdd=-400,
+            yield self.y_addCardData(dmgT, attackAdd=-400, defenceAdd=-400,
                                      effDuration=EFF_DURATION.utilTurnEnds)
         return True

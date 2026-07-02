@@ -37,6 +37,6 @@ class thandgreen_effect1(Effect):
             return True
         target = self.getLegalTarget1()
         if target:
-            yield self.y_addCardData(target, atkAdd=200, defAdd=200,
+            yield self.y_addCardData(target, attackAdd=200, defenceAdd=200,
                                      effDuration=EFF_DURATION.utilTurnEnds)
         return True

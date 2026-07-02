@@ -32,7 +32,5 @@ class t151search_effect1(Effect):
         if justCheck:
             return True
 
-        card=yield self.y_discover1MonsterFromDeck()
-        if card:
-            yield self.y_setCardToSpellZone(card)
+        yield self.y_setCardFromDeck(self.getSide(), 1, randomPick=True, cardType=CARD_TYPE.monster)
         return True

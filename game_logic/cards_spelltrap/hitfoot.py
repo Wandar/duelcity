@@ -37,6 +37,6 @@ class thitfoot_effect1(Effect):
             return True
         attacker = self.getLegalTarget1()
         if attacker:
-            yield self.y_addCardData(attacker, atkAdd=-200, defAdd=-200,
+            yield self.y_addCardData(attacker, attackAdd=-200, defenceAdd=-200,
                                      effDuration=EFF_DURATION.utilBattleEnds)
         return True

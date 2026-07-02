@@ -35,7 +35,7 @@ class Wasp_Blue_e1(Effect):
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.INSECT,
+        picked = yield self.y_discoverCard(title=TITLE.specialSummon, side=self.getSide(), race=RACE.INSECT,
                                            cardType=CARD_TYPE.monster, maxLevel=3, count=3, canCancel=True)
         if picked and self.freeMonsterSpace() > 0:
             yield self.y_specialSummon(picked, form=FORM.defence)

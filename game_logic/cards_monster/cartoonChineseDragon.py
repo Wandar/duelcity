@@ -41,7 +41,7 @@ class cartoonChineseDragon_e1(Effect):
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.DRAGON,
+        picked = yield self.y_discoverCard(title=TITLE.specialSummon, side=self.getSide(), race=RACE.DRAGON,
                                            cardType=CARD_TYPE.monster, maxLevel=5, count=3, canCancel=True)
         if picked and self.freeMonsterSpace() > 0:
             yield self.y_specialSummon(picked)

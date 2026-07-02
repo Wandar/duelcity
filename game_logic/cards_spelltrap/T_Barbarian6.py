@@ -44,7 +44,7 @@ class tT_Barbarian6_effect1(Effect):
             return True
         target = self.getLegalTarget1()
         if target:
-            yield self.y_addCardData(target, atkAdd=400, defAdd=400,
+            yield self.y_addCardData(target, attackAdd=400, defenceAdd=400,
                                      effDuration=EFF_DURATION.utilTurnEnds)
         target2 = self.getLegalTarget2()
         if target2:

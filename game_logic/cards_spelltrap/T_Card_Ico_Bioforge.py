@@ -33,7 +33,7 @@ class tT_Card_Ico_Bioforge_effect1(Effect):
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.WARRIOR,
+        picked = yield self.y_discoverCard(title=TITLE.specialSummon, side=self.getSide(), race=RACE.WARRIOR,
                                            cardType=CARD_TYPE.monster, count=3, canCancel=True)
         if picked and self.freeMonsterSpace() > 0:
             yield self.y_specialSummon(picked, form=FORM.attack)

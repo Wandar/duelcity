@@ -5,8 +5,7 @@ from annos import *
 """
 CardName:Dragonrex
 卡名:恐暴龙
-效果:1T:<召唤时>:破坏自己场上此卡以外所有怪兽。2P:此卡每回合必须攻击。
-注:2P「每回合必须攻击」由战斗系统读取怪兽的 mustAttack 标记执行;此处负责设置该标记。
+效果:1T:<召唤时>:破坏自己场上此卡以外所有怪兽。
 """
 
 class dragonrex(Card):
@@ -15,7 +14,6 @@ class dragonrex(Card):
 
     def effectsInit(self):
         self.initEffect(dragonrex_e1)
-        self.initEffect(dragonrex_e2)
 
 
 class dragonrex_e1(Effect):
@@ -48,18 +46,3 @@ class dragonrex_e1(Effect):
         return True
 
 
-class dragonrex_e2(Effect):
-    # 2P:此卡每回合必须攻击。在此卡上设置 mustAttack 标记,供战斗系统判定。
-    effType = EFF_TYPE.permanent
-    observeSignals = (LOCATION.monsterZone, [Signal.AttachMonsterZone, Signal.DetachMonsterZone])
-    AI_HINT = [AI_HINT.permanent]
-    EFF_POWER = 1
-
-    def y_signal(self, signal):
-        if isSignal(signal, Signal.DetachMonsterZone, self.owner):
-            self.owner.delData("mustAttack")
-            return
-        if self.owner.isMonsterOnField():
-            self.owner.setData("mustAttack", "1")
-        return
-        yield

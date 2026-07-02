@@ -239,8 +239,8 @@ class Game(Reload, GameFunc):
 
 
     def y_testScene(self):
-        ME_START_HAND = ["MountainDragon"]
-        ME_START_MONSTER = ["FireDragonRed", "Dragonide", "Wyvern", "Griffin"]
+        ME_START_HAND = ["Triceratops", "Velociraptor", "Ankylosaurus", "Dilophosaurus"]
+        ME_START_MONSTER = ["Brachiosaurus"]
         ME_START_SPELL = []
         ME_START_GRAVE = []
         EN_START_HAND = []
@@ -304,48 +304,12 @@ class Game(Reload, GameFunc):
         self.duel.recalculateAllCardsOperation()
 
     def y_startTutorialScene(self):
-        ME_START_HAND = ["StoneBeast"]
-        ME_START_FIELD = []
-        ME_START_GRAVE = []
-        EN_START_HAND = ["StoneBeast","Beast_1"]
         EN_START_FIELD =["Beast_1"]
-        EN_START_GRAVE = []
 
         playerSide = self.duel.getNotBotAvatar(1).c_side
         oppoSide = self.getEnemySideTuple(playerSide)[0]
 
         signals=[]
-        if len(ME_START_HAND):
-            self.hands[playerSide] = []
-            self.syncCardList(playerSide, LOCATION.hand)
-            for cardKey in ME_START_HAND:
-                card = self.createCard(cardKey, playerSide)
-                sigs=yield self._y_changeCardLocation(card, LOCATION.hand)
-                signals.extend(sigs)
-
-        if len(EN_START_HAND):
-            self.hands[oppoSide] = []
-            self.syncCardList(oppoSide, LOCATION.hand)
-            for cardKey in EN_START_HAND:
-                card = self.createCard(cardKey, oppoSide)
-                sigs=yield self._y_changeCardLocation(card, LOCATION.hand)
-                signals.extend(sigs)
-
-        for cardKey in ME_START_GRAVE:
-            card = self.createCard(cardKey, playerSide)
-            sigs=yield self._y_changeCardLocation(card, LOCATION.grave)
-            signals.extend(sigs)
-
-        for cardKey in EN_START_GRAVE:
-            card = self.createCard(cardKey, oppoSide)
-            sigs=yield self._y_changeCardLocation(card, LOCATION.grave)
-            signals.extend(sigs)
-
-        for cardKey in ME_START_FIELD:
-            card = self.createCard(cardKey, playerSide)
-            sigs=yield self._y_changeCardLocation(card, LOCATION.monsterZone)
-            signals.extend(sigs)
-
         for cardKey in EN_START_FIELD:
             card = self.createCard(cardKey, oppoSide)
             sigs=yield self._y_changeCardLocation(card, LOCATION.monsterZone)
