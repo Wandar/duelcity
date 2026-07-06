@@ -639,6 +639,12 @@ class Card(CardData):
         if self.isInMonsterZone():
             return False
 
+        # Unique (唯一): only one copy of this card may exist on its controller's field at a time
+        if self.getEffect('Unique'):
+            for m in self.game.monsters[side]:
+                if m is not self and m.cardKey == self.cardKey:
+                    return False
+
         if isSignal(signal, Signal.NormalSummon):
             if not self.checkBuffCanNormalSummon():
                 return False

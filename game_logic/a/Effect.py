@@ -242,6 +242,12 @@ class Effect(EffectData,GameFunc):
         if card.isSetInSpellZone() and card.beSetTurn==self.game.curTurn:
             return False
 
+        #Unique lock: a same-name card of mine already activated this turn (this card is exempt)
+        if card.flag & CARD_FLAG.cantActivateThisTurn:
+            if isActivelyActivate:
+                self.CANTUSE_LOG("cantActivateThisTurn")
+            return False
+
 
         if isActivelyActivate:
             #not active effect
@@ -315,6 +321,9 @@ class Effect(EffectData,GameFunc):
             self.game.effectUseCntThisTurn[selfeffuniName]+=1
         self.useCountThisTurn+=1
         self.useCountThisDuel+=1
+
+        #Unique: after activating (regardless of later success), lock my other same-name cards this turn
+        self.game.onCardActivatedEffect(card)
 
         if not self.hasUseCount(selfeffuniName):
             if 0<self.order<=8:
@@ -974,19 +983,4 @@ class AuraToSelf(Effect):
     def isActive(self):
         """Whether the aura currently applies. Default: the source is in its operating
         location (observeSignals[0]). isSilenced is NOT checked. Override for custom gating."""
-        return self.owner.location & self.observeSignals[0] != 0
-
-    def y_signal(self, signal):
-        if self._recomputing:
-            return
-        self._recomputing = True
-        try:
-            yield self._y_recompute()
-        finally:
-            self._recomputing = False
-
-    def _y_recompute(self):
-        if self.isActive() and self.condition():
-            yield self.y_apply()
-        else:
-            yield self.y_removeBuffEffectSource(self.owner, self.effUniID)
+        return self.owner.location & self.observeSignals[0]

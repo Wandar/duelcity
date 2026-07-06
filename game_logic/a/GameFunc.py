@@ -2148,6 +2148,18 @@ class GameFunc:
 
                 card.resetReenterField()
 
+
+                #avatar anim
+                effectperiod, effect = self.game.getDealingEffect()
+                if effect and effect.owner:
+                    callerSide=effect.owner.side
+                else:
+                    callerSide=card.side
+                avatar=self.duel.avatars[callerSide]
+                if time.time()-avatar.lastPlayAvatarAnim[0]>3:
+                    self.duelNode.playanimAvatarAnim(callerSide,AVATAR_ANIM.summon)
+
+
                 if not fxID:
                     fxID=FX_ID.specialSummon
 
@@ -2172,16 +2184,7 @@ class GameFunc:
                 successCardList.append(card)
                 successNum += 1
 
-                #avatar anim
-                callerSide=0
-                effectperiod, effect = self.game.getDealingEffect()
-                if effect and effect.owner:
-                    callerSide=effect.owner.side
-                else:
-                    callerSide=card.side
-                avatar=self.duel.avatars[callerSide]
-                if time.time()-avatar.lastPlayAvatarAnim[0]>3:
-                    self.duelNode.playanimAvatarAnim(callerSide,AVATAR_ANIM.summon)
+
 
 
         if len(successCardList)>1:

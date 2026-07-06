@@ -526,6 +526,9 @@ class Game(Reload, GameFunc):
         self.curTurn += 1
         self.sendSignalCntThisTurn=0
         self.effectUseCntThisTurn.clear()
+        # clear Unique locks for the new turn
+        for c in self.duel.usedCards.values():
+            c.flag &= ~CARD_FLAG.cantActivateThisTurn
         self._resetCountersOfEachTurn()
 
         # self.manaMgr.onTurnStart() #manachange
@@ -850,12 +853,30 @@ class Game(Reload, GameFunc):
     def player_getCardCanActivateEffectList(self, card: Card) -> [Effect]:
         efflist = []
 
+        # a silenced card cannot activate any effect
+        if card.isSilenced:
+            return efflist
+
+        # Unique lock: a same-name card of mine already activated this turn
+        if card.flag & CARD_FLAG.cantActivateThisTurn:
+            return efflist
+
         sig = Signal.PlayerActivate(card)
         for effID, effect in card.effects.items():
             isSuccess = effect.checkCanActivate(sig)
             if isSuccess:
                 efflist.append(effect)
         return efflist
+
+    def onCardActivatedEffect(self, card: Card):
+        # 效果唯一 (Unique): once a card carrying this marker activates an effect, lock every
+        # OTHER same-side same-cardKey card for the rest of the turn. The activator itself is left
+        # usable (not flagged). Covers deck / extra deck / hand / field / grave via usedCards.
+        if not card.getEffect(shortEffects.Unique):
+            return
+        for c in self.duel.usedCards.values():
+            if c.uniID != card.uniID and c.side == card.side and c.cardKey == card.cardKey:
+                c.flag |= CARD_FLAG.cantActivateThisTurn
 
     #if player activate ,set specificOperate
     #if bot activate ,set specificOrder
@@ -1329,7 +1350,9 @@ class Game(Reload, GameFunc):
 
             #check should die and change Atk
             if attackerDamageOrder==1:
-                if attacker.hasLife():
+                # Slay{N}: if the receiver destroys the attacker and attacker.level<=N, no half-broken
+                slay = receiver.getEffect(shortEffects.Slay)
+                if attacker.hasLife() and not (slay and attacker.level <= slay.number_0):
                     attackerShouldDie=False
                     yield attacker.y_becomeHalfLife()
                 else:
@@ -1338,7 +1361,9 @@ class Game(Reload, GameFunc):
                 attackerShouldDie=True
 
             if receiverDamageOrder==1:
-                if receiver.hasLife():
+                # Slay{N}: if the attacker destroys the receiver and receiver.level<=N, no half-broken
+                slay = attacker.getEffect(shortEffects.Slay)
+                if receiver.hasLife() and not (slay and receiver.level <= slay.number_0):
                     receiverShouldDie=False
                     yield receiver.y_becomeHalfLife()
                 else:

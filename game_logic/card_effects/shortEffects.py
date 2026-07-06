@@ -45,6 +45,8 @@ class ShortEffect(Effect):
 穿刺 Pierce - 攻击守备怪兽时造成穿刺伤害
 受保护 Protected - 场上有非受保护怪兽时不能被指定为近战攻击目标
 无法被攻击 CannotBeAttacked - 不能被指定为近战攻击目标
+唯一 Unique - 此卡发动效果后,本回合我方其它同名卡都不能发动效果.同名卡我方场上只能有一只存在
+斩杀 Slay{} - 被此卡战斗破坏的等级N以下的怪兽不进入半破状态直接破坏(超过N星仍半破)
 """
 
 
@@ -192,6 +194,19 @@ class SelfDescend(ShortEffect):
     # Marker short effect (无法特召): a card with it cannot be Normal Summoned, nor Special
     # Summoned by a FOREIGN card's effect. Own-effect / ignoreRequirement / player-initiated
     # summons are still allowed. Read in Card.checkBuffCanSpecialSummon / checkBuffCanNormalSummon.
+    pass
+
+
+"""
+唯一:此卡发动效果后,本回合我方其它同名卡都不能发动效果(此卡自身不受限)
+"""
+class Unique(ShortEffect):
+    # Marker short effect (效果唯一 Unique): pure marker, no signal logic. The behaviour is hardcoded in
+    # the engine: when a card carrying this effect activates an effect, Game.onCardActivatedEffect
+    # sets CARD_FLAG.cantActivateThisTurn on every OTHER same-side same-cardKey card (deck / extra
+    # deck / hand / field / grave included), and Effect.y_costSuper + player_getCardCanActivateEffectList
+    # refuse activation while that flag is set. The activator itself is left unflagged (still usable).
+    # The flag is cleared at turn reset.
     pass
 
 """
@@ -666,3 +681,14 @@ class CannotBeAttacked(ShortEffect):
     # NOT block direct attacks. Ranged attacks (Game.y_rangedAttack) can still hit it.
     # Read in Game.player_getAttackTargetListOfCard.
     pass
+
+
+"""
+处决:被此卡战斗破坏的等级N以下的怪兽不进入半破状态直接破坏(超过N星仍半破)
+"""
+class Slay(ShortEffect):
+    # Slay N (NEED_NUM): a monster battle-destroyed by this card whose level <= N skips the
+    # half-broken (半破) survival state and is destroyed outright; a victim above level N still
+    # becomes half-broken. Read in Game.y_battle: the destroyer (the combatant that dealt the fatal
+    # hit) carrying this effect denies its victim y_becomeHalfLife only when victim.level <= number_0.
+    NEED_NUM = True
