@@ -67,7 +67,6 @@ class DuelAINormal(ChoiceMixin, DuelAIBase):
 
         # Safe defaults; y_initDuelAI overwrites shouldWin asynchronously.
         self.shouldWin = False
-        self._outcomeReported = False
         self.signatureOnField = False
 
         # Signature-monster gate: at least signatureTurn turns, randomized +-
@@ -90,7 +89,6 @@ class DuelAINormal(ChoiceMixin, DuelAIBase):
         if sw is None:
             sw = random.random() < 0.5
         self.shouldWin = bool(sw)
-        self._outcomeReported = False
         AI_MSG("y_initDuelAI shouldWin=", self.shouldWin)
 
     def getBotName(self):
@@ -119,28 +117,8 @@ class DuelAINormal(ChoiceMixin, DuelAIBase):
         except Exception:
             return None
 
-    def onDuelEnd(self, duel):
-        # Compare intended vs actual outcome; the player's base compensates
-        # the pool when they differ.
-        if getattr(self, "_outcomeReported", False):
-            return
-        self._outcomeReported = True
-
-        try:
-            losers = duel._losers or {}
-        except Exception:
-            return
-        if not losers:
-            return
-
-        botLost = self.getSide() in losers
-        if len(losers) >= 2 and botLost:
-            AI_MSG("[outcome] draw, skip")
-            return
-
-        playerCE = self._getOutcomePlayerCE()
-        if playerCE is not None and getattr(playerCE, "base", None):
-            playerCE.base.reportDuelOutcome(self.shouldWin, not botLost)
+    #outcome reporting moved out of the AI: Duel.gameOverDealWinnerAndLoser
+    #calls avatar.base.reportDuelOutcome (pool compensation + reward grant)
 
     def onTurnStart(self):
         self.turnWaitedAtStart = False

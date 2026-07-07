@@ -74,6 +74,12 @@ class Duel(Reload):
         self._lastUpdateTime = 0
         self._botName=botName
 
+        #duel mode of this game: any bot involved -> vsbot, otherwise publicRoomPVP.
+        #used to pick the reward table on the base side
+        self.duelStartMode = DUEL_START_MODE.publicRoomPVP
+        if botName or any(a.c_isBot for a in self.avatars.values()):
+            self.duelStartMode = DUEL_START_MODE.vsbot
+
         #play client shows of this duel
         self.duelNode: DuelNode = duelNode
         self.space: SpaceCE = self.duelNode.space
@@ -172,6 +178,13 @@ class Duel(Reload):
             ERROR_MSG("game init failed")
             self.destroy()
             return
+
+        #prepare this duel's win/lose rewards on the base side (AccountFunc) right at duel
+        #start; they are actually granted after the duel ends (see gameOverDealWinnerAndLoser)
+        if not self.IS_TUTORIAL and not self.IS_TEST_PLAY:
+            for side, avatar in self.avatars.items():
+                if not avatar.c_isBot and avatar.base:
+                    avatar.base.prepareDuelReward(self.duelID, self.duelStartMode)
 
         self.duelNode.startCoroutine(self.y_startDuel(), True, 0)
 
@@ -1496,7 +1509,7 @@ class Duel(Reload):
 
     def gameOverDealWinnerAndLoser(self):
         if len(self._losers):
-            # 通知 bot AI 终局, 用于更新全局赢局/输局池
+            #notify bot AIs the duel ended (no-op by default)
             self.callBotFunc("onDuelEnd", self)
 
             isDraw = False
@@ -1527,7 +1540,23 @@ class Duel(Reload):
                         winOrLose = 1
                         avatarLoseReasonTxt = loseReasonTxt + "_win"
 
-                worldUI.initGameoverPanel(avatar.id, self.duelID,self.duelNode.c_duelPlaceClientData.placeID,worldUILife, winOrLose, avatarLoseReasonTxt, 100)
+                #one interface at duel end: report the actual outcome (win/lose pool,
+                #bot duels only) AND grant the reward prepared at duel start. All decided
+                #by AccountFunc; avatarBA keeps the granted result as a temp for the
+                #gameover panel to fetch. duelStartMode tells bot duel from PVP.
+                #called BEFORE initGameoverPanel so the panel's fetch reaches base
+                #after the temp is written (mailbox calls to the same base are ordered)
+                if not isTestDev() and not avatar.c_isBot and avatar.base:
+                    intendedShouldWin = False
+                    enemy = self.avatars.get(3 - avatar.c_side)
+                    if enemy is not None and enemy.c_isBot:
+                        ai = enemy.getDuelAI()
+                        if ai:
+                            intendedShouldWin = bool(ai.shouldWin)
+                    avatar.base.reportDuelOutcome(self.duelID, self.duelStartMode, winOrLose,
+                                                  avatarLoseReasonTxt, intendedShouldWin)
+
+                worldUI.initGameoverPanel(avatar.id, self.duelID,self.duelNode.c_duelPlaceClientData.placeID,worldUILife, winOrLose, avatarLoseReasonTxt, 0)
 
     def y_duelEnd(self, shouldDestroy, longestWaitForClientTime):
         #wait client play remain anim
