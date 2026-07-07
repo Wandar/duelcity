@@ -103,13 +103,13 @@ TUTORIAL_DECK={
     # 我方:高bt在上,LV<=4易召唤,不重复,共40张(32怪+8魔陷)
     "a":[
         "StoneBeast",                      # 蓝晶甲壳兽          LV4 atk2000  bt5 dia2.2
-        "Beast_1",                         # 刺壳巨兽           LV4 atk1900  bt5 dia2.85
+        "SciFi Beast05_Skin1",             # 百兽机 暴龙         LV4 atk1700  bt5 dia3.6
         "SKM_whale",                       # 机器鲸鱼           LV4 atk1800  bt5 dia1.4
         "Griffin_skin",                    # 幽暗森林 守林狮鹫      LV4 atk1800  bt5 dia3.0
         "SciFi Beast03 Skin1",             # 百兽机 翼龙         LV4 atk1800  bt5 dia4.8
         "SciFi Beast04 WhaleSnake Skin1",  # 百兽机 黑鲸         LV4 atk1800  bt5 dia4.5
-        "SciFi Beast05_Skin1",             # 百兽机 暴龙         LV4 atk1700  bt5 dia3.6
         "SciFi Beast06 Bull Skin2",        # 百兽机 牛怪         LV4 atk1600  bt5 dia2.8
+        "Beast_1",                         # 刺壳巨兽           LV4 atk1900  bt5 dia2.85
         "T Rex",                           # 暴龙             LV4 atk1900  bt4 dia1.408
         "Brachiosaurus",                   # 腕龙             LV4 atk1600  bt4 dia2.15
         "Dilophosaurus",                   # 双冠龙            LV4 atk1600  bt4 dia1.52

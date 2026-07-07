@@ -1556,7 +1556,7 @@ class Duel(Reload):
                     avatar.base.reportDuelOutcome(self.duelID, self.duelStartMode, winOrLose,
                                                   avatarLoseReasonTxt, intendedShouldWin)
 
-                worldUI.initGameoverPanel(avatar.id, self.duelID,self.duelNode.c_duelPlaceClientData.placeID,worldUILife, winOrLose, avatarLoseReasonTxt, 0)
+                worldUI.initGameoverPanel(avatar.id, self.duelID,self.duelNode.c_duelPlaceClientData.placeID,worldUILife, winOrLose, avatarLoseReasonTxt)
 
     def y_duelEnd(self, shouldDestroy, longestWaitForClientTime):
         #wait client play remain anim

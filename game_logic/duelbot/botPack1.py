@@ -60,7 +60,7 @@ MENU_BOTS = {
         "combos": [],
     },
     "tutorialBot": {
-        "avatarKey": "yblack",
+        "avatarKey": "whitetail",
         "picture": "",
         "title": "",
         "description": "",

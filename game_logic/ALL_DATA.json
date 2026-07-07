@@ -35616,7 +35616,7 @@
             "forceUpdate": false,
             "canHome": true,
             "bgm": "古典Frozen Landscape",
-            "ambient": "沙漠AU_AMB_Wind_Sand|0.5",
+            "ambient": "沙漠AU_AMB_Wind_Sand|0.2",
             "characterSlope": 0
         },
         {
@@ -35662,8 +35662,8 @@
             "maxPlayer": 50,
             "publicweight": 1.0,
             "forceUpdate": false,
-            "canHome": false,
-            "bgm": "",
+            "canHome": true,
+            "bgm": "Upbeat City LOOP",
             "ambient": "",
             "characterSlope": 0
         }
