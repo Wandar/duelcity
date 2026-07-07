@@ -40,32 +40,24 @@ from KBEDebug import *
 from globalvars import D_CARD
 from Constants import RACE, ATTR, CARD_TYPE
 
-# ─────────────────────────────────────────────
-# Constants enum int → D_CARD string lookup tables
-# D_CARD stores race/attr/type as uppercase strings, e.g. "DINOSAUR", "DARK",
-# "MONSTER"; the public API takes Constants enums and we translate here.
-# ─────────────────────────────────────────────
-_RACE_INT_TO_STR: Dict[int, str] = {
-    1:  'WARRIOR',    2:  'SPELLCASTER', 4:  'FIEND',
-    5:  'UNDEAD',     6:  'MACHINE',     7:  'AQUA',
-    8:  'PYRO',       9:  'ROCK',        10: 'WINDBEAST',
-    11: 'PLANT',      12: 'INSECT',      14: 'DRAGON',
-    15: 'BEAST',      16: 'BEASTWARRIOR',17: 'DINOSAUR',
-    20: 'REPTILE',    21: 'FAIRY',
-}
-
-_ATTR_INT_TO_STR: Dict[int, str] = {
-    0x01: 'DARK',   0x02: 'LIGHT',  0x04: 'EARTH',
-    0x08: 'WATER',  0x10: 'FIRE',   0x20: 'WIND',   0x40: 'GRASS',
-}
-
-def _toStr(val, table: Dict[int, str]) -> Optional[str]:
-    """Map a Constants enum int (RACE / ATTR) to the uppercase D_CARD string; pass None through."""
+def _enumToStr(val, enumCls) -> Optional[str]:
+    """
+    Reverse-lookup a Constants MyEnum int value to its member name string.
+    D_CARD stores race/attr as uppercase strings identical to the enum member
+    names (e.g. RACE.DINOSAUR=17 -> 'DINOSAUR'), so the name IS the D_CARD string.
+    Pass None through; 'none' and private members are skipped.
+    """
     if val is None:
         return None
-    if isinstance(val, int):
-        return table.get(val)
-    ERROR_MSG(f"[DiscoverPool] expected a Constants enum int, got {val!r}")
+    if not isinstance(val, int):
+        ERROR_MSG(f"[DiscoverPool] expected a Constants enum int, got {val!r}")
+        return None
+    for name, v in vars(enumCls).items():
+        if name.startswith('_') or name == 'none':
+            continue
+        if v == val:
+            return name
+    ERROR_MSG(f"[DiscoverPool] no {enumCls.__name__} member with value {val!r}")
     return None
 
 
@@ -236,8 +228,8 @@ class DiscoverPool(Reload):
         onlyEnabled : True = only cards with disable==9; False = all cards
         count       : number of cards to return (default 3)
         """
-        raceStr = _toStr(race, _RACE_INT_TO_STR)
-        attrStr = _toStr(attr, _ATTR_INT_TO_STR)
+        raceStr = _enumToStr(race, RACE)
+        attrStr = _enumToStr(attr, ATTR)
 
         fkey = (raceStr, attrStr, cardType, minLevel, maxLevel, onlyEnabled)
 
@@ -249,6 +241,24 @@ class DiscoverPool(Reload):
                      f"size={len(pool)}")
 
         keys = self._pools[fkey].pick(count)
+
+        # Fallback: not enough matching cards — rediscover without the level
+        # limits (race/attr/type filters are kept) and top up the result.
+        if len(keys) < count and (minLevel is not None or maxLevel is not None):
+            INFO_MSG(f"[DiscoverPool] only {len(keys)}/{count} cards for fkey={fkey}, "
+                     f"retrying without level limits")
+            fkey2 = (raceStr, attrStr, cardType, None, None, onlyEnabled)
+            if fkey2 not in self._pools:
+                pool2 = self._buildPool(raceStr, attrStr, cardType, None, None, onlyEnabled)
+                self._pools[fkey2] = pool2
+                INFO_MSG(f"[DiscoverPool] new auto pool race={raceStr} attr={attrStr} "
+                         f"type={cardType} lv=None~None size={len(pool2)}")
+            extra = self._pools[fkey2].pick(count)
+            for k in extra:
+                if len(keys) >= count:
+                    break
+                if k not in keys:
+                    keys.append(k)
 
         if not keys:
             WARNING_MSG(f"[DiscoverPool] auto pool is empty fkey={fkey}")
