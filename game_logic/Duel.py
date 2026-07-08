@@ -269,6 +269,18 @@ class Duel(Reload):
                 resultDict = yield self.y_multiPlayersShowPopup(TITLE.decideWhoFirst, "", tuple(self.avatars.keys()),
                                                                 ["ROCK", "PAPER", "SCISSORS"],
                                                                 defaultDict, "", POPUP_TYPE.rockpaperscissors, timeout=20)
+
+                #bot duel: always settle in one round — on a tie, reroll the
+                #bot's hand to a random non-tie one (win or lose, 50/50)
+                if self.duelStartMode == DUEL_START_MODE.vsbot and resultDict[1] == resultDict[2]:
+                    botSide = 0
+                    for side, avatar in self.avatars.items():
+                        if avatar.c_isBot:
+                            botSide = side
+                    if botSide:
+                        humanChoice = resultDict[3 - botSide]
+                        resultDict[botSide] = (humanChoice + random.choice((1, 2))) % 3
+
                 self.duelNode.playanimRockPaperScissors(resultDict[1], resultDict[2])
                 if resultDict[1] == resultDict[2]:
                     continue
