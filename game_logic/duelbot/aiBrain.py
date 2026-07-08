@@ -120,8 +120,14 @@ class DuelAINormal(ChoiceMixin, DuelAIBase):
     #outcome reporting moved out of the AI: Duel.gameOverDealWinnerAndLoser
     #calls avatar.base.reportDuelOutcome (pool compensation + reward grant)
 
+    #per-turn small-monster board target, rolled in onTurnStart (default safe)
+    smallLimitRolled = 3
+
     def onTurnStart(self):
         self.turnWaitedAtStart = False
+        #roll how many small monsters this turn aims to have on board:
+        #1-3 by probability (always filling to 3 looked too mechanical)
+        self.smallLimitRolled = random.choices((1, 2, 3), weights=(0.25, 0.40, 0.35))[0]
 
     def y_signal(self, signal):
         # Reveal tracking for the CardSupply (cards entering public zones).
@@ -142,13 +148,15 @@ class DuelAINormal(ChoiceMixin, DuelAIBase):
         funTurns = config.get("funTurns", 3)
         # Winning bots keep one zone free until the signature monster is out.
         smallLimit = 2 if (self.shouldWin and not self.signatureOnField) else 3
+        # per-turn rolled target (1-3) caps the board fill
+        smallLimit = min(smallLimit, self.smallLimitRolled)
         myMonsterCnt = len(game.monsters[side])
 
         # ==================== MAIN ====================
         if game.phase != PHASE.battle:
             # -- 1. fun period: small monsters only, hand first --
             if turnsPassed < funTurns:
-                if (yield self.y_summonSmallFromHand(True)):
+                if myMonsterCnt < smallLimit and (yield self.y_summonSmallFromHand(True)):
                     return (yield self.y_summonSmallFromHand(False))
                 if myMonsterCnt < smallLimit and (yield self.supply.y_fillSmall(True)):
                     return (yield self.supply.y_fillSmall(False))
@@ -171,7 +179,7 @@ class DuelAINormal(ChoiceMixin, DuelAIBase):
                     return (yield self.supply.y_signatureSummon(False))
 
             # -- 4. ordinary development from hand --
-            if (yield self.y_summonSmallFromHand(True)):
+            if myMonsterCnt < smallLimit and (yield self.y_summonSmallFromHand(True)):
                 return (yield self.y_summonSmallFromHand(False))
             if (yield self.y_playSpellFromHand(True)):
                 return (yield self.y_playSpellFromHand(False))

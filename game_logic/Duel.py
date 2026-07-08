@@ -1556,7 +1556,8 @@ class Duel(Reload):
                     avatar.base.reportDuelOutcome(self.duelID, self.duelStartMode, winOrLose,
                                                   avatarLoseReasonTxt, intendedShouldWin)
 
-                worldUI.initGameoverPanel(avatar.id, self.duelID,self.duelNode.c_duelPlaceClientData.placeID,worldUILife, winOrLose, avatarLoseReasonTxt)
+                worldUI.initGameoverPanel(avatar.id, self.duelID,self.duelNode.c_duelPlaceClientData.placeID,worldUILife, winOrLose, avatarLoseReasonTxt,
+                                          self.duelStartMode==DUEL_START_MODE.vsbot)
 
     def y_duelEnd(self, shouldDestroy, longestWaitForClientTime):
         #wait client play remain anim
@@ -1605,8 +1606,9 @@ class Duel(Reload):
                     avatar.showPopupWithOK(popNotify, "", "")
                 elif self._botName:
                     avatar.c_setMainPanelEnabled(True)
-                    if getIsBHVer():
-                        avatar.base.loginToIdleScene()
+                    #no automatic scene switch at duel end anymore; in the BH
+                    #version the switch happens when the owner clicks the
+                    #gameover panel (WorldUIPopupCE.interactWorldUI)
 
 
         for avatar in self.watcherList:
