@@ -414,6 +414,24 @@ ELITE_DECK_MECH={
         "droid",                          # 迷彩机甲兵     LV4  ATK=1400  bt=3  MACHINE/EARTH
         "droid",
         "droid",
+        # ── LV2-3 weak machine fillers (disable=9, pad to 40) ──
+        "Sci-Fi Insect Mosquito Skin2",   # LV2  ATK=800   MACHINE
+        "Sci-Fi Insect Mosquito Skin2",
+        "Sci-Fi Insect Mosquito Skin2",
+        "GridRobot",                      # LV2  ATK=900   MACHINE
+        "GridRobot",
+        "GridRobot",
+        "ToonRobot (25)",                 # LV2  ATK=900   MACHINE
+        "ToonRobot (25)",
+        "ToonRobot (25)",
+        "Sci-Fi_Robot_Spider Prefab",     # LV2  ATK=900   MACHINE
+        "Sci-Fi_Robot_Spider Prefab",
+        "Sci-Fi_Robot_Spider Prefab",
+        "JellyfishRobot",                 # LV2  ATK=1000  MACHINE
+        "JellyfishRobot",
+        "JellyfishRobot",
+        "TankerRobot",                    # LV3  ATK=1100  MACHINE
+        "TankerRobot",
         # ── LV5 中级机甲 (bt=4) ────────────────────────────────
         "Dragon Bot",                     # 灵巧机龙       LV5  ATK=1900  bt=4  MACHINE/FIRE
         "Razor Robot",
@@ -451,6 +469,18 @@ ELITE_DECK_BEAST={
         "EnemyCreature_V1",               # 甜梦幻蜥       LV3  ATK=1400  bt=5  REPTILE/WATER
         "EnemyCreature_V1",
         "EnemyCreature_V1",
+        # ── LV1-2 weak beast/dino fillers (disable=9, pad to 40) ──
+        "Bizun_2",                        # LV1  ATK=600   BEAST
+        "Bizun_2",
+        "Bizun_2",
+        "ms07_Wildboar_1",                # LV1  ATK=700   BEAST
+        "ms07_Wildboar_1",
+        "ms07_Wildboar_1",
+        "Tiger_Black",                    # LV2  ATK=900   BEAST
+        "Tiger_Black",
+        "Tiger_Black",
+        "Pterodactyl",                    # LV2  ATK=1200  DINOSAUR
+        "Pterodactyl",
         # ── LV4 强力中怪 (bt=4~5) ──────────────────────────────
         "Beast_1",                        # 刺壳巨兽       LV4  ATK=1900  bt=5  INSECT/GRASS
         "Beast_1",
