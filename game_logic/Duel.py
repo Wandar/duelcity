@@ -1790,6 +1790,31 @@ class Duel(Reload):
         self.duelNode.startCoroutine(self.game.y_returnCardToHand(mon))
 
 
+    def testWorldUI(self):
+        isDraw=False
+        loseReasonTxt=LOSE_REASON.LPTo0
+        for avatar in list(self.avatars.values()):
+            if avatar.c_isBot:
+                worldUILife=10
+            else:
+                worldUILife=5*60
+
+            worldUI: WorldUIPopupCE = self.duelNode.space.createObj("WorldUIPopup", avatar.position)
+            winOrLose = 1
+            if isDraw:
+                winOrLose = 0
+                avatarLoseReasonTxt = loseReasonTxt + "_draw"
+            else:
+                if avatar.c_side in self._losers:
+                    winOrLose = -1
+                    avatarLoseReasonTxt = loseReasonTxt + "_lose"
+                else:
+                    winOrLose = 1
+                    avatarLoseReasonTxt = loseReasonTxt + "_win"
+
+            worldUI.initGameoverPanel(avatar.id, self.duelID,self.duelNode.c_duelPlaceClientData.placeID,worldUILife, winOrLose, avatarLoseReasonTxt)
+
+
     def ______________________debugcommandEnd(self):
         pass
 

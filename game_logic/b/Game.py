@@ -227,6 +227,8 @@ class Game(Reload, GameFunc):
         self.duelNode.c_whoseTurn = whoseTurn
         self.resetWhoCanMove()
         self.curTurn = 1
+        if self.duel.IS_TUTORIAL:
+            self.curTurn=2
         self.duelNode.c_curTurn=self.curTurn
         self._setPhase( PHASE.mainphase1)
         self._resetCountersOfEachTurn()

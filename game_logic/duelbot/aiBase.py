@@ -128,7 +128,7 @@ class DuelAIBase(Reload):
 
         if not self.turnWaitedAtStart:
             self.turnWaitedAtStart = True
-            yield WaitForSeconds(2)
+            yield WaitForSeconds(4)
 
         for _ in range(MAX_MOVES_PER_TURN):
             acted = yield self.y_think()
