@@ -210,7 +210,7 @@ class DuelAINormal(ChoiceMixin, DuelAIBase):
             return False
         if justCheck:
             return True
-        ok = yield game.y_normalSummon(False, card)
+        ok = yield self.y_playerlikeNormalSummon(card)
         if ok:
             AI_MSG("normal summon from hand:", card.cardKey)
             yield WaitForSeconds(2)

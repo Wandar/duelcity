@@ -987,10 +987,12 @@ class Game(Reload, GameFunc):
         if type(target) == int:  #direct attack
             targetSide = target
             if targetSide not in self.monsters:
-                ERROR_MSG("y_player_monsterAttack target=", target)
+                self.BATTLE_MSG("y_player_monsterAttack bad targetSide=", target)
                 return False
 
             if targetSide not in self.player_getAttackTargetListOfCard(attacker)[1]:
+                #normal player input: e.g. enemy still has attackable monsters
+                self.BATTLE_MSG("y_player_monsterAttack direct attack not available")
                 return False
 
             yield self._y_askChangeToBattlePhaseAndShowHand()
@@ -1002,14 +1004,16 @@ class Game(Reload, GameFunc):
             return isSuccess
         else:
             if not target.isMonster():
-                ERROR_MSG("y_client_monsterAttack target not monster card")
+                self.BATTLE_MSG("y_player_monsterAttack target not monster card")
                 return False
             if not target.isInMonsterZone():
-                ERROR_MSG("y_client_monsterAttack target not on monster field")
+                self.BATTLE_MSG("y_player_monsterAttack target not on monster field")
                 return False
 
             if target not in self.player_getAttackTargetListOfCard(attacker)[0]:
-                ERROR_MSG("y_client_monsterAttack target not in avail target list")
+                #normal player input: hidden/Protected/CannotBeAttacked target,
+                #no attacks left this turn, wrong phase, or stale client view
+                self.BATTLE_MSG("y_player_monsterAttack target not in avail target list")
                 return False
 
             # cardEntity=target.getCardEntity()

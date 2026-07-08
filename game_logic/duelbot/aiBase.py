@@ -50,6 +50,17 @@ class DuelAIBase(Reload):
     def onTurnStart(self):
         pass
 
+    # Normal summon "like a player": sets game.playerop around the call so the
+    # bot avatar plays AVATAR_ANIM.summon (see the playerop gate in
+    # GameFunc.y_normalSummon). Use this instead of game.y_normalSummon for
+    # every summon the bot performs as if it clicked the card itself.
+    def y_playerlikeNormalSummon(self, card, toWhoseSide=0, costNormalSummonChance=True, tributeNumChange=None):
+        game = self.game
+        game.playerop = (card.side, OPERATE.normalSummon)
+        ok = yield game.y_normalSummon(False, card, toWhoseSide, costNormalSummonChance, tributeNumChange)
+        game.playerop = (0, 0)
+        return ok
+
     # Async init right after duel start (e.g. request win/lose from player base). Default: no-op.
     def y_initDuelAI(self):
         yield None

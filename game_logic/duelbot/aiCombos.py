@@ -132,17 +132,17 @@ class Combo_dragonRush(ComboBase):
             return missing
 
         # ---- execute (real hand cards, normal summon flow) ----
-        ok = yield game.y_normalSummon(False, bot.handCard("SK_BabyDragon"))
+        ok = yield bot.y_playerlikeNormalSummon(bot.handCard("SK_BabyDragon"))
         if not ok:
             return False
         yield WaitForSeconds(cfg.STEP_WAIT)
-        yield game.y_normalSummon(False, bot.handCard("SK_BabyDragon"),
-                                  costNormalSummonChance=False)
+        yield bot.y_playerlikeNormalSummon(bot.handCard("SK_BabyDragon"),
+                                           costNormalSummonChance=False)
         yield WaitForSeconds(cfg.STEP_WAIT)
         # Tribute summon; the tribute selector is answered by aiChoice
         # (self_cost policy picks the weakest own monsters, i.e. the babies).
-        ok = yield game.y_normalSummon(False, bot.handCard("MountainDragon"),
-                                       costNormalSummonChance=False)
+        ok = yield bot.y_playerlikeNormalSummon(bot.handCard("MountainDragon"),
+                                                costNormalSummonChance=False)
         if ok:
             bot.signatureOnField = True
         return ok

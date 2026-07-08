@@ -234,7 +234,7 @@ class CardSupply(Reload):
             monster = planted
             yield WaitForSeconds(1)
 
-        ok = yield game.y_normalSummon(False, monster, costNormalSummonChance=False)
+        ok = yield bot.y_playerlikeNormalSummon(monster, costNormalSummonChance=False)
         if ok:
             yield WaitForSeconds(2)
         return ok
