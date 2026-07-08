@@ -374,6 +374,11 @@ class Game(Reload, GameFunc):
         pass
 
     def y_changePhase(self, flySpeed=1):
+        #the very first turn of the duel cannot change phase at all
+        #(no battle phase, no main phase 2), players and AI alike.
+        #INFINITE_BATTLE (debug) lifts the restriction.
+        if self.curTurn == 1 and not self.duel.INFINITE_BATTLE:
+            return False
         if self.phase == PHASE.mainphase1:
             #to battle
             self._setPhase(PHASE.battle)
