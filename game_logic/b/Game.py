@@ -923,6 +923,9 @@ class Game(Reload, GameFunc):
         side = card.side
         if self.phase not in (PHASE.mainphase1, PHASE.battle):
             return result
+        #the very first turn of the duel (whoever goes first) cannot attack
+        if self.curTurn == 1 and not self.duel.INFINITE_BATTLE:
+            return result
         if not card.canBattle(True):
             return result
         if self.whoseTurn != side:
@@ -1062,6 +1065,9 @@ class Game(Reload, GameFunc):
 
     def checkCanRangedAttack(self,attacker:Card):
         if attacker.rangeAtk==ATK.none or attacker.rangeAtk==0:
+            return False
+        #the very first turn of the duel (whoever goes first) cannot attack
+        if self.curTurn == 1 and not self.duel.INFINITE_BATTLE:
             return False
         if not attacker.isMonsterOnField():
             return False

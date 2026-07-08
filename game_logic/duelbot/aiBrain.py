@@ -328,6 +328,10 @@ class DuelAINormal(ChoiceMixin, DuelAIBase):
     # battle predicates
     # ============================================================
     def _canAttackFilter(self, card):
+        #the very first turn of the duel cannot attack (same rule as players);
+        #this also keeps y_gotoBattle from entering the battle phase on turn 1
+        if self.game.curTurn == 1 and not self.duel.INFINITE_BATTLE:
+            return False
         if card.form != FORM.attack:
             return False
         if not card.checkBuffCanAttack():
