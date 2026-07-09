@@ -103,6 +103,10 @@ class DuelAINormal(ChoiceMixin, DuelAIBase):
         DuelAIBase.onDuelStart(self, duel)
         config = self.getBotConfig()
 
+        # track summoned cardKeys to avoid repeating last turn's small monsters
+        self.lastTurnSummonKeys = set()
+        self.thisTurnSummonKeys = set()
+
         self.supply = CardSupply(self)
         self.supply.initFromConfig(config)
         self.initGeneratePool()
@@ -266,6 +270,9 @@ class DuelAINormal(ChoiceMixin, DuelAIBase):
     def onTurnStart(self):
         self.turnWaitedAtStart = False
         self.destroyProvidedThisTurn = False
+        # rotate the summon record: this turn we avoid last turn's small monsters
+        self.lastTurnSummonKeys = self.thisTurnSummonKeys or set()
+        self.thisTurnSummonKeys = set()
         #roll how many small monsters this turn aims to have on board:
         #1-3 by probability (always filling to 3 looked too mechanical)
         self.smallLimitRolled = random.choices((1, 2, 3), weights=(0.25, 0.40, 0.35))[0]
@@ -373,9 +380,18 @@ class DuelAINormal(ChoiceMixin, DuelAIBase):
             return True
         ok = yield self.y_playerlikeNormalSummon(card)
         if ok:
+            self._recordSummon(card.cardKey)
             AI_MSG("normal summon from hand:", card.cardKey)
             yield WaitForSeconds(2)
         return ok
+
+    def _recordSummon(self, cardKey):
+        """Remember a small monster summoned this turn (so next turn we can
+        avoid repeating it)."""
+        if self.thisTurnSummonKeys is None:
+            self.thisTurnSummonKeys = set()
+        if cardKey:
+            self.thisTurnSummonKeys.add(cardKey)
 
     def y_playSpellFromHand(self, justCheck):
         game = self.game
@@ -447,7 +463,11 @@ class DuelAINormal(ChoiceMixin, DuelAIBase):
             return s
 
         cards.sort(key=score, reverse=True)
-        return cards[0]
+        # prefer a monster NOT summoned last turn; only repeat if every
+        # summonable hand monster was already used last turn
+        avoid = self.lastTurnSummonKeys or set()
+        fresh = [c for c in cards if c.cardKey not in avoid]
+        return (fresh or cards)[0]
 
     def _firstPlayableSpell(self):
         game = self.game
