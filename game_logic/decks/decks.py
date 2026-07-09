@@ -52,13 +52,22 @@ DEBUG_DECK1={
 
 
 TUTORIAL_ENEMY_DECK={
-    # 对方:攻击力低,LV<=4,不重复,共40张(32怪+8魔陷)
+    # 对方:攻击力低,LV<=4,不重复,共39张(31怪+8魔陷)
+    # 顶部6张为大体型压场怪(diameter大),ATK已在ALL_DATA.json中封顶1500
+    # 移除了原表中diameter最小的3张:jhp_treasure_poter_ani/Sun Blossom/SK_BabyDragon
     "a":[
+        # ── 顶部:大体型怪 (6) ──
+        "Giant_Autumn",                    # 红鬃秋巨人          LV5 atk1500(封顶) dia2.66
+        "MechaGolem_Bronze",               # 古代青铜机械         LV5 atk1500(封顶) dia3.6
+        "Dragon Inferno",                  # 爆炎小恶龙          LV3 atk1200  btNone dia2.3
+        "Cactus Boss",                     # 巨嘴刺王           LV3 atk1200  bt3 dia4.6
+        "Sci-Fi Insect Miner Beetle Skin1", # 旋轮机虫           LV3 atk1000  bt3 dia2.01
+        "Ent",                             # 林间巨灵           LV3 atk1500(封顶) dia2.5
+        # ── 其余低攻怪 ──
         "ms07_Wildboar_1",                 # 花冠小猪           LV1 atk700   btNone dia1.5142
         "ms04_01_Minotaur_2",              # 牛头小战士          LV2 atk800   btNone dia2.0064
         "Sci-Fi Insect Mosquito Skin2",    # 机械吸血蚊          LV2 atk800   bt4 dia1.6
         "PlatypusA",                       # 水缘鸭嘴兽          LV2 atk800   btNone dia1.449
-        "Sun Blossom",                     # 向阳翼花小妖         LV1 atk800   bt2 dia1.36
         "cartoonWyvern",                   # 小红龙            LV2 atk900   bt3 dia3.5
         "cartoonDragon",                   # 小紫龙            LV2 atk900   bt3 dia2.64
         "Assault Mech_Skin1",              # 铁壁推进者          LV2 atk900   bt4 dia1.898
@@ -67,9 +76,7 @@ TUTORIAL_ENEMY_DECK={
         "Tiger_Black",                     # 暗影虎            LV2 atk900   btNone dia1.55
         "ma001_Eagle_2",                   # 疾风鹰            LV2 atk900   btNone dia1.5196
         "Sci-Fi_Robot_Spider Prefab",      # 量子侦察蛛          LV2 atk900   bt4 dia1.49
-        "SK_BabyDragon",                   # 星芽小龙           LV2 atk900   btNone dia1.3975
         "ms01_Golem_1",                    # 石头小傀儡          LV2 atk1000  btNone dia2.2064
-        "Sci-Fi Insect Miner Beetle Skin1", # 旋轮机虫           LV3 atk1000  bt3 dia2.01
         "WerewolfMaskTint",                # 獠牙勇士           LV3 atk1000  bt1 dia1.84
         "SKM_Iron_Golem",                  # 重甲石傀儡          LV2 atk1000  bt3 dia1.575
         "ms02_Stump_1",                    # 树桩怪            LV2 atk1000  btNone dia1.519
@@ -78,11 +85,8 @@ TUTORIAL_ENEMY_DECK={
         "FireGolem_03",                    # 沼泽泥巨人          LV3 atk1100  bt4 dia2.45
         "KingSlime_1",                     # 史莱姆国王          LV3 atk1100  bt4 dia1.7625
         "CrabMonsterDefault",              # 迷你螃蟹           LV2 atk1100  bt0 dia1.6
-        "jhp_treasure_poter_ani",          # 宝藏搜寻者          LV3 atk1100  bt2 dia1.3
-        "Cactus Boss",                     # 巨嘴刺王           LV3 atk1200  bt3 dia4.6
         "Werewolf",                        # 寒蓝恶狼           LV3 atk1200  bt3 dia3.0
         "OrcPBR",                          # 锤炼小兽人          LV2 atk1200  bt3 dia2.5
-        "Dragon Inferno",                  # 爆炎小恶龙          LV3 atk1200  btNone dia2.3
         "Treant_Summer",                   # 夏日树妖           LV4 atk1200  bt1 dia1.96
         "Flying_Golem",                    # 飞行魔像           LV3 atk1200  bt2 dia1.5
         # ── 魔法/陷阱 ──
