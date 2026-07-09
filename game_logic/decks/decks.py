@@ -107,7 +107,6 @@ TUTORIAL_DECK={
         "SKM_whale",                       # 机器鲸鱼           LV4 atk1800  bt5 dia1.4
         "Griffin_skin",                    # 幽暗森林 守林狮鹫      LV4 atk1800  bt5 dia3.0
         "SciFi Beast03 Skin1",             # 百兽机 翼龙         LV4 atk1800  bt5 dia4.8
-        "SciFi Beast04 WhaleSnake Skin1",  # 百兽机 黑鲸         LV4 atk1800  bt5 dia4.5
         "SciFi Beast06 Bull Skin2",        # 百兽机 牛怪         LV4 atk1600  bt5 dia2.8
         "Beast_1",                         # 刺壳巨兽           LV4 atk1900  bt5 dia2.85
         "T Rex",                           # 暴龙             LV4 atk1900  bt4 dia1.408
