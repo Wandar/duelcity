@@ -236,6 +236,9 @@ class CardSupply(Reload):
 
         ok = yield bot.y_playerlikeNormalSummon(monster, costNormalSummonChance=False)
         if ok:
+            rec = getattr(bot, "_recordSummon", None)
+            if rec:
+                rec(getattr(monster, "cardKey", None))   # track for last-turn avoidance
             yield WaitForSeconds(2)
         return ok
 
