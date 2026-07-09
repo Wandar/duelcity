@@ -29,6 +29,41 @@ Big picture per duel:
 """
 
 
+# ============================================================
+# Eraser detection: does a cardKey have an effect that destroys a monster,
+# tagged AI_HINT.eraser, and is NOT a self-cost destroy (costMonster) nor
+# bot-forbidden (botDontUse)? Instantiating a card registers it in usedCards,
+# so this throwaway probe unregisters itself. Result cached globally.
+# ============================================================
+_ERASE_ENEMY_CACHE = {}
+
+
+def _cardErasesEnemy(bot, cardKey):
+    cached = _ERASE_ENEMY_CACHE.get(cardKey)
+    if cached is not None:
+        return cached
+    result = False
+    game = bot.game
+    try:
+        card = game.createCard(cardKey, bot.getSide())
+        if card is not None:
+            for eff in card.effects.values():
+                hints = getattr(eff, "AI_HINT", None) or []
+                if (AI_HINT.eraser in hints
+                        and AI_HINT.costMonster not in hints
+                        and AI_HINT.botDontUse not in hints):
+                    result = True
+                    break
+            try:
+                del game.duel.usedCards[card.uniID]   # throwaway probe: unregister
+            except Exception:
+                pass
+    except Exception as e:
+        ERROR_MSG("[destroy] erase-detect failed for", cardKey, e)
+    _ERASE_ENEMY_CACHE[cardKey] = result
+    return result
+
+
 class DuelAINormal(ChoiceMixin, DuelAIBase):
     # --- per-duel core state ---
     shouldWin = False          # intended outcome of this duel
@@ -51,6 +86,16 @@ class DuelAINormal(ChoiceMixin, DuelAIBase):
 
     supply: CardSupply = None
 
+    # BotConfig for this duel, injected by BotAICE.setDuelAI (may be None for
+    # legacy paths / bot-vs-bot; getBotConfig() then derives one).
+    botConfig = None
+
+    # --- far-behind destroy rescue (winning script only) ---
+    destroyPool = None                 # cardKeys that can erase an enemy monster
+    destroyProvidedThisTurn = False
+    FALLBEHIND_RATIO = 2.0             # trigger when enemy field value >= mine * ratio
+    FALLBEHIND_MIN_GAP = 2000          # ...and the absolute ATK gap is at least this
+
     # ============================================================
     # duel lifecycle
     # ============================================================
@@ -61,6 +106,7 @@ class DuelAINormal(ChoiceMixin, DuelAIBase):
         self.supply = CardSupply(self)
         self.supply.initFromConfig(config)
         self.initGeneratePool()
+        self._buildDestroyPool()
 
         self.duelStartTurn = duel.game.curTurn
         self.turnWaitedAtStart = False
@@ -99,15 +145,15 @@ class DuelAINormal(ChoiceMixin, DuelAIBase):
             return None
 
     def getBotConfig(self):
-        from duelbot.botPack1 import MENU_BOTS
+        """The BotConfig for this duel. Prefer the instance handed in by
+        setDuelAI; otherwise derive one from the MENU_BOTS key (or random)."""
+        if self.botConfig is not None:
+            return self.botConfig
+        from duelbot.botConfig import BotConfig
         botName = self.getBotName()
-        if botName and botName in MENU_BOTS:
-            return MENU_BOTS[botName]
-        # Fallback: first config matching our class (legacy behavior)
-        for key, cfg in MENU_BOTS.items():
-            if cfg.get("aiClass") == self.__class__ or cfg.get("aiClass") == DuelAINormal:
-                return cfg
-        return {}
+        self.botConfig = (BotConfig.fromMenuBot(botName)
+                          if botName else BotConfig.random())
+        return self.botConfig
 
     def _getOutcomePlayerCE(self):
         """Human player's AvatarCE (the persistent pool lives on its base);
@@ -117,6 +163,85 @@ class DuelAINormal(ChoiceMixin, DuelAIBase):
         except Exception:
             return None
 
+    # ============================================================
+    # Far-behind destroy rescue (winning script only)
+    # ============================================================
+    def _fieldValue(self, sideTuple):
+        """Total ATK of monsters on the given side(s) — a rough board strength."""
+        monsters = self.game.searchCards(LOCATION.monsterZone, sideTuple, CARD_TYPE.monster)
+        total = 0.0
+        for m in monsters:
+            try:
+                total += m.getCurNumber()
+            except Exception:
+                pass
+        return total
+
+    def _farBehindOnField(self):
+        """True when the enemy board is far stronger than ours."""
+        mine = self._fieldValue(self.getAllySideTuple())
+        enemy = self._fieldValue(self.getEnemySideTuple())
+        if enemy <= 0:
+            return False
+        return (enemy - mine) >= self.FALLBEHIND_MIN_GAP and enemy >= mine * self.FALLBEHIND_RATIO
+
+    def _buildDestroyPool(self):
+        """cardKeys that can erase an enemy monster AND are playable through the
+        normal flow (a spell, or a LV<=4 monster whose summon erases). Sourced
+        from config['destroyCards'] (trusted) plus auto-detected erasers found
+        in the bot's own pools."""
+        config = self.getBotConfig()
+        explicit = list(config.get("destroyCards") or [])
+        candidates = set(explicit)
+        for pool in (self.lowlevelMonsterPool, self.middleLevelMonsterPool,
+                     self.highLevelMonsterPool, self.signatureMonstersPool):
+            candidates.update(pool or [])
+        candidates.update(config.get("preferCards") or [])
+
+        result = []
+        for k in candidates:
+            if k not in D_CARD:
+                continue
+            explicitK = k in explicit
+            if not explicitK and not _cardErasesEnemy(self, k):
+                continue
+            # keep only what the normal play flow will actually cast: spells, or
+            # LV<=4 monsters (for auto-detected ones); explicit ones are trusted.
+            isMonster = "MONSTER" in D_CARD[k].get("type", "")
+            lv = D_CARD[k].get("level", 0)
+            if not explicitK and isMonster and lv > 4:
+                continue
+            result.append(k)
+        self.destroyPool = result
+        AI_MSG("[destroy] pool:", result)
+
+    def y_supplyDestroyCard(self, justCheck):
+        """Winning script + far behind on board: morph a destroy card into the
+        hand so the ordinary play flow casts it and erases the player's monster
+        (aiChoice's harm_enemy policy targets the strongest enemy). Once/turn."""
+        game = self.game
+        if not self.shouldWin or self.destroyProvidedThisTurn:
+            return False
+        if not self.destroyPool:
+            return False
+        # the player must actually have a monster worth erasing
+        enemyMonsters = game.searchCards(LOCATION.monsterZone,
+                                         self.getEnemySideTuple(), CARD_TYPE.monster)
+        if not enemyMonsters:
+            return False
+        if not self._farBehindOnField():
+            return False
+        key = self.supply.pickCreatableFromPool(self.destroyPool)
+        if not key or not self.supply.canProvideToHand([key]):
+            return False
+        if justCheck:
+            return True
+        if self.supply.provideToHand([key]):
+            self.destroyProvidedThisTurn = True
+            AI_MSG("[destroy] supplied destroy card to hand:", key)
+            return True
+        return False
+
     #outcome reporting moved out of the AI: Duel.gameOverDealWinnerAndLoser
     #calls avatar.base.reportDuelOutcome (pool compensation + reward grant)
 
@@ -125,6 +250,7 @@ class DuelAINormal(ChoiceMixin, DuelAIBase):
 
     def onTurnStart(self):
         self.turnWaitedAtStart = False
+        self.destroyProvidedThisTurn = False
         #roll how many small monsters this turn aims to have on board:
         #1-3 by probability (always filling to 3 looked too mechanical)
         self.smallLimitRolled = random.choices((1, 2, 3), weights=(0.25, 0.40, 0.35))[0]
@@ -154,6 +280,11 @@ class DuelAINormal(ChoiceMixin, DuelAIBase):
 
         # ==================== MAIN ====================
         if game.phase != PHASE.battle:
+            # -- 0. winning script + far behind on board: conjure a destroy
+            #       card into hand to erase the player's monster --
+            if (yield self.y_supplyDestroyCard(True)):
+                return (yield self.y_supplyDestroyCard(False))
+
             # -- 1. fun period: small monsters only, hand first --
             if turnsPassed < funTurns:
                 if myMonsterCnt < smallLimit and (yield self.y_summonSmallFromHand(True)):
@@ -196,9 +327,10 @@ class DuelAINormal(ChoiceMixin, DuelAIBase):
         plan = self.nextAttackPlan()
         if plan is None:
             return False
-        if not self.shouldWin and self.mercyShouldSkip(plan):
-            return False                       # losing script: pull punches
         attacker, target = plan
+        # Attack part never pulls punches: every favorable attack is taken,
+        # including direct attacks on the player (nextAttackPlan only returns
+        # fights we win). No mercy skipping in any script.
         before = attacker.attackCntThisTurn
         yield game.y_player_monsterAttack(attacker, target)
         yield WaitForSeconds(3)

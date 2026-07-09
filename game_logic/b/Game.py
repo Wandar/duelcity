@@ -114,77 +114,101 @@ class Game(Reload, GameFunc):
     decks: {1:{"a":[],"b":[],"c":[]}}
     """
 
+    #main deck target size; short decks get padded with random LV<=4 monsters
+    MAIN_DECK_SIZE = 40
+
     def parseDecks(self, decks: Dict[int, Union[Dict, List, Deck]]):
-        isSuccess = True
+        #parsing a deck ALWAYS succeeds: illegal cards are logged and skipped,
+        #and a short main deck is padded up to MAIN_DECK_SIZE. Never aborts.
         for side in self.monsters:
-            errorSide = 0
-            if side not in decks:
-                ERROR_MSG("decks not has side ", side)
-                errorSide = side
-            self.decks[side], self.extraDecks[side] = self._parseDeck(decks[side], side)
-            if self.decks[side] == None:
-                errorSide = side
-            if errorSide:
-                avatar = self.duel.avatars[errorSide]
-                self.duel.eachPlayerShowNotify(makeStrNoTrans("deckerror", avatar.c_nickName))
-                isSuccess = False
-            else:
-                if self.duel.getPlayerAI(side):
-                    for card in self.decks[side] + self.extraDecks[side]:
-                        card.hasShown = False
+            deck = decks.get(side)
+            if deck is None:
+                ERROR_MSG("decks not has side ", side)   #report, keep going
+                deck = []
+            self.decks[side], self.extraDecks[side] = self._parseDeck(deck, side)
+            if self.duel.getPlayerAI(side):
+                for card in self.decks[side] + self.extraDecks[side]:
+                    card.hasShown = False
 
-        if isSuccess:
-            #make uniID random
-            self.duel.shuffleUsedCardsUniID()
+        #make uniID random
+        self.duel.shuffleUsedCardsUniID()
+        return True
 
-        return isSuccess
+    _LOW_MONSTER_KEYS_CACHE = None
+
+    def _lowLevelMonsterKeys(self):
+        """Cached list of LV1-4 monster cardKeys, used to pad short decks."""
+        keys = Game._LOW_MONSTER_KEYS_CACHE
+        if keys is None:
+            keys = []
+            for k, j in D_CARD.items():
+                if k == "version":
+                    continue
+                try:
+                    if "MONSTER" not in j.get("type", ""):
+                        continue
+                    lv = j.get("level", 0)
+                except Exception:
+                    continue
+                if 1 <= lv <= 4:
+                    keys.append(k)
+            Game._LOW_MONSTER_KEYS_CACHE = keys
+        return keys
 
     # deck example in decks.py
     def _parseDeck(self, deck, side):
+        #always returns (mainDeck, extraDeck); never None. Illegal cards are
+        #reported and skipped; a short main deck is padded to MAIN_DECK_SIZE.
+        aList, bList = [], []
         try:
             if type(deck) == dict:
                 aList = deck["a"]
                 if "b" in deck and type(deck["b"]) == list:
                     bList = deck["b"]
-                else:
-                    bList = []
             elif type(deck) == list:
                 aList = deck
-                bList = []
             else:
                 deck = deck  #type:Deck
                 aList = deck.a
                 bList = deck.b
-
-            mainDeck = []
-            extraDeck = []
-            for cardclass in aList:
-                card = self.createCard(cardclass, side)
-                if card:
-                    card.location = LOCATION.deck
-                    mainDeck.append(card)
-
-
-            for cardclass in bList:
-                card = self.createCard(cardclass, side)
-                if card:
-                    card.location = LOCATION.extraDeck
-                    extraDeck.append(card)
-
-            if len(aList) == 0:
-                ERROR_MSG("deck not contain a list ", deck)
-                return None, None ,None
-
-            mainDeck.reverse()
-            return mainDeck, extraDeck
         except Exception as e:
+            #report but keep going: fall through with empty lists -> padded deck
             ERROR_MSG("deck parse exception ", e)
-            s = traceback.format_exc()
-            arr = s.split('\n')
-            for l in arr:
+            for l in traceback.format_exc().split('\n'):
                 ERROR_MSG(l)
             ERROR_MSG("failed deck ", deck)
-            return None, None,None
+            aList, bList = [], []
+
+        mainDeck = []
+        for cardclass in aList:
+            card = self.createCard(cardclass, side)
+            if card:
+                card.location = LOCATION.deck
+                mainDeck.append(card)
+            else:
+                ERROR_MSG("parseDeck illegal card skipped (side %s): %s" % (side, cardclass))
+
+        extraDeck = []
+        for cardclass in bList:
+            card = self.createCard(cardclass, side)
+            if card:
+                card.location = LOCATION.extraDeck
+                extraDeck.append(card)
+            else:
+                ERROR_MSG("parseDeck illegal extra card skipped (side %s): %s" % (side, cardclass))
+
+        #pad the main deck up to MAIN_DECK_SIZE with random LV<=4 monsters
+        lowKeys = self._lowLevelMonsterKeys()
+        attempts = 0
+        while len(mainDeck) < self.MAIN_DECK_SIZE and lowKeys and attempts < self.MAIN_DECK_SIZE * 5:
+            attempts += 1
+            card = self.createCard(random.choice(lowKeys), side)
+            if card:
+                card.location = LOCATION.deck
+                mainDeck.append(card)
+
+        mainDeck.reverse()
+        return mainDeck, extraDeck
 
     def y_startGameAndDrawStartHands(self, whoseTurn):
         if publish():
@@ -670,6 +694,9 @@ class Game(Reload, GameFunc):
             #check can return a face-down set card back to hand
             if getBoolYieldReturn(self.y_player_returnSetCardToHand(True, card)):
                 availOperates.append(OPERATE.returnSetCard)
+            #check can return a face-down set card back to hand
+            if getBoolYieldReturn(self.y_player_returnSetCardToHand(True, card)):
+                availOperates.append(OPERATE.returnSetCard)
 
         canActivateEffectList = self.player_getCardCanActivateEffectList(card)
         activateEffectList=card.getCurLocationActivateEffectList()
@@ -702,6 +729,32 @@ class Game(Reload, GameFunc):
 
         successNum = yield self.y_setCardToSpellZone(card)
 
+        self.playerop=(0,0)
+        return successNum != 0
+
+    def y_player_returnSetCardToHand(self, justCheck, card: Card) -> bool:
+        #pick up a face-down Spell/Trap from the field back to hand
+        if not self.isMainPhase():
+            self.CANTUSE_LOG("canOnlyReturnInMainPhase")
+            return False
+        if not card.isSpellTrapCard():
+            return False
+        if card.location != LOCATION.spellTrapZone:
+            return False
+        if card.form & FORM.set == 0:
+            return False
+        if card.side != self.whoseTurn:
+            return False
+        #the turn this card was set, it cannot be returned (same rule as activating a just-set card)
+        if card.beSetTurn == self.curTurn:
+            self.CANTUSE_LOG("cantReturnSetCardThisTurn")
+            return False
+
+        if justCheck:
+            return True
+
+        self.playerop=(card.side, OPERATE.returnSetCard)
+        successNum = yield self.y_returnCardToHand(card)
         self.playerop=(0,0)
         return successNum != 0
 
