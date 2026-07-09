@@ -24,13 +24,16 @@ ALL_BOT_RACES = [RACE.DRAGON, RACE.AQUA, RACE.INSECT, RACE.PLANT,
 
 class BotConfig:
     def __init__(self, preferRace=None, preferCards=None, signatureMonsters=None,
-                 combos=None, destroyCards=None, botWinRate=0.5, funTurns=3,
-                 signatureTurn=6, avatarKey="", deck=None):
+                 combos=None, destroyCards=None, useSupply=True, botWinRate=0.5,
+                 funTurns=3, signatureTurn=6, avatarKey="", deck=None):
         self.preferRace        = preferRace
         self.preferCards       = list(preferCards or [])
         self.signatureMonsters = list(signatureMonsters or [])
         self.combos            = list(combos or [])
         self.destroyCards      = list(destroyCards or [])
+        # useSupply: may the bot use the CardSupply (morph hidden cards /
+        # conjure signatures / destroy-rescue)? Off -> plays only its real hand.
+        self.useSupply         = useSupply
         self.botWinRate        = botWinRate
         self.funTurns          = funTurns
         self.signatureTurn     = signatureTurn
@@ -52,6 +55,7 @@ class BotConfig:
             signatureMonsters = d.get("signatureMonsters"),
             combos            = d.get("combos"),
             destroyCards      = d.get("destroyCards"),
+            useSupply         = d.get("useSupply", True),
             botWinRate        = d.get("botWinRate", 0.5),
             funTurns          = d.get("funTurns", 3),
             signatureTurn     = d.get("signatureTurn", 6),
