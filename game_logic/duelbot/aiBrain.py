@@ -106,7 +106,11 @@ class DuelAINormal(ChoiceMixin, DuelAIBase):
         self.supply = CardSupply(self)
         self.supply.initFromConfig(config)
         self.initGeneratePool()
-        self._buildDestroyPool()
+        # destroy-rescue relies on the supply; skip probing when it's disabled
+        if self.canUseSupply():
+            self._buildDestroyPool()
+        else:
+            self.destroyPool = []
 
         self.duelStartTurn = duel.game.curTurn
         self.turnWaitedAtStart = False
@@ -154,6 +158,15 @@ class DuelAINormal(ChoiceMixin, DuelAIBase):
         self.botConfig = (BotConfig.fromMenuBot(botName)
                           if botName else BotConfig.random())
         return self.botConfig
+
+    def canUseSupply(self):
+        """Whether the CardSupply (hidden-card morph / conjure / destroy-rescue)
+        may be used. ALWAYS off in the tutorial — the tutorial bot plays only
+        the real monsters in its hand, never morphs or conjures. Otherwise the
+        per-bot config switch decides (default on)."""
+        if getattr(self.duel, "IS_TUTORIAL", False):
+            return False
+        return bool(self.getBotConfig().get("useSupply", True))
 
     def _getOutcomePlayerCE(self):
         """Human player's AvatarCE (the persistent pool lives on its base);
@@ -220,6 +233,8 @@ class DuelAINormal(ChoiceMixin, DuelAIBase):
         hand so the ordinary play flow casts it and erases the player's monster
         (aiChoice's harm_enemy policy targets the strongest enemy). Once/turn."""
         game = self.game
+        if not self.canUseSupply():
+            return False
         if not self.shouldWin or self.destroyProvidedThisTurn:
             return False
         if not self.destroyPool:
@@ -285,11 +300,14 @@ class DuelAINormal(ChoiceMixin, DuelAIBase):
             if (yield self.y_supplyDestroyCard(True)):
                 return (yield self.y_supplyDestroyCard(False))
 
-            # -- 1. fun period: small monsters only, hand first --
+            # -- 1. fun period: small monsters only. Summon real hand monsters
+            #       first; only if the supply is allowed, morph/conjure to fill
+            #       the remaining board slots. (Tutorial: hand only.)
             if turnsPassed < funTurns:
                 if myMonsterCnt < smallLimit and (yield self.y_summonSmallFromHand(True)):
                     return (yield self.y_summonSmallFromHand(False))
-                if myMonsterCnt < smallLimit and (yield self.supply.y_fillSmall(True)):
+                if (self.canUseSupply() and myMonsterCnt < smallLimit
+                        and (yield self.supply.y_fillSmall(True))):
                     return (yield self.supply.y_fillSmall(False))
                 return (yield self.y_gotoBattle())
 
@@ -299,9 +317,10 @@ class DuelAINormal(ChoiceMixin, DuelAIBase):
                 ok = yield COMBOS[readyCombo].y_combo(self, False)
                 return ok is not False
 
-            # -- 3. winning script: signature monster not out yet --
+            # -- 3. winning script: signature monster not out yet (supply only) --
             if (self.shouldWin and not self.signatureOnField
-                    and turnsPassed >= self.signatureTurnRolled):
+                    and turnsPassed >= self.signatureTurnRolled
+                    and self.canUseSupply()):
                 # Morph the combo's missing cards into the hand; next think
                 # step the combo checks ready and plays itself.
                 if almostCombo and self.supply.provideToHand(almostCombo.missing):
@@ -317,8 +336,10 @@ class DuelAINormal(ChoiceMixin, DuelAIBase):
             if (yield self.y_setTrapFromHand(True)):
                 return (yield self.y_setTrapFromHand(False))
 
-            # -- 5. hand is dry: pad the board via hidden-card morph --
-            if myMonsterCnt < smallLimit and (yield self.supply.y_fillSmall(True)):
+            # -- 5. hand is dry: pad the board via hidden-card morph (supply
+            #       only; tutorial never reaches here) --
+            if (self.canUseSupply() and myMonsterCnt < smallLimit
+                    and (yield self.supply.y_fillSmall(True))):
                 return (yield self.supply.y_fillSmall(False))
 
             return (yield self.y_gotoBattle())
