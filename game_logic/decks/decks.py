@@ -59,7 +59,6 @@ TUTORIAL_ENEMY_DECK={
         # ── 顶部:大体型怪 (6) ──
         "Giant_Autumn",                    # 红鬃秋巨人          LV5 atk1500(封顶) dia2.66
         "MechaGolem_Bronze",               # 古代青铜机械         LV5 atk1500(封顶) dia3.6
-        "Dragon Inferno",                  # 爆炎小恶龙          LV3 atk1200  btNone dia2.3
         "Cactus Boss",                     # 巨嘴刺王           LV3 atk1200  bt3 dia4.6
         "Sci-Fi Insect Miner Beetle Skin1", # 旋轮机虫           LV3 atk1000  bt3 dia2.01
         "Ent",                             # 林间巨灵           LV3 atk1500(封顶) dia2.5
