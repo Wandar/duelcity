@@ -128,8 +128,6 @@ class DuelAIBase(Reload):
 
         if not self.turnWaitedAtStart:
             self.turnWaitedAtStart = True
-            #4s: give the client time to finish the draw-card animation
-            #before the bot starts acting
             yield WaitForSeconds(4)
 
         for _ in range(MAX_MOVES_PER_TURN):

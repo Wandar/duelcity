@@ -77,8 +77,6 @@ class Duel(Reload):
         #duel mode of this game: any bot involved -> vsbot, otherwise publicRoomPVP.
         #used to pick the reward table on the base side
         self.duelStartMode = DUEL_START_MODE.publicRoomPVP
-        if botName or any(a.c_isBot for a in self.avatars.values()):
-            self.duelStartMode = DUEL_START_MODE.vsbot
 
         #play client shows of this duel
         self.duelNode: DuelNode = duelNode
@@ -99,9 +97,10 @@ class Duel(Reload):
             self.INIT_LP=4000
 
 
-    def showDuelStartPreparePanel(self):
+    def showDuelStartPreparePanel(self,duelStartMode):
+        self.duelStartMode=duelStartMode
         self.stage = DUEL_STAGE.preparing
-        self.getNotBotAvatar(1).initAndShowDuelStartPanel(list(self.avatars.values()))
+        self.getNotBotAvatar(1).initAndShowDuelStartPanel(duelStartMode,list(self.avatars.values()))
 
         #remove all result panels of last duel
         for eid,en in entities.items():
@@ -272,14 +271,11 @@ class Duel(Reload):
 
                 #bot duel: always settle in one round — on a tie, reroll the
                 #bot's hand to a random non-tie one (win or lose, 50/50)
-                if self.duelStartMode == DUEL_START_MODE.vsbot and resultDict[1] == resultDict[2]:
-                    botSide = 0
-                    for side, avatar in self.avatars.items():
-                        if avatar.c_isBot:
-                            botSide = side
-                    if botSide:
-                        humanChoice = resultDict[3 - botSide]
-                        resultDict[botSide] = (humanChoice + random.choice((1, 2))) % 3
+                botAvatar=self.getBotAvatar()
+                if botAvatar and resultDict[1] == resultDict[2]:
+                    botSide =botAvatar.c_side
+                    humanChoice = resultDict[3 - botSide]
+                    resultDict[botSide] = (humanChoice + random.choice((1, 2))) % 3
 
                 self.duelNode.playanimRockPaperScissors(resultDict[1], resultDict[2])
                 if resultDict[1] == resultDict[2]:
@@ -1221,6 +1217,12 @@ class Duel(Reload):
                 avatarTime.isMove = False
         self.duelNode.setWhoCanMove(sideTuple)
 
+    def getBotAvatar(self)->AvatarCE:
+        for side, avatar in self.avatars.items():
+            if avatar.c_isBot:
+                return avatar
+        return None
+
     #get the avatar with client
     def getNotBotAvatar(self, preferSide) -> AvatarCE:
         avatar = self.avatars[preferSide]
@@ -1572,8 +1574,7 @@ class Duel(Reload):
                     avatar.base.reportDuelOutcome(self.duelID, self.duelStartMode, winOrLose,
                                                   avatarLoseReasonTxt, intendedShouldWin)
 
-                worldUI.initGameoverPanel(avatar.id, self.duelID,self.duelNode.c_duelPlaceClientData.placeID,worldUILife, winOrLose, avatarLoseReasonTxt,
-                                          self.duelStartMode==DUEL_START_MODE.vsbot)
+                worldUI.initGameoverPanel(avatar.id, self.duelID,self.duelNode.c_duelPlaceClientData.placeID,worldUILife, winOrLose, avatarLoseReasonTxt,self.duelStartMode,self.IS_TUTORIAL)
 
     def y_duelEnd(self, shouldDestroy, longestWaitForClientTime):
         #wait client play remain anim
@@ -1806,6 +1807,31 @@ class Duel(Reload):
         monList = self.game.searchCards(LOCATION.monsterZone)
         mon = monList[0]
         self.duelNode.startCoroutine(self.game.y_returnCardToHand(mon))
+
+
+    def testWorldUI(self):
+        isDraw=False
+        loseReasonTxt=LOSE_REASON.LPTo0
+        for avatar in list(self.avatars.values()):
+            if avatar.c_isBot:
+                worldUILife=10
+            else:
+                worldUILife=5*60
+
+            worldUI: WorldUIPopupCE = self.duelNode.space.createObj("WorldUIPopup", avatar.position)
+            winOrLose = 1
+            if isDraw:
+                winOrLose = 0
+                avatarLoseReasonTxt = loseReasonTxt + "_draw"
+            else:
+                if avatar.c_side in self._losers:
+                    winOrLose = -1
+                    avatarLoseReasonTxt = loseReasonTxt + "_lose"
+                else:
+                    winOrLose = 1
+                    avatarLoseReasonTxt = loseReasonTxt + "_win"
+
+            worldUI.initGameoverPanel(avatar.id, self.duelID,self.duelNode.c_duelPlaceClientData.placeID,worldUILife, winOrLose, avatarLoseReasonTxt,DUEL_START_MODE.menuBot,self.IS_TUTORIAL)
 
 
     def ______________________debugcommandEnd(self):

@@ -251,6 +251,9 @@ class Game(Reload, GameFunc):
         self.duelNode.c_whoseTurn = whoseTurn
         self.resetWhoCanMove()
         self.curTurn = 1
+        if self.duel.IS_TUTORIAL:
+            self.curTurn=2
+        self.duelNode.c_curTurn=self.curTurn
         self._setPhase( PHASE.mainphase1)
         self._resetCountersOfEachTurn()
 
@@ -553,6 +556,7 @@ class Game(Reload, GameFunc):
         self.resetWhoCanMove()
         self.duelNode.c_whoseTurn = self.whoseTurn
         self.curTurn += 1
+        self.duelNode.c_curTurn=self.curTurn
         self.sendSignalCntThisTurn=0
         self.effectUseCntThisTurn.clear()
         # clear Unique locks for the new turn

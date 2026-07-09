@@ -84,7 +84,7 @@ MENU_BOTS = {
             "SK_BabyDragon", "Dragon Inferno", "FireDragonRed", "ForestDrake_Blue",
             "smallDragonWhelp_Rd", "Fantasy Dragon-Blue", "Drake Skinny",
         ],
-        "preferScene": "cc/factory_parking/factory_parking",
+        "preferScene": "cc/modular_town/modular_town",
         "funTurns": 3,
         "signatureMonsters": [
             "MountainDragon", "cartoonChineseDragon", "Wyrm1_2", "Wyvern", "dragonrex",
@@ -103,7 +103,7 @@ MENU_BOTS = {
             "Bass_LOD0", "CrabMonsterDefault", "Catfish_LOD0", "giantcrab",
             "weranglerfish", "SKM_whale", "Walrus_LOD0", "SeaLion_LOD0", "StoneBeast",
         ],
-        "preferScene": "cc/modular_town/modular_town",
+        "preferScene": "cc/topdownforest/topdownforest",
         "funTurns": 3,
         "signatureMonsters": [
             "werecrab", "Voidray", "toon_Lobster", "SKM_squid", "Turtle_Blue_Shell_01",
@@ -122,7 +122,7 @@ MENU_BOTS = {
             "ms03_Bee_1", "Wasp_Blue", "Caterpillar", "JapaneseHornet",
             "Ladybug", "Mantis", "Moth", "Beast_1",
         ],
-        "preferScene": "cc/modular_town/modular_town",
+        "preferScene": "cc/luna_park/luna_park",
         "funTurns": 3,
         "signatureMonsters": [
             "GiantBeetle", "RhinocerosBeetle",
@@ -142,7 +142,7 @@ MENU_BOTS = {
             "Cactus Boss", "Sunflower Fairy", "Ent", "Treant_Summer",
             "Plant Chewer", "TreantGuard-Green",
         ],
-        "preferScene": "cc/modular_town/modular_town",
+        "preferScene": "cc/summer_beach/summer_beach",
         "funTurns": 3,
         "signatureMonsters": [
             "Sunflora Pixie",
@@ -162,7 +162,7 @@ MENU_BOTS = {
             "SK_BabyDragon", "Dragon Inferno", "FireDragonRed", "ForestDrake_Blue",
             "smallDragonWhelp_Rd", "Fantasy Dragon-Blue", "Drake Skinny",
         ],
-        "preferScene": "cc/modular_town/modular_town",
+        "preferScene": "cc/topdownforest/topdownforest",
         "funTurns": 3,
         "signatureMonsters": [
             "desertdragon", "Wyrm1_2", "plainsdragon", "polardragon", "dragonrex",
@@ -181,7 +181,7 @@ MENU_BOTS = {
             "OrcPBR", "ms06_Rat_1", "ms04_01_Minotaur_2", "RatAssassinDefault",
             "WerewolfMaskTint", "Kitsune_2", "Dragonide",
         ],
-        "preferScene": "cc/modular_town/modular_town",
+        "preferScene": "cc/factory_parking/factory_parking",
         "funTurns": 3,
         "signatureMonsters": [
             "Dog Bowwow", "SwordsTiger",
@@ -219,7 +219,7 @@ MENU_BOTS = {
             "Pachycephalosaurus", "Stegosaurus", "T Rex", "Brachiosaurus",
             "Dilophosaurus", "Parasaurolophus",
         ],
-        "preferScene": "cc/modular_town/modular_town",
+        "preferScene": "cc/summer_beach/summer_beach",
         "funTurns": 3,
         "signatureMonsters": [],   # empty -> global high-level pool
         "combos": [],
@@ -237,7 +237,7 @@ MENU_BOTS = {
             "Werewolf", "Dog Bark", "ThreeTailedWolf", "toon_RedPanda",
             "toon_SnappingTurtle", "Lynx_LOD0", "Llama_LOD0",
         ],
-        "preferScene": "cc/modular_town/modular_town",
+        "preferScene": "cc/sacred_desert/sacred_desert",
         "funTurns": 3,
         "signatureMonsters": [
             "toon_Crocodile", "toon_Hedgehog", "toon_Skunk", "Moose_LOD0",
