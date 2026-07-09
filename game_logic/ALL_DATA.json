@@ -4,7 +4,7 @@
             "disable": 9,
             "key": "version",
             "name_zh": "版本号",
-            "name_en": "0.0.13",
+            "name_en": "0.0.14",
             "name_zh_tr": "",
             "name_ja": "",
             "image": "",
@@ -35568,7 +35568,7 @@
             "forceUpdate": false,
             "canHome": true,
             "bgm": "LightFall_XA1-S3_Lagoon",
-            "ambient": "carsamb",
+            "ambient": "Carsamb:0.7",
             "characterSlope": 0
         },
         {
@@ -35648,7 +35648,7 @@
             "forceUpdate": false,
             "canHome": true,
             "bgm": "Lively Now (Spring)",
-            "ambient": "Forest Birds [loop] (1)",
+            "ambient": "Forest Birds [loop] (1)|0.5",
             "characterSlope": 0
         },
         {
