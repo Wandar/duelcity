@@ -65,7 +65,7 @@ class Duel(Reload):
         self.SKIP_SHUFFLE_DECK = False
         self.TEST_SUMMON = False
         self.INFINITE_BATTLE = False
-        self.INFINITE_USE_EFFECT = True
+        self.INFINITE_USE_EFFECT = False
         self.IS_TEST_PLAY=False
         #timeout lose
         self.NO_TIMEOUT = True
