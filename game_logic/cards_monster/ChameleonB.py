@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Meadow Camo Chameleon Blue
 卡名:树影伪装者·蓝
-效果:1T:<召唤时>:发现一张等级2以下的爬虫类族怪兽并守备召唤。
+效果:1T:<召唤时>:发现一张等级2以下的爬虫类族怪兽并特殊召唤。
 """
 
 class ChameleonB(Card):
@@ -17,7 +17,7 @@ class ChameleonB(Card):
 
 
 class ChameleonB_e1(Effect):
-    # 1T:<召唤时>:发现一张等级2以下的爬虫类族怪兽并守备召唤。
+    # 1T:<召唤时>:发现一张等级2以下的爬虫类族怪兽并特殊召唤。
     effType = EFF_TYPE.trigger
     observeSignals = (LOCATION.monsterZone, [Signal.Summon])
     AI_HINT = [AI_HINT.summoner]
@@ -38,5 +38,5 @@ class ChameleonB_e1(Effect):
         picked = yield self.y_discoverCard(title=TITLE.specialSummon, side=self.getSide(), race=RACE.REPTILE,
                                            cardType=CARD_TYPE.monster, maxLevel=2, count=3, canCancel=True)
         if picked and self.freeMonsterSpace() > 0:
-            yield self.y_specialSummon(picked, form=FORM.defence)
+            yield self.y_specialSummon(picked)
         return True

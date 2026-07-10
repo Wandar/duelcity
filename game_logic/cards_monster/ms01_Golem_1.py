@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Tiny Stone Golem
 卡名:石头小傀儡
-效果:1A:[丢弃1只岩石族怪兽]:发现一张等级2以下的岩石族怪兽并守备召唤。
+效果:1A:[丢弃1只岩石族怪兽]:发现一张等级2以下的岩石族怪兽并特殊召唤。
 """
 
 class ms01_Golem_1(Card):
@@ -17,7 +17,7 @@ class ms01_Golem_1(Card):
 
 
 class ms01_Golem_1_e1(Effect):
-    # 1A:[丢弃1只岩石族怪兽]:发现一张等级2以下的岩石族怪兽并守备召唤。
+    # 1A:[丢弃1只岩石族怪兽]:发现一张等级2以下的岩石族怪兽并特殊召唤。
     effType = EFF_TYPE.active
     activateLocation = LOCATION.monsterZone
     AI_HINT = [AI_HINT.summoner, AI_HINT.costHand]
@@ -47,5 +47,5 @@ class ms01_Golem_1_e1(Effect):
         picked = yield self.y_discoverCard(title=TITLE.specialSummon, side=self.getSide(), race=RACE.ROCK,
                                            cardType=CARD_TYPE.monster, maxLevel=2, count=3, canCancel=True)
         if picked and self.freeMonsterSpace() > 0:
-            yield self.y_specialSummon(picked, form=FORM.defence)
+            yield self.y_specialSummon(picked)
         return True

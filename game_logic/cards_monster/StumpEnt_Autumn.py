@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Little Log
 卡名:小木桩
-效果:1A:[支付800基本分]:发现一张等级2以下的植物族怪兽并守备召唤。
+效果:1A:[支付800基本分]:发现一张等级2以下的植物族怪兽并特殊召唤。
 """
 
 class StumpEnt_Autumn(Card):
@@ -17,7 +17,7 @@ class StumpEnt_Autumn(Card):
 
 
 class StumpEnt_Autumn_e1(Effect):
-    # 1A:[支付800基本分]:发现一张等级2以下的植物族怪兽并守备召唤。
+    # 1A:[支付800基本分]:发现一张等级2以下的植物族怪兽并特殊召唤。
     effType = EFF_TYPE.active
     activateLocation = LOCATION.monsterZone
     AI_HINT = [AI_HINT.summoner, AI_HINT.highCost]
@@ -41,5 +41,5 @@ class StumpEnt_Autumn_e1(Effect):
         picked = yield self.y_discoverCard(title=TITLE.specialSummon, side=self.getSide(), race=RACE.PLANT,
                                            cardType=CARD_TYPE.monster, maxLevel=2, count=3, canCancel=True)
         if picked and self.freeMonsterSpace() > 0:
-            yield self.y_specialSummon(picked, form=FORM.defence)
+            yield self.y_specialSummon(picked)
         return True

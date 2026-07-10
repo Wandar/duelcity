@@ -536,7 +536,8 @@ class DuelAINormal(ChoiceMixin, DuelAIBase):
                                          CARD_TYPE.monster)
         if enemyMonsters:
             weakest = min(em.getCurNumber() for em in enemyMonsters)
-            return any(m.getCurNumber() > weakest for m in attackers)
+            # >= : an equal-ATK trade still counts as a real attack
+            return any(m.getCurNumber() >= weakest for m in attackers)
         return True
 
     def nextAttackPlan(self):
@@ -554,11 +555,17 @@ class DuelAINormal(ChoiceMixin, DuelAIBase):
                                          CARD_TYPE.monster)
         random.shuffle(attackers)
         if enemyMonsters:
-            # Only pick fights we win: first attacker with a strictly weaker enemy.
+            # 1) prefer free kills: an attacker with a strictly weaker enemy
             for m in attackers:
                 weaker = [e for e in enemyMonsters if e.getCurNumber() < m.getCurNumber()]
                 if weaker:
                     return (m, random.choice(weaker))
+            # 2) no free kill: still attack an equal-ATK enemy (mutual
+            #    destruction) instead of skipping the attack
+            for m in attackers:
+                equal = [e for e in enemyMonsters if e.getCurNumber() == m.getCurNumber()]
+                if equal:
+                    return (m, random.choice(equal))
             return None
         return (attackers[0], random.choice(self.getEnemySideTuple()))
 

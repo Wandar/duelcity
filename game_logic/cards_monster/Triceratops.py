@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Triceratops
 卡名:三角龙
-效果:1T:<手牌效果:自己的恐龙族怪兽被攻击时>:把此卡以守备表示特殊召唤。
+效果:1T:<手牌效果:自己的恐龙族怪兽被攻击时>:把此卡特殊召唤。
 """
 
 class Triceratops(Card):
@@ -17,7 +17,7 @@ class Triceratops(Card):
 
 
 class Triceratops_e1(Effect):
-    # 1T:<手牌效果:自己的恐龙族怪兽被攻击时>:把此卡以守备表示特殊召唤。
+    # 1T:<手牌效果:自己的恐龙族怪兽被攻击时>:把此卡特殊召唤。
     effType = EFF_TYPE.instant
     observeSignals = (LOCATION.hand, [Signal.RequestBattle])
     AI_HINT = [AI_HINT.summoner]
@@ -40,6 +40,6 @@ class Triceratops_e1(Effect):
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        yield self.y_specialSummon(self.owner, form=FORM.defence)
+        yield self.y_specialSummon(self.owner)
         return True
 

@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Tiny Breeze Sprite
 卡名:微风小精灵
-效果:1T:<此卡被特殊召唤时>:发现一张等级2以下的天使族怪兽并守备召唤。
+效果:1T:<此卡被特殊召唤时>:发现一张等级2以下的天使族怪兽并特殊召唤。
 """
 
 class Whirlwind(Card):
@@ -17,7 +17,7 @@ class Whirlwind(Card):
 
 
 class Whirlwind_e1(Effect):
-    # 1T:<此卡被特殊召唤时>:发现一张等级2以下的天使族怪兽并守备召唤。
+    # 1T:<此卡被特殊召唤时>:发现一张等级2以下的天使族怪兽并特殊召唤。
     effType = EFF_TYPE.trigger
     observeSignals = (LOCATION.monsterZone, [Signal.SpecialSummon])
     AI_HINT = [AI_HINT.summoner]
@@ -38,5 +38,5 @@ class Whirlwind_e1(Effect):
         picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.FAIRY,
                                            cardType=CARD_TYPE.monster, maxLevel=2, count=3, title=TITLE.specialSummon, canCancel=True)
         if picked and self.freeMonsterSpace() > 0:
-            yield self.y_specialSummon(picked, form=FORM.defence)
+            yield self.y_specialSummon(picked)
         return True

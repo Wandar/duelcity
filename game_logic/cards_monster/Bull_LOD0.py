@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Rampaging Bul
 卡名:暴蹄奔牛
-效果:1T:<我方准备阶段>:发现一张等级3以下的兽族怪兽并守备召唤。
+效果:1T:<我方准备阶段>:发现一张等级3以下的兽族怪兽并特殊召唤。
 """
 
 class Bull_LOD0(Card):
@@ -17,7 +17,7 @@ class Bull_LOD0(Card):
 
 
 class Bull_LOD0_e1(Effect):
-    # 1T:<我方准备阶段>:发现一张等级3以下的兽族怪兽并守备召唤。
+    # 1T:<我方准备阶段>:发现一张等级3以下的兽族怪兽并特殊召唤。
     effType = EFF_TYPE.trigger
     observeSignals = (LOCATION.monsterZone, [Signal.StandbyPhase])
     AI_HINT = [AI_HINT.summoner]
@@ -43,5 +43,5 @@ class Bull_LOD0_e1(Effect):
         picked = yield self.y_discoverCard(title=TITLE.specialSummon, side=self.getSide(), race=RACE.BEAST,
                                            cardType=CARD_TYPE.monster, maxLevel=3, count=3, canCancel=True)
         if picked and self.freeMonsterSpace() > 0:
-            yield self.y_specialSummon(picked, form=FORM.defence)
+            yield self.y_specialSummon(picked)
         return True

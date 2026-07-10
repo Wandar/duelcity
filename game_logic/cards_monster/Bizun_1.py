@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Bramble Tusk Runt
 卡名:棘丛小暴獠
-效果:1A:[把1只我方怪兽返回手牌]:从手牌把1只等级2以下的兽族怪兽守备召唤。
+效果:1A:[把1只我方怪兽返回手牌]:从手牌把1只等级2以下的兽族怪兽特殊召唤。
 """
 
 class Bizun_1(Card):
@@ -17,7 +17,7 @@ class Bizun_1(Card):
 
 
 class Bizun_1_e1(Effect):
-    # 1A:[把1只我方怪兽返回手牌]:从手牌把1只等级2以下的兽族怪兽守备召唤。
+    # 1A:[把1只我方怪兽返回手牌]:从手牌把1只等级2以下的兽族怪兽特殊召唤。
     effType = EFF_TYPE.active
     activateLocation = LOCATION.monsterZone
     AI_HINT = [AI_HINT.summoner, AI_HINT.costMonster]
@@ -52,5 +52,5 @@ class Bizun_1_e1(Effect):
         t = self.getLegalTarget1(checkLocationChange=False)
         if not t or self.freeMonsterSpace() == 0:
             return False
-        yield self.y_specialSummon(t, form=FORM.defence)
+        yield self.y_specialSummon(t)
         return True
