@@ -106,6 +106,7 @@ class DuelAINormal(ChoiceMixin, DuelAIBase):
         # track summoned cardKeys to avoid repeating last turn's small monsters
         self.lastTurnSummonKeys = set()
         self.thisTurnSummonKeys = set()
+        self.smallSummonsThisTurn = 0
 
         self.supply = CardSupply(self)
         self.supply.initFromConfig(config)
@@ -267,12 +268,17 @@ class DuelAINormal(ChoiceMixin, DuelAIBase):
     #per-turn small-monster board target, rolled in onTurnStart (default safe)
     smallLimitRolled = 3
 
+    #hard cap on how many monsters the board-fill may summon in a single turn
+    MAX_BOARD_SUMMONS_PER_TURN = 1
+    smallSummonsThisTurn = 0
+
     def onTurnStart(self):
         self.turnWaitedAtStart = False
         self.destroyProvidedThisTurn = False
         # rotate the summon record: this turn we avoid last turn's small monsters
         self.lastTurnSummonKeys = self.thisTurnSummonKeys or set()
         self.thisTurnSummonKeys = set()
+        self.smallSummonsThisTurn = 0        # reset the per-turn summon cap
         #roll how many small monsters this turn aims to have on board:
         #1-3 by probability (always filling to 3 looked too mechanical)
         self.smallLimitRolled = random.choices((1, 2, 3), weights=(0.25, 0.40, 0.35))[0]
@@ -299,6 +305,11 @@ class DuelAINormal(ChoiceMixin, DuelAIBase):
         # per-turn rolled target (1-3) caps the board fill
         smallLimit = min(smallLimit, self.smallLimitRolled)
         myMonsterCnt = len(game.monsters[side])
+        # cap board-fill to at most MAX_BOARD_SUMMONS_PER_TURN summons per turn:
+        # once this turn's quota is used, the "myMonsterCnt < smallLimit" gates
+        # below stop summoning regardless of the board target.
+        remainingSummons = max(0, self.MAX_BOARD_SUMMONS_PER_TURN - self.smallSummonsThisTurn)
+        smallLimit = min(smallLimit, myMonsterCnt + remainingSummons)
 
         # ==================== MAIN ====================
         if game.phase != PHASE.battle:
@@ -392,6 +403,7 @@ class DuelAINormal(ChoiceMixin, DuelAIBase):
             self.thisTurnSummonKeys = set()
         if cardKey:
             self.thisTurnSummonKeys.add(cardKey)
+        self.smallSummonsThisTurn += 1       # counts toward the per-turn summon cap
 
     def y_playSpellFromHand(self, justCheck):
         game = self.game
