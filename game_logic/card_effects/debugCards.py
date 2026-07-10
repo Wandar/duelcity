@@ -7,33 +7,33 @@ from b.Card import *
 from a.Effect import *
 from a.DuelConstants import *
 from Constants import *
-
-DEBUGCARD_AAA_DATA = {
-    "key": "dragonDCard",  #unique,must not conflict with the "key" tags in ALL_DATA.json and in this file
-    "name_en": "Fire Dragon",
-    "name_zh": "大火龙",
-    "type": "MONSTER",
-    "image":"",
-    "prefab": "dame",  #decide the appearance of this unit,You can use the "key" tag from ALL_DATA.json
-    "package": "dame", #normally same as prefab
-    "diameter": 3.0,  #how big is this unit
-    "attack": 1,
-    "defense": 1,
-    "health": 1,
-    "attr": 0,
-    "level": 1,
-    "race": 0,
-    "short_effects": "", #short effects
-    "effect_en": "", #just text
-    "effect_zh": "",
-}
-
-
-class DebugCardAAA:
-    CARD_DATA = DEBUGCARD_AAA_DATA  #comment this line to exclude from merge
-
-    def __init__(self):
-        pass
+#
+# DEBUGCARD_AAA_DATA = {
+#     "key": "dragonDCard",  #unique,must not conflict with the "key" tags in ALL_DATA.json and in this file
+#     "name_en": "Fire Dragon",
+#     "name_zh": "大火龙",
+#     "type": "MONSTER",
+#     "image":"",
+#     "prefab": "dame",  #decide the appearance of this unit,You can use the "key" tag from ALL_DATA.json
+#     "package": "dame", #normally same as prefab
+#     "diameter": 3.0,  #how big is this unit
+#     "attack": 1,
+#     "defense": 1,
+#     "health": 1,
+#     "attr": 0,
+#     "level": 1,
+#     "race": 0,
+#     "short_effects": "", #short effects
+#     "effect_en": "", #just text
+#     "effect_zh": "",
+# }
+#
+#
+# class DebugCardAAA:
+#     CARD_DATA = DEBUGCARD_AAA_DATA  #comment this line to exclude from merge
+#
+#     def __init__(self):
+#         pass
 
 # class zenyuan(Spell):
 #     KEY="zenyuan"
