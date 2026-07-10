@@ -411,6 +411,7 @@ ELITE_DECK_MECH={
         # ── LV4 额外机甲 (bt=3) ────────────────────────────────
         "ACS17",                          # 机甲17         LV4  ATK=1500  bt=3  MACHINE/EARTH
         "ACS17",
+        "ACS17",
         "droid",                          # 迷彩机甲兵     LV4  ATK=1400  bt=3  MACHINE/EARTH
         "droid",
         "droid",
@@ -432,8 +433,10 @@ ELITE_DECK_MECH={
         "JellyfishRobot",
         "TankerRobot",                    # LV3  ATK=1100  MACHINE
         "TankerRobot",
+        "TankerRobot",
         # ── LV5 中级机甲 (bt=4) ────────────────────────────────
         "Dragon Bot",                     # 灵巧机龙       LV5  ATK=1900  bt=4  MACHINE/FIRE
+        "Dragon Bot",
         "Razor Robot",
         # ── LV7-10 招牌大机甲 (bt=5) ───────────────────────────
         "SK_VelociraptorMech",            # 机器速龙       LV7  ATK=2400  bt=5  MACHINE/WIND

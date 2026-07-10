@@ -137,7 +137,11 @@ class Game(Reload, GameFunc):
     _LOW_MONSTER_KEYS_CACHE = None
 
     def _lowLevelMonsterKeys(self):
-        """Cached list of LV1-4 monster cardKeys, used to pad short decks."""
+        """Cached list of LV1-4 monster cardKeys, used to pad short decks.
+        Only enabled real cards (disable==9): this excludes disabled cards
+        and debug-injected cards (CARD_DATA classes get debug=True and
+        disable=0 in mergeCards, e.g. dragonDCard whose class is not a Card
+        subclass and would crash createCard)."""
         keys = Game._LOW_MONSTER_KEYS_CACHE
         if keys is None:
             keys = []
@@ -145,6 +149,8 @@ class Game(Reload, GameFunc):
                 if k == "version":
                     continue
                 try:
+                    if j.get("debug"):
+                        continue
                     if "MONSTER" not in j.get("type", ""):
                         continue
                     lv = j.get("level", 0)
@@ -2587,7 +2593,16 @@ class Game(Reload, GameFunc):
         else:
             Class = g_allcardClass[key]
 
-        card = Class(key, self, originalSide)
+        #never let a broken card class kill the caller (e.g. a debug CARD_DATA
+        #class that is not a Card subclass): report and return None, callers
+        #treat None as "skip this card"
+        try:
+            card = Class(key, self, originalSide)
+        except Exception as e:
+            ERROR_MSG("createCard failed, key=%s class=%s err=%s" % (key, getattr(Class, "__name__", Class), e))
+            for l in traceback.format_exc().split('\n'):
+                ERROR_MSG(l)
+            return None
         card.uniID = self.genUniID()
         self.duel.usedCards[card.uniID] = card
         card.location = LOCATION.none
