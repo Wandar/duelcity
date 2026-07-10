@@ -2593,7 +2593,16 @@ class Game(Reload, GameFunc):
         else:
             Class = g_allcardClass[key]
 
-        card = Class(key, self, originalSide)
+        #never let a broken card class kill the caller (e.g. a debug CARD_DATA
+        #class that is not a Card subclass): report and return None, callers
+        #treat None as "skip this card"
+        try:
+            card = Class(key, self, originalSide)
+        except Exception as e:
+            ERROR_MSG("createCard failed, key=%s class=%s err=%s" % (key, getattr(Class, "__name__", Class), e))
+            for l in traceback.format_exc().split('\n'):
+                ERROR_MSG(l)
+            return None
         card.uniID = self.genUniID()
         self.duel.usedCards[card.uniID] = card
         card.location = LOCATION.none
