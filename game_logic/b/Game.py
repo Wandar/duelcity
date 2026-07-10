@@ -137,7 +137,11 @@ class Game(Reload, GameFunc):
     _LOW_MONSTER_KEYS_CACHE = None
 
     def _lowLevelMonsterKeys(self):
-        """Cached list of LV1-4 monster cardKeys, used to pad short decks."""
+        """Cached list of LV1-4 monster cardKeys, used to pad short decks.
+        Only enabled real cards (disable==9): this excludes disabled cards
+        and debug-injected cards (CARD_DATA classes get debug=True and
+        disable=0 in mergeCards, e.g. dragonDCard whose class is not a Card
+        subclass and would crash createCard)."""
         keys = Game._LOW_MONSTER_KEYS_CACHE
         if keys is None:
             keys = []
@@ -145,6 +149,8 @@ class Game(Reload, GameFunc):
                 if k == "version":
                     continue
                 try:
+                    if j.get("debug"):
+                        continue
                     if "MONSTER" not in j.get("type", ""):
                         continue
                     lv = j.get("level", 0)
