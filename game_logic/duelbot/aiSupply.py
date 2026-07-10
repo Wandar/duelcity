@@ -262,6 +262,9 @@ class CardSupply(Reload):
         monster = self.morph(victims[0], key)
         if monster is None:
             return False
+        # BH version: never summon a monster with ATK over the cap
+        if getattr(bot, "_bhSummonBlocked", None) and bot._bhSummonBlocked(monster.getCurNumber()):
+            return False
         yield WaitForSeconds(random.uniform(1, 2))
         ok = yield game.y_specialSummon(monster)
         if ok:

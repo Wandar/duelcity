@@ -65,12 +65,14 @@ class BotConfig:
 
     @classmethod
     def random(cls):
-        """A non-MENU_BOTS in-scene bot: roll a random config."""
+        """A non-MENU_BOTS in-scene bot: roll a random config. In-scene bots are
+        never test/tutorial, so the BH ATK cap applies directly."""
         race = random.choice(ALL_BOT_RACES)
+        cap = 1500 if getIsBHVer() else None
         return cls(
             preferRace        = race,
             preferCards       = [],                              # filled by race in buildBotDeck / pools
-            signatureMonsters = _pickMonstersByRace(race, 7, 999, count=3),
+            signatureMonsters = _pickMonstersByRace(race, 7, 999, count=3, maxAtk=cap),
             combos            = [],
             botWinRate        = round(random.uniform(0.2, 0.5), 2),
             funTurns          = random.randint(2, 4),
@@ -117,8 +119,20 @@ def _matchRace(cardKey, preferRace):
     return r == preferRace
 
 
-def _pickMonstersByRace(preferRace, lvMin, lvMax, count):
-    """Random `count` non-fusion monster cardKeys of the given race/level range."""
+def _keyAtk(cardKey):
+    """Numeric ATK for a cardKey from D_CARD (0 if unknown)."""
+    j = D_CARD.get(cardKey)
+    if not j:
+        return 0
+    try:
+        return int(j.get("atk", 0) or 0)
+    except Exception:
+        return 0
+
+
+def _pickMonstersByRace(preferRace, lvMin, lvMax, count, maxAtk=None):
+    """Random `count` non-fusion monster cardKeys of the given race/level range.
+    maxAtk (BH version): only keep monsters with ATK strictly below maxAtk."""
     out = []
     for cardKey, j in D_CARD.items():
         if cardKey == "version":
@@ -130,14 +144,17 @@ def _pickMonstersByRace(preferRace, lvMin, lvMax, count):
             continue
         if not _matchRace(cardKey, preferRace):
             continue
+        if maxAtk is not None and _keyAtk(cardKey) >= maxAtk:
+            continue
         out.append(cardKey)
     random.shuffle(out)
     return out[:count]
 
 
-def _supplementDeckList(deckList, targetSize, lvMin, lvMax, preferRace):
+def _supplementDeckList(deckList, targetSize, lvMin, lvMax, preferRace, maxAtk=None):
     """Pad deckList up to targetSize with low-level monsters of preferRace
-    (relax the race filter if that race has too few)."""
+    (relax the race filter if that race has too few). maxAtk (BH version):
+    only use monsters with ATK strictly below maxAtk."""
     need = targetSize - len(deckList)
     if need <= 0:
         return
@@ -153,6 +170,8 @@ def _supplementDeckList(deckList, targetSize, lvMin, lvMax, preferRace):
             if lv < lvMin or lv > lvMax:
                 continue
             if useRace and not _matchRace(cardKey, preferRace):
+                continue
+            if maxAtk is not None and _keyAtk(cardKey) >= maxAtk:
                 continue
             res.append(cardKey)
         return res
@@ -170,18 +189,23 @@ def _supplementDeckList(deckList, targetSize, lvMin, lvMax, preferRace):
         need -= 1
 
 
-def buildBotDeck(botConfig, mainSize=40):
-    """Generate a deck json from a BotConfig. a=main deck, b=extra (fusion/synchro)."""
+def buildBotDeck(botConfig, mainSize=40, bhMaxAtk=None):
+    """Generate a deck json from a BotConfig. a=main deck, b=extra (fusion/synchro).
+    bhMaxAtk (BH version): only include monsters with ATK strictly below it."""
     if botConfig is None:
         botConfig = BotConfig()
+
+    def _atkOk(k):
+        return bhMaxAtk is None or _keyAtk(k) < bhMaxAtk
+
     a = []
     for k in botConfig.signatureMonsters:
-        if k in D_CARD and not _isWhiteMonsterKey(k):
+        if k in D_CARD and not _isWhiteMonsterKey(k) and _atkOk(k):
             a += [k] * 2                      # signature big monsters: 2 copies each
     for k in botConfig.preferCards:
-        if k in D_CARD:
+        if k in D_CARD and _atkOk(k):
             a += [k] * 3                      # core cards: 3 copies each
-    _supplementDeckList(a, mainSize, 1, 4, botConfig.preferRace)   # pad with small monsters
+    _supplementDeckList(a, mainSize, 1, 4, botConfig.preferRace, maxAtk=bhMaxAtk)
     b = [k for k in botConfig.signatureMonsters
-         if k in D_CARD and _isWhiteMonsterKey(k)]                 # fusion/synchro -> extra deck
+         if k in D_CARD and _isWhiteMonsterKey(k) and _atkOk(k)]   # fusion/synchro -> extra
     return {"a": a[:mainSize], "b": b}
