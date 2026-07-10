@@ -196,7 +196,6 @@ NEWBIE_DECK1={
         "Assault Mech_Skin1",                 # 铁壁推进者      LV2   atk=1800  MACHINE
         "Dragonide",                          # 铁锤蜥蜴       LV4   atk=1800  BEASTWARRIOR
         "SciFi Beast03 Skin1",                # 百兽机 翼龙     LV4   atk=1800  MACHINE
-        "SciFi Beast04 WhaleSnake Skin1",     # 百兽机 黑鲸     LV4   atk=1800  MACHINE
         "SciFi Beast05_Skin1",                # 百兽机 暴龙     LV4   atk=1700  MACHINE
         "FireMeka_01",                        # 赤焰机甲兽      LV4   atk=1600  MACHINE
         "SciFi Beast06 Bull Skin2",           # 百兽机 牛怪     LV4   atk=1600  MACHINE
@@ -298,7 +297,6 @@ NEWBIE_DECK3={
         "Assault Mech_Skin1",                 # 铁壁推进者      LV2   atk=1800  MACHINE
         "Dragonknight",                       # 赤鳞龙骑士      LV4   atk=1800  DRAGON
         "SciFi Beast03 Skin1",                # 百兽机 翼龙     LV4   atk=1800  MACHINE
-        "SciFi Beast04 WhaleSnake Skin1",     # 百兽机 黑鲸     LV4   atk=1800  MACHINE
         "SciFi Beast05_Skin1",                # 百兽机 暴龙     LV4   atk=1700  MACHINE
         "FireMeka_01",                        # 赤焰机甲兽      LV4   atk=1600  MACHINE
         "SciFi Beast06 Bull Skin2",           # 百兽机 牛怪     LV4   atk=1600  MACHINE
@@ -407,9 +405,6 @@ ELITE_DECK_MECH={
         "SciFi Beast05_Skin1",            # 百兽机 暴龙    LV4  ATK=1700  bt=5  MACHINE/LIGHT
         "SciFi Beast05_Skin1",            # 百兽机 暴龙    LV4  ATK=1700  bt=5  MACHINE/LIGHT
         "SciFi Beast05_Skin1",
-        "SciFi Beast04 WhaleSnake Skin1", # 百兽机 黑鲸    LV4  ATK=1800  bt=5  MACHINE/LIGHT
-        "SciFi Beast04 WhaleSnake Skin1",
-        "SciFi Beast04 WhaleSnake Skin1",
         "SciFi Beast03 Skin1",            # 百兽机 翼龙    LV4  ATK=1800  bt=5  MACHINE/LIGHT
         "SciFi Beast03 Skin1",
         "SciFi Beast03 Skin1",
