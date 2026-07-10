@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Spore Orb
 卡名:孢子球
-效果:1T:<此卡被特殊召唤时>:发现一张等级2以下的植物族怪兽并守备召唤。
+效果:1T:<此卡被特殊召唤时>:发现一张等级2以下的植物族怪兽并特殊召唤。
 """
 
 class Spore(Card):
@@ -17,7 +17,7 @@ class Spore(Card):
 
 
 class Spore_e1(Effect):
-    # 1T:<此卡被特殊召唤时>:发现一张等级2以下的植物族怪兽并守备召唤。
+    # 1T:<此卡被特殊召唤时>:发现一张等级2以下的植物族怪兽并特殊召唤。
     effType = EFF_TYPE.trigger
     observeSignals = (LOCATION.monsterZone, [Signal.SpecialSummon])
     AI_HINT = [AI_HINT.summoner]
@@ -38,5 +38,5 @@ class Spore_e1(Effect):
         picked = yield self.y_discoverCard(side=self.getSide(), race=RACE.PLANT,
                                            cardType=CARD_TYPE.monster, maxLevel=2, count=3, title=TITLE.specialSummon, canCancel=True)
         if picked and self.freeMonsterSpace() > 0:
-            yield self.y_specialSummon(picked, form=FORM.defence)
+            yield self.y_specialSummon(picked)
         return True

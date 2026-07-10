@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Nightwood Stalker
 卡名:夜林潜行喵
-效果:1A:[支付800基本分]:从手牌把1只等级2以下的兽族怪兽守备召唤。
+效果:1A:[支付800基本分]:从手牌把1只等级2以下的兽族怪兽特殊召唤。
 """
 
 class CombatCat01(Card):
@@ -17,7 +17,7 @@ class CombatCat01(Card):
 
 
 class CombatCat01_e1(Effect):
-    # 1A:[支付800基本分]:从手牌把1只等级2以下的兽族怪兽守备召唤。
+    # 1A:[支付800基本分]:从手牌把1只等级2以下的兽族怪兽特殊召唤。
     effType = EFF_TYPE.active
     activateLocation = LOCATION.monsterZone
     AI_HINT = [AI_HINT.summoner, AI_HINT.costMonster]
@@ -48,5 +48,5 @@ class CombatCat01_e1(Effect):
         t = self.getLegalTarget1(checkLocationChange=False)
         if not t or self.freeMonsterSpace() == 0:
             return False
-        yield self.y_specialSummon(t, form=FORM.defence)
+        yield self.y_specialSummon(t)
         return True

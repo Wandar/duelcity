@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Storm Wyvern
 卡名:风暴亚龙
-效果:1A:[丢弃1张手牌]:发现一张等级3以下的龙族怪兽并守备召唤。
+效果:1A:[丢弃1张手牌]:发现一张等级3以下的龙族怪兽并特殊召唤。
 """
 
 class Fantasy_Dragon_Blue(Card):
@@ -17,7 +17,7 @@ class Fantasy_Dragon_Blue(Card):
 
 
 class Fantasy_Dragon_Blue_e1(Effect):
-    # 1A:[丢弃1张手牌]:发现一张等级3以下的龙族怪兽并守备召唤。
+    # 1A:[丢弃1张手牌]:发现一张等级3以下的龙族怪兽并特殊召唤。
     effType = EFF_TYPE.active
     activateLocation = LOCATION.monsterZone
     AI_HINT = [AI_HINT.summoner, AI_HINT.costHand]
@@ -45,5 +45,5 @@ class Fantasy_Dragon_Blue_e1(Effect):
         picked = yield self.y_discoverCard(title=TITLE.specialSummon, side=self.getSide(), race=RACE.DRAGON,
                                            cardType=CARD_TYPE.monster, maxLevel=3, count=3, canCancel=True)
         if picked and self.freeMonsterSpace() > 0:
-            yield self.y_specialSummon(picked, form=FORM.defence)
+            yield self.y_specialSummon(picked)
         return True

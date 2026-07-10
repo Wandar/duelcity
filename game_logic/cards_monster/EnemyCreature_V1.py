@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Sweet Dream Gecko
 卡名:甜梦幻蜥
-效果:1T:<召唤时>:从手牌把1只等级3以下的爬虫类怪兽守备召唤。
+效果:1T:<召唤时>:从手牌把1只等级3以下的爬虫类怪兽特殊召唤。
 """
 
 class EnemyCreature_V1(Card):
@@ -17,7 +17,7 @@ class EnemyCreature_V1(Card):
 
 
 class EnemyCreature_V1_e1(Effect):
-    # 1T:<召唤时>:从手牌把1只等级3以下的爬虫类怪兽守备召唤。
+    # 1T:<召唤时>:从手牌把1只等级3以下的爬虫类怪兽特殊召唤。
     effType = EFF_TYPE.trigger
     observeSignals = (LOCATION.monsterZone, [Signal.Summon])
     AI_HINT = [AI_HINT.summoner]
@@ -47,5 +47,5 @@ class EnemyCreature_V1_e1(Effect):
         t = self.getLegalTarget1()
         if not t or self.freeMonsterSpace() == 0:
             return False
-        yield self.y_specialSummon(t, form=FORM.defence)
+        yield self.y_specialSummon(t)
         return True

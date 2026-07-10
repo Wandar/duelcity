@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Vivid Green Dragon
 卡名:苍翠龙
-效果:1T:<召唤时>:随机发现2只等级3以下的植物族怪兽守备召唤。2P:自己场上其他植物族怪兽{ATK}{DEF}+400。
+效果:1T:<召唤时>:随机发现2只等级3以下的植物族怪兽特殊召唤。2P:自己场上其他植物族怪兽{ATK}{DEF}+400。
 """
 
 class forestdragon(Card):
@@ -18,7 +18,7 @@ class forestdragon(Card):
 
 
 class forestdragon_e1(Effect):
-    # 1T:<召唤时>:随机发现2只等级3以下的植物族怪兽守备召唤。
+    # 1T:<召唤时>:随机发现2只等级3以下的植物族怪兽特殊召唤。
     effType = EFF_TYPE.trigger
     observeSignals = (LOCATION.monsterZone, [Signal.Summon])
     AI_HINT = [AI_HINT.summoner]
@@ -36,7 +36,7 @@ class forestdragon_e1(Effect):
     def y_activate(self, justCheck, signal):
         if justCheck:
             return True
-        # 发现并守备召唤至多2只等级3以下的植物族怪兽
+        # 发现并特殊召唤至多2只等级3以下的植物族怪兽
         for _ in range(2):
             if self.freeMonsterSpace() <= 0:
                 break
@@ -45,7 +45,7 @@ class forestdragon_e1(Effect):
                                                count=3, canCancel=True)
             if not picked:
                 break
-            yield self.y_specialSummon(picked, form=FORM.defence)
+            yield self.y_specialSummon(picked)
         return True
 
 

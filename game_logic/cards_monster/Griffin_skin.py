@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Gloomywood Guardian, Griffin of the Thicket
 卡名:幽暗森林 守林狮鹫
-效果:1T:<对方怪兽召唤时>:发现一张等级3以下的鸟兽族怪兽并守备召唤。
+效果:1T:<对方怪兽召唤时>:发现一张等级3以下的鸟兽族怪兽并特殊召唤。
 """
 
 class Griffin_skin(Card):
@@ -17,7 +17,7 @@ class Griffin_skin(Card):
 
 
 class Griffin_skin_e1(Effect):
-    # 1T:<对方怪兽召唤时>:发现一张等级3以下的鸟兽族怪兽并守备召唤。
+    # 1T:<对方怪兽召唤时>:发现一张等级3以下的鸟兽族怪兽并特殊召唤。
     effType = EFF_TYPE.trigger
     observeSignals = (LOCATION.monsterZone, [Signal.Summon])
     AI_HINT = [AI_HINT.summoner]
@@ -43,5 +43,5 @@ class Griffin_skin_e1(Effect):
         picked = yield self.y_discoverCard(title=TITLE.specialSummon, side=self.getSide(), race=RACE.WINDBEAST,
                                            cardType=CARD_TYPE.monster, maxLevel=3, count=3, canCancel=True)
         if picked and self.freeMonsterSpace() > 0:
-            yield self.y_specialSummon(picked, form=FORM.defence)
+            yield self.y_specialSummon(picked)
         return True

@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Forged Orc Whelp
 卡名:锤炼小兽人
-效果:1A:[把1张手牌送入弃牌区]:发现一张等级2以下的兽战士族怪兽并守备召唤。
+效果:1A:[把1张手牌送入弃牌区]:发现一张等级2以下的兽战士族怪兽并特殊召唤。
 """
 
 class OrcPBR(Card):
@@ -17,7 +17,7 @@ class OrcPBR(Card):
 
 
 class OrcPBR_e1(Effect):
-    # 1A:[把1张手牌送入弃牌区]:发现一张等级2以下的兽战士族怪兽并守备召唤。
+    # 1A:[把1张手牌送入弃牌区]:发现一张等级2以下的兽战士族怪兽并特殊召唤。
     effType = EFF_TYPE.active
     activateLocation = LOCATION.monsterZone
     AI_HINT = [AI_HINT.summoner, AI_HINT.costHand]
@@ -45,5 +45,5 @@ class OrcPBR_e1(Effect):
         picked = yield self.y_discoverCard(title=TITLE.specialSummon, side=self.getSide(), race=RACE.BEASTWARRIOR,
                                            cardType=CARD_TYPE.monster, maxLevel=2, count=3, canCancel=True)
         if picked and self.freeMonsterSpace() > 0:
-            yield self.y_specialSummon(picked, form=FORM.defence)
+            yield self.y_specialSummon(picked)
         return True

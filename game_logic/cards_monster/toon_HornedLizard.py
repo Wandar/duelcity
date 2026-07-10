@@ -5,7 +5,7 @@ from annos import *
 """
 CardName:Pointy Horned Lizard
 卡名:尖尖角蜥
-效果:1A:[丢弃1张手牌]:发现一张等级3以下的爬虫类族怪兽并守备召唤。
+效果:1A:[丢弃1张手牌]:发现一张等级3以下的爬虫类族怪兽并特殊召唤。
 """
 
 class toon_HornedLizard(Card):
@@ -17,7 +17,7 @@ class toon_HornedLizard(Card):
 
 
 class toon_HornedLizard_e1(Effect):
-    # 1A:[丢弃1张手牌]:发现一张等级3以下的爬虫类族怪兽并守备召唤。
+    # 1A:[丢弃1张手牌]:发现一张等级3以下的爬虫类族怪兽并特殊召唤。
     effType = EFF_TYPE.active
     activateLocation = LOCATION.monsterZone
     AI_HINT = [AI_HINT.summoner, AI_HINT.costHand]
@@ -45,5 +45,5 @@ class toon_HornedLizard_e1(Effect):
         picked = yield self.y_discoverCard(title=TITLE.specialSummon, side=self.getSide(), race=RACE.REPTILE,
                                            cardType=CARD_TYPE.monster, maxLevel=3, count=3, canCancel=True)
         if picked and self.freeMonsterSpace() > 0:
-            yield self.y_specialSummon(picked, form=FORM.defence)
+            yield self.y_specialSummon(picked)
         return True
