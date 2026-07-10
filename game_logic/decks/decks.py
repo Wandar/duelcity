@@ -59,7 +59,6 @@ TUTORIAL_ENEMY_DECK={
         # ── 顶部:大体型怪 (6) ──
         "Giant_Autumn",                    # 红鬃秋巨人          LV5 atk1500(封顶) dia2.66
         "MechaGolem_Bronze",               # 古代青铜机械         LV5 atk1500(封顶) dia3.6
-        "Dragon Inferno",                  # 爆炎小恶龙          LV3 atk1200  btNone dia2.3
         "Cactus Boss",                     # 巨嘴刺王           LV3 atk1200  bt3 dia4.6
         "Sci-Fi Insect Miner Beetle Skin1", # 旋轮机虫           LV3 atk1000  bt3 dia2.01
         "Ent",                             # 林间巨灵           LV3 atk1500(封顶) dia2.5
@@ -111,7 +110,6 @@ TUTORIAL_DECK={
         "SKM_whale",                       # 机器鲸鱼           LV4 atk1800  bt5 dia1.4
         "Griffin_skin",                    # 幽暗森林 守林狮鹫      LV4 atk1800  bt5 dia3.0
         "SciFi Beast03 Skin1",             # 百兽机 翼龙         LV4 atk1800  bt5 dia4.8
-        "SciFi Beast04 WhaleSnake Skin1",  # 百兽机 黑鲸         LV4 atk1800  bt5 dia4.5
         "SciFi Beast06 Bull Skin2",        # 百兽机 牛怪         LV4 atk1600  bt5 dia2.8
         "Beast_1",                         # 刺壳巨兽           LV4 atk1900  bt5 dia2.85
         "T Rex",                           # 暴龙             LV4 atk1900  bt4 dia1.408
@@ -198,7 +196,6 @@ NEWBIE_DECK1={
         "Assault Mech_Skin1",                 # 铁壁推进者      LV2   atk=1800  MACHINE
         "Dragonide",                          # 铁锤蜥蜴       LV4   atk=1800  BEASTWARRIOR
         "SciFi Beast03 Skin1",                # 百兽机 翼龙     LV4   atk=1800  MACHINE
-        "SciFi Beast04 WhaleSnake Skin1",     # 百兽机 黑鲸     LV4   atk=1800  MACHINE
         "SciFi Beast05_Skin1",                # 百兽机 暴龙     LV4   atk=1700  MACHINE
         "FireMeka_01",                        # 赤焰机甲兽      LV4   atk=1600  MACHINE
         "SciFi Beast06 Bull Skin2",           # 百兽机 牛怪     LV4   atk=1600  MACHINE
@@ -300,7 +297,6 @@ NEWBIE_DECK3={
         "Assault Mech_Skin1",                 # 铁壁推进者      LV2   atk=1800  MACHINE
         "Dragonknight",                       # 赤鳞龙骑士      LV4   atk=1800  DRAGON
         "SciFi Beast03 Skin1",                # 百兽机 翼龙     LV4   atk=1800  MACHINE
-        "SciFi Beast04 WhaleSnake Skin1",     # 百兽机 黑鲸     LV4   atk=1800  MACHINE
         "SciFi Beast05_Skin1",                # 百兽机 暴龙     LV4   atk=1700  MACHINE
         "FireMeka_01",                        # 赤焰机甲兽      LV4   atk=1600  MACHINE
         "SciFi Beast06 Bull Skin2",           # 百兽机 牛怪     LV4   atk=1600  MACHINE
@@ -409,9 +405,6 @@ ELITE_DECK_MECH={
         "SciFi Beast05_Skin1",            # 百兽机 暴龙    LV4  ATK=1700  bt=5  MACHINE/LIGHT
         "SciFi Beast05_Skin1",            # 百兽机 暴龙    LV4  ATK=1700  bt=5  MACHINE/LIGHT
         "SciFi Beast05_Skin1",
-        "SciFi Beast04 WhaleSnake Skin1", # 百兽机 黑鲸    LV4  ATK=1800  bt=5  MACHINE/LIGHT
-        "SciFi Beast04 WhaleSnake Skin1",
-        "SciFi Beast04 WhaleSnake Skin1",
         "SciFi Beast03 Skin1",            # 百兽机 翼龙    LV4  ATK=1800  bt=5  MACHINE/LIGHT
         "SciFi Beast03 Skin1",
         "SciFi Beast03 Skin1",

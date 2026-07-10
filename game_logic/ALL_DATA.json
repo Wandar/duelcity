@@ -4,7 +4,7 @@
             "disable": 9,
             "key": "version",
             "name_zh": "版本号",
-            "name_en": "0.0.14",
+            "name_en": "0.0.15",
             "name_zh_tr": "",
             "name_ja": "",
             "image": "",
@@ -9359,7 +9359,7 @@
             }
         },
         {
-            "disable": 9,
+            "disable": 0,
             "key": "CrystalElemental_Cave",
             "name_zh": "水晶元素守护者",
             "name_en": "Crystal Elemental Guardian",
@@ -16058,7 +16058,7 @@
             "race": "PLANT",
             "range": "",
             "atk": "1500",
-            "def": "1300",
+            "def": "1500",
             "series": "",
             "type": "MONSTER",
             "chuangyi": "",
@@ -23591,7 +23591,7 @@
         {
             "key": "updating cards",
             "ui": false,
-            "en": "updating cards",
+            "en": "LOADING…",
             "zh": "加载中......",
             "ja": "",
             "zh_tr": "",
@@ -35568,7 +35568,7 @@
             "forceUpdate": false,
             "canHome": true,
             "bgm": "LightFall_XA1-S3_Lagoon",
-            "ambient": "Carsamb:0.7",
+            "ambient": "Carsamb:0.5",
             "characterSlope": 0
         },
         {
@@ -35648,7 +35648,7 @@
             "forceUpdate": false,
             "canHome": true,
             "bgm": "Lively Now (Spring)",
-            "ambient": "Forest Birds [loop] (1)|0.5",
+            "ambient": "Forest Birds [loop] (1)|0.2",
             "characterSlope": 0
         },
         {
