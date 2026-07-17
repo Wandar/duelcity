@@ -22722,6 +22722,23 @@
             "id": ""
         },
         {
+            "key": "loginerror",
+            "ui": false,
+            "en": "login failed,please retry",
+            "zh": "登录失败,请重试",
+            "ja": "",
+            "zh_tr": "",
+            "de": "",
+            "ko": "",
+            "fr": "",
+            "pt_br": "",
+            "es": "",
+            "it": "",
+            "ru": "",
+            "vi": "",
+            "id": ""
+        },
+        {
             "key": "incorrectmail",
             "ui": false,
             "en": "email format incorrect",
@@ -22963,7 +22980,7 @@
             "key": "networkerror",
             "ui": false,
             "en": "Network error,Please check your network",
-            "zh": "网络错误请检查网络",
+            "zh": "网络异常请检查网络",
             "ja": "",
             "zh_tr": "",
             "de": "",
