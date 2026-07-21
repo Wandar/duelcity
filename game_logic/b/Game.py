@@ -1098,6 +1098,30 @@ class Game(Reload, GameFunc):
             isSuccess = yield self.y_battle(attacker, target, True)
             return isSuccess
 
+    # def _y_askChangeToBattlePhaseAndShowHand(self):
+    #     #avatar anim
+    #     avatarAnim=AVATAR_ANIM.attackCommand
+    #     percent=random.random()
+    #     if percent<0.5:
+    #         avatarAnim=AVATAR_ANIM.attackCommand
+    #     elif percent<0.65:
+    #         avatarAnim=AVATAR_ANIM.attackCommand1
+    #     elif percent<0.85:
+    #         avatarAnim=AVATAR_ANIM.attackCommand2
+    #     elif percent<1:
+    #         avatarAnim=AVATAR_ANIM.attackCommand3
+    #
+    #     #change phase first
+    #     if self.phase == PHASE.mainphase1:
+    #         # option = yield self.duel.y_showPopup("shouldChangeToBattleTitle", "shouldChangeToBattle", self.whoseTurn,["YES"], 0,"NO")
+    #         option = yield self.duel.y_showPopup("shouldAttack", "", self.whoseTurn,["YES"], 0,"NO",POPUP_TYPE.askbattle)
+    #         if option == 0:
+    #             self.duelNode.playanimAvatarAnim(self.whoseTurn,avatarAnim )
+    #             yield self.y_changePhase()
+    #     elif self.phase==PHASE.battle:
+    #         self.duelNode.playanimAvatarAnim(self.whoseTurn,avatarAnim )
+
+
     def _y_askChangeToBattlePhaseAndShowHand(self):
         #avatar anim
         avatarAnim=AVATAR_ANIM.attackCommand
@@ -1113,11 +1137,8 @@ class Game(Reload, GameFunc):
 
         #change phase first
         if self.phase == PHASE.mainphase1:
-            # option = yield self.duel.y_showPopup("shouldChangeToBattleTitle", "shouldChangeToBattle", self.whoseTurn,["YES"], 0,"NO")
-            option = yield self.duel.y_showPopup("shouldAttack", "", self.whoseTurn,["YES"], 0,"NO",POPUP_TYPE.askbattle)
-            if option == 0:
-                self.duelNode.playanimAvatarAnim(self.whoseTurn,avatarAnim )
-                yield self.y_changePhase()
+            self.duelNode.playanimAvatarAnim(self.whoseTurn,avatarAnim )
+            yield self.y_changePhase()
         elif self.phase==PHASE.battle:
             self.duelNode.playanimAvatarAnim(self.whoseTurn,avatarAnim )
 
