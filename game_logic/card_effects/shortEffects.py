@@ -47,6 +47,7 @@ class ShortEffect(Effect):
 无法被攻击 CannotBeAttacked - 不能被指定为近战攻击目标
 唯一 Unique - 此卡发动效果后,本回合我方其它同名卡都不能发动效果.同名卡我方场上只能有一只存在
 斩杀 Slay{} - 被此卡战斗破坏的等级N以下的怪兽不进入半破状态直接破坏(超过N星仍半破)
+远程狙杀 Snipe - 被此卡远程攻击命中的单位,当前数值低于此卡攻击力则直接破坏(不额外扣血),否则照常削减数值
 """
 
 
@@ -692,3 +693,13 @@ class Slay(ShortEffect):
     # becomes half-broken. Read in Game.y_battle: the destroyer (the combatant that dealt the fatal
     # hit) carrying this effect denies its victim y_becomeHalfLife only when victim.level <= number_0.
     NEED_NUM = True
+
+
+"""
+远程狙杀:被此卡远程攻击命中的单位,当前数值 < 此卡攻击力则直接破坏(不造成溢出玩家伤害),否则照常削减数值
+"""
+class Snipe(ShortEffect):
+    # Marker: when this card performs a ranged attack, a hit whose target getCurNumber() is below
+    # this card's atk is destroyed outright (no overflow LP damage); otherwise it resolves as a
+    # normal ranged hit (y_damageCard by rangeAtk). Read in Game.y_rangedAttack.
+    pass

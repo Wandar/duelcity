@@ -1220,9 +1220,15 @@ class Game(Reload, GameFunc):
         attackerEntity.playanimBattleResult(attackerBattleResult,paraID)
 
 
+        snipe = bool(attacker.getEffect(shortEffects.Snipe))
         for r in receivers:
             if r.isMonsterOnField():
-                yield self.y_damageCard(r,attacker.rangeAtk,FX_ID.none,attacker,paraID)
+                # Snipe: target whose current number is below this card's ATK is destroyed outright
+                # (no overflow LP damage); otherwise resolve as a normal ranged hit.
+                if snipe and r.getCurNumber() < attacker.atk:
+                    yield self.y_destroyCard(r)
+                else:
+                    yield self.y_damageCard(r,attacker.rangeAtk,FX_ID.none,attacker,paraID)
 
         attacker.attackCntThisTurn+=1
         return True
